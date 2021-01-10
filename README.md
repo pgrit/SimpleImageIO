@@ -10,7 +10,7 @@ While this *should* work on all platforms, it is currently only tested on 64 Bit
 All dependencies are header-only. Building requires
 - a C++11 (or newer) compiler
 - CMake
-- [.NET](https://dotnet.microsoft.com/)
+- [.NET 5.0](https://dotnet.microsoft.com/) (or newer)
 
 ## Building
 
