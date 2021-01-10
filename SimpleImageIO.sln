@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimpleImageIO", "SimpleImag
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimpleImageIO.Tests", "SimpleImageIO.Tests\SimpleImageIO.Tests.csproj", "{2969A392-634E-4EF4-847B-0F3A88E791D2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestApp", "TestApp\TestApp.csproj", "{9EBBD915-68FF-490E-9304-4C9ED0BF717C}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -43,18 +41,6 @@ Global
 		{2969A392-634E-4EF4-847B-0F3A88E791D2}.Release|x64.Build.0 = Release|Any CPU
 		{2969A392-634E-4EF4-847B-0F3A88E791D2}.Release|x86.ActiveCfg = Release|Any CPU
 		{2969A392-634E-4EF4-847B-0F3A88E791D2}.Release|x86.Build.0 = Release|Any CPU
-		{9EBBD915-68FF-490E-9304-4C9ED0BF717C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9EBBD915-68FF-490E-9304-4C9ED0BF717C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9EBBD915-68FF-490E-9304-4C9ED0BF717C}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{9EBBD915-68FF-490E-9304-4C9ED0BF717C}.Debug|x64.Build.0 = Debug|Any CPU
-		{9EBBD915-68FF-490E-9304-4C9ED0BF717C}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{9EBBD915-68FF-490E-9304-4C9ED0BF717C}.Debug|x86.Build.0 = Debug|Any CPU
-		{9EBBD915-68FF-490E-9304-4C9ED0BF717C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9EBBD915-68FF-490E-9304-4C9ED0BF717C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9EBBD915-68FF-490E-9304-4C9ED0BF717C}.Release|x64.ActiveCfg = Release|Any CPU
-		{9EBBD915-68FF-490E-9304-4C9ED0BF717C}.Release|x64.Build.0 = Release|Any CPU
-		{9EBBD915-68FF-490E-9304-4C9ED0BF717C}.Release|x86.ActiveCfg = Release|Any CPU
-		{9EBBD915-68FF-490E-9304-4C9ED0BF717C}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

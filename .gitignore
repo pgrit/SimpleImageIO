@@ -4,6 +4,7 @@
 
 # Build files
 build/*
+build-linux/*
 bin
 obj
 

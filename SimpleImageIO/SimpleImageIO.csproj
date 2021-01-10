@@ -14,10 +14,10 @@
 
   <ItemGroup>
     <Content CopyToOutputDirectory="Always"
-			Include="../Dist/SimpleImageIOCore.so"
+			Include="../Dist/libSimpleImageIOCore.so"
 			Pack="true"
 			PackagePath="runtimes/win-x64/native/"
-      Condition="Exists('../Dist/SimpleImageIOCore.so')"/>
+      Condition="Exists('../Dist/libSimpleImageIOCore.so')"/>
   </ItemGroup>
 
 </Project>
