@@ -16,7 +16,7 @@
     <Content CopyToOutputDirectory="Always"
 			Include="../Dist/libSimpleImageIOCore.so"
 			Pack="true"
-			PackagePath="runtimes/win-x64/native/"
+			PackagePath="runtimes/linux-x64/native/"
       Condition="Exists('../Dist/libSimpleImageIOCore.so')"/>
   </ItemGroup>
 
