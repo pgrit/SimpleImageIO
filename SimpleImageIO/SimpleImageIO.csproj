@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content CopyToOutputDirectory="Always"
+			Include="../Dist/SimpleImageIOCore.dll"
+			Pack="true"
+			PackagePath="runtimes/win-x64/native/"
+      Condition="Exists('../Dist/SimpleImageIOCore.dll')"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content CopyToOutputDirectory="Always"
+			Include="../Dist/SimpleImageIOCore.so"
+			Pack="true"
+			PackagePath="runtimes/win-x64/native/"
+      Condition="Exists('../Dist/SimpleImageIOCore.so')"/>
+  </ItemGroup>
+
+</Project>

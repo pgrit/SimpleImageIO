@@ -1,0 +1,11 @@
+# IDE related
+.vs
+.vscode/settings.json
+
+# Build files
+build/*
+bin
+obj
+
+# Compiled shared libraries
+Dist/*
