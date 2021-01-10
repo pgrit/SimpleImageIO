@@ -1,18 +1,30 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
+    <Title>Simple Image IO</Title>
+    <Description>A very simple C# wrapper to read and write various HDR and LDR image file formats.</Description>
+    <PackageId>SimpleImageIO</PackageId>
+    <Version>0.1.0</Version>
+    <Copyright>(c) Pascal Grittmann</Copyright>
+    <RepositoryUrl>https://github.com/pgrit/SimpleImageIO</RepositoryUrl>
+
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <Authors>Pascal Grittmann</Authors>
+    <IncludeBuildOutput>true</IncludeBuildOutput>
+    <IsPackable>true</IsPackable>
+    <PackageTags>exr hdr png image jpg</PackageTags>
+
     <TargetFramework>net5.0</TargetFramework>
+    <!-- Each additional platform requires an entry here, once the native binaries have been added below -->
+    <RuntimeIdentifiers>win10-x64;linux-x64</RuntimeIdentifiers>
   </PropertyGroup>
 
+  <!-- Each additional platform requires an entry here, to copy the corresponding native binaries -->
   <ItemGroup>
     <Content CopyToOutputDirectory="Always"
 			Include="../Dist/SimpleImageIOCore.dll"
 			Pack="true"
 			PackagePath="runtimes/win-x64/native/"
       Condition="Exists('../Dist/SimpleImageIOCore.dll')"/>
-  </ItemGroup>
-
-  <ItemGroup>
     <Content CopyToOutputDirectory="Always"
 			Include="../Dist/libSimpleImageIOCore.so"
 			Pack="true"
@@ -20,21 +32,9 @@
       Condition="Exists('../Dist/libSimpleImageIOCore.so')"/>
   </ItemGroup>
 
-  <PropertyGroup Label="Nuget">
-    <IsPackable>true</IsPackable>
-    <Title>Simple Image IO</Title>
-    <Description>A very simple C# wrapper to read and write various HDR and LDR image file formats.</Description>
-    <Copyright>(c) Pascal Grittmann</Copyright>
-    <PackageId>SimpleImageIO</PackageId>
-    <PackageTags>exr hdr png image jpg</PackageTags>
-    <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <RepositoryUrl>https://github.com/pgrit/SimpleImageIO</RepositoryUrl>
-    <Authors>Pascal Grittmann</Authors>
-    <IncludeBuildOutput>true</IncludeBuildOutput>
-  </PropertyGroup>
-
   <ItemGroup>
-    <None Include="LICENSE" Pack="true" PackagePath="$(PackageLicenseFile)"/>
+    <None Include="../LICENSE" Pack="true" PackagePath=""/>
+    <None Include="../README.md" Pack="true" PackagePath=""/>
   </ItemGroup>
 
 </Project>

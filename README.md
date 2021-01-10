@@ -3,8 +3,6 @@
 A *very* simple C# wrapper to read and write RGB images from / to various file formats.
 Supports .exr via [tinyexr](https://github.com/syoyo/tinyexr) and a number of other formats (including .png, .jpg, .bmp) via [stb_image](https://github.com/nothings/stb/blob/master/stb_image.h) and [stb_image_write](https://github.com/nothings/stb/blob/master/stb_image_write.h).
 
-While this *should* work on all platforms, it is currently only tested on 64 Bit Windows and Ubuntu Linux.
-
 ## Dependencies
 
 All dependencies are header-only. Building requires
@@ -12,7 +10,7 @@ All dependencies are header-only. Building requires
 - CMake
 - [.NET 5.0](https://dotnet.microsoft.com/) (or newer)
 
-## Building
+## Building on Windows and Linux
 
 Build the C++ low level library by running:
 ```
@@ -29,6 +27,10 @@ dotnet test
 ```
 
 That's it. Simply add a reference to `SimpleImageIO/SimpleImageIO.csproj` to your project and you should be up and running.
+
+## Building on other platforms
+
+In theory, the package works on any platform. However, the native dependencies have to be built for each. Currently, the workflow has been set up and tested for 64 bit Windows and Linux (Ubuntu 20.04). Other platforms (like OSX) need to be built from source. For these, the [SimpleImageIO.csproj](SimpleImageIO/SimpleImageIO.csproj) file needs to be adjusted, instructions can be found in the comments of that file. The process should be a simple copy&paste operation, provided nothing goes south when building the C++ library.
 
 ## Usage example
 
