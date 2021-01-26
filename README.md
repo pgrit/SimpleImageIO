@@ -3,6 +3,10 @@
 A *very* simple C# wrapper to read and write RGB images from / to various file formats.
 Supports .exr via [tinyexr](https://github.com/syoyo/tinyexr) and a number of other formats (including .png, .jpg, .bmp) via [stb_image](https://github.com/nothings/stb/blob/master/stb_image.h) and [stb_image_write](https://github.com/nothings/stb/blob/master/stb_image_write.h).
 
+<a href="https://www.nuget.org/packages/SimpleImageIO/">
+<img src="https://buildstats.info/nuget/SimpleImageIO" />
+</a>
+
 ## Dependencies
 
 All dependencies are header-only. Building requires
