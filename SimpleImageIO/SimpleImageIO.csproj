@@ -3,7 +3,7 @@
     <Title>Simple Image IO</Title>
     <Description>A very simple C# wrapper to read and write various HDR and LDR image file formats.</Description>
     <PackageId>SimpleImageIO</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Copyright>(c) Pascal Grittmann</Copyright>
     <RepositoryUrl>https://github.com/pgrit/SimpleImageIO</RepositoryUrl>
 
@@ -21,15 +21,15 @@
   <!-- Each additional platform requires an entry here, to copy the corresponding native binaries -->
   <ItemGroup>
     <Content CopyToOutputDirectory="Always"
-			Include="../Dist/SimpleImageIOCore.dll"
+			Include="../Runtimes/SimpleImageIOCore.dll"
 			Pack="true"
 			PackagePath="runtimes/win-x64/native/"
-      Condition="Exists('../Dist/SimpleImageIOCore.dll')"/>
+      Condition="Exists('../Runtimes/SimpleImageIOCore.dll')"/>
     <Content CopyToOutputDirectory="Always"
-			Include="../Dist/libSimpleImageIOCore.so"
+			Include="../Runtimes/libSimpleImageIOCore.so"
 			Pack="true"
 			PackagePath="runtimes/linux-x64/native/"
-      Condition="Exists('../Dist/libSimpleImageIOCore.so')"/>
+      Condition="Exists('../Runtimes/libSimpleImageIOCore.so')"/>
   </ItemGroup>
 
   <ItemGroup>

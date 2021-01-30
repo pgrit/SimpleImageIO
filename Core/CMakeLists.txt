@@ -17,11 +17,6 @@ target_sources(SimpleImageIOCore
         "External/stb_image_write.h"
 )
 
-set_target_properties(SimpleImageIOCore PROPERTIES
-                      RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_CURRENT_SOURCE_DIR}/../Dist
-                      RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_CURRENT_SOURCE_DIR}/../Dist
-                      RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${CMAKE_CURRENT_SOURCE_DIR}/../Dist
-                      LIBRARY_OUTPUT_DIRECTORY_DEBUG ${CMAKE_CURRENT_SOURCE_DIR}/../Dist
-                      LIBRARY_OUTPUT_DIRECTORY_RELEASE ${CMAKE_CURRENT_SOURCE_DIR}/../Dist
-                      LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO ${CMAKE_CURRENT_SOURCE_DIR}/../Dist
+install(TARGETS SimpleImageIOCore
+    DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../Runtimes
 )

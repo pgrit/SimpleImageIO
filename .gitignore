@@ -9,4 +9,4 @@ bin
 obj
 
 # Compiled shared libraries
-Dist/*
+Runtimes/*
