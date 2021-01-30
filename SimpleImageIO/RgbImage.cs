@@ -1,5 +1,6 @@
 using System;
 using System.Numerics;
+using System.Runtime.InteropServices;
 
 namespace SimpleImageIO {
     public class RgbImage {
@@ -33,6 +34,17 @@ namespace SimpleImageIO {
                 System.IO.Directory.CreateDirectory(dirname);
 
             SimpleImageIOCore.WriteImage(data, Width, Height, 3, filename);
+        }
+
+        public string AsBase64Png() {
+            int numBytes;
+            IntPtr mem = SimpleImageIOCore.WritePngToMemory(data, Width, Height, 3, out numBytes);
+
+            byte[] bytes = new byte[numBytes];
+            Marshal.Copy(mem, bytes, 0, numBytes);
+            SimpleImageIOCore.FreeMemory(mem);
+
+            return Convert.ToBase64String(bytes);
         }
 
         void LoadFromFile(string filename) {

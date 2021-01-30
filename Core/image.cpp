@@ -259,6 +259,19 @@ SIMPLE_IMAGE_IO_API void WriteImage(float* data, int width, int height, int numC
     }
 }
 
+SIMPLE_IMAGE_IO_API unsigned char* WritePngToMemory(float* data, int width, int height,
+                                                    int numChannels, int* len) {
+    std::vector<uint8_t> buffer(width * height * numChannels);
+    ConvertToSRGB(data, buffer.data(), width, height, numChannels);
+
+    return stbi_write_png_to_mem((const unsigned char *) buffer.data(), width * numChannels,
+        width, height, numChannels, len);
+}
+
+SIMPLE_IMAGE_IO_API void FreeMemory(unsigned char* mem) {
+    STBIW_FREE(mem);
+}
+
 SIMPLE_IMAGE_IO_API int CacheImage(int* width, int* height, const char* filename) {
     auto fname = std::string(filename);
     if (fname.compare(fname.size() - 4, 4, ".exr") == 0) {

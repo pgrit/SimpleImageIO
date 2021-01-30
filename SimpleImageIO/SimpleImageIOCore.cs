@@ -1,3 +1,4 @@
+using System;
 using System.Numerics;
 using System.Runtime.InteropServices;
 
@@ -12,5 +13,12 @@ namespace SimpleImageIO {
 
         [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
         public static extern void CopyCachedImage(int id, [Out] Vector3[,] buffer);
+
+        [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr WritePngToMemory(Vector3[,] data, int width, int height,
+                                                     int numChannels, out int len);
+
+        [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void FreeMemory(IntPtr mem);
     }
 }

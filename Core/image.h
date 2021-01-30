@@ -14,6 +14,11 @@
 extern "C" {
 
 SIMPLE_IMAGE_IO_API void WriteImage(float* data, int width, int height, int numChannels, const char* filename);
+
+SIMPLE_IMAGE_IO_API unsigned char* WritePngToMemory(float* data, int width, int height,
+                                                    int numChannels, int* len);
+SIMPLE_IMAGE_IO_API void FreeMemory(unsigned char* mem);
+
 SIMPLE_IMAGE_IO_API int CacheImage(int* width, int* height, const char* filename);
 SIMPLE_IMAGE_IO_API void CopyCachedImage(int id, float* out);
 
