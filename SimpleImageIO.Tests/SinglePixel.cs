@@ -50,5 +50,21 @@ namespace SimpleImageIO.Tests {
             Assert.Equal(0.0f, pixel.Y, 1);
             Assert.Equal(1.0f, pixel.Z, 1);
         }
+
+        [Fact]
+        public void Overexposed_ShouldBeWhite() {
+            RgbImage image = new(1, 1);
+            image.SetPixel(0, 0, new(17.0f, 12.0f, 4.0f));
+            image.WriteToFile("testoverexposed.png");
+
+            RgbImage loaded = new("testoverexposed.png");
+            var pixel = loaded.GetPixel(0, 0);
+
+            Assert.Equal(1, loaded.Width);
+            Assert.Equal(1, loaded.Height);
+            Assert.Equal(1.0f, pixel.X, 3);
+            Assert.Equal(1.0f, pixel.Y, 3);
+            Assert.Equal(1.0f, pixel.Z, 3);
+        }
     }
 }

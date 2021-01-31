@@ -206,8 +206,11 @@ void CopyCachedStbImage(int id, float* out) {
     stbi_image_free(data.data);
 }
 
-float LinearToSrgb(float linear) {
-    return std::pow(linear, 1.0f / 2.2f) * 255;
+uint8_t LinearToSrgb(float linear) {
+    float srgb = std::pow(linear, 1.0f / 2.2f) * 255;
+    float clipped = srgb < 0 ? 0 : srgb;
+    clipped = clipped > 255 ? 255 : clipped;
+    return (uint8_t) clipped;
 }
 
 void ConvertToSRGB(const float* data, uint8_t* buffer, int width, int height, int numChannels) {
@@ -219,7 +222,7 @@ void ConvertToSRGB(const float* data, uint8_t* buffer, int width, int height, in
         for (int col = 0; col < width; ++col) {
             for (int chan = 0; chan < numChannels; ++chan) {
                 size_t idx = row * (width * numChannels) + col * numChannels + chan;
-                uint8_t v = (uint8_t) LinearToSrgb(data[idx]);
+                uint8_t v = LinearToSrgb(data[idx]);
                 buffer[idx] = v;
             }
         }
