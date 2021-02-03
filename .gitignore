@@ -2,6 +2,9 @@
 .vs
 .vscode/settings.json
 
+# OS related
+.DS_Store
+
 # Build files
 build/*
 build-linux/*

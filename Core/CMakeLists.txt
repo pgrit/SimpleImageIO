@@ -17,6 +17,13 @@ target_sources(SimpleImageIOCore
         "External/stb_image_write.h"
 )
 
+set_target_properties(SimpleImageIOCore
+    PROPERTIES
+        CXX_STANDARD 11
+        CXX_STANDARD_REQUIRED YES
+        CXX_EXTENSIONS NO
+)
+
 install(TARGETS SimpleImageIOCore
     DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../Runtimes
 )
