@@ -15,7 +15,7 @@
 
     <TargetFramework>net5.0</TargetFramework>
     <!-- Each additional platform requires an entry here, once the native binaries have been added below -->
-    <RuntimeIdentifiers>win10-x64;linux-x64</RuntimeIdentifiers>
+    <RuntimeIdentifiers>win10-x64;linux-x64;osx.10.15-x64</RuntimeIdentifiers>
   </PropertyGroup>
 
   <!-- Each additional platform requires an entry here, to copy the corresponding native binaries -->
@@ -33,7 +33,7 @@
     <Content CopyToOutputDirectory="Always"
 			Include="../Runtimes/libSimpleImageIOCore.dylib"
 			Pack="true"
-			PackagePath="runtimes/macos-x64/native/"
+			PackagePath="runtimes/osx.10.15-x64/native/"
       Condition="Exists('../Runtimes/libSimpleImageIOCore.dylib')"/>
   </ItemGroup>
 
