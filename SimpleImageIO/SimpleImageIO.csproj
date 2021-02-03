@@ -30,6 +30,11 @@
 			Pack="true"
 			PackagePath="runtimes/linux-x64/native/"
       Condition="Exists('../Runtimes/libSimpleImageIOCore.so')"/>
+    <Content CopyToOutputDirectory="Always"
+			Include="../Runtimes/libSimpleImageIOCore.dylib"
+			Pack="true"
+			PackagePath="runtimes/macos-x64/native/"
+      Condition="Exists('../Runtimes/libSimpleImageIOCore.dylib')"/>
   </ItemGroup>
 
   <ItemGroup>
