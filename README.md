@@ -36,7 +36,7 @@ That's it. Simply add a reference to `SimpleImageIO/SimpleImageIO.csproj` to you
 
 In theory, the package works on any platform.
 However, the native dependencies have to be built for each.
-Currently, the workflow has been set up and tested for Intel 64bit Windows, Linux (Ubuntu 20.04) and macOS 10.15.
+Currently, the workflow has been set up and tested for x86-64 versions of Windows, Linux (Ubuntu 20.04) and macOS 10.15.
 Other platforms need to be built from source.
 For these, the [SimpleImageIO.csproj](SimpleImageIO/SimpleImageIO.csproj) file needs to be adjusted, instructions can be found in the comments of that file.
 The process should be a simple copy&paste operation, provided nothing goes south when building the C++ library.
