@@ -10,6 +10,13 @@ build/*
 build-linux/*
 bin
 obj
+__pycache__
+/dist
+/SimpleImageIO.egg-info
 
 # Compiled shared libraries
 Runtimes/*
+
+# Generated images
+PyTest/*.png
+PyTest/*.exr

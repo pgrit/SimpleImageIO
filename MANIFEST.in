@@ -1,0 +1,5 @@
+include Core/*.h Core/*.cpp
+include Core/External/*.h Core/External/*.cpp
+include CMakeLists.txt Core/CMakeLists.txt
+
+exclude PyTest
