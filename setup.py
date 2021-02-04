@@ -44,11 +44,19 @@ class build_ext(build_ext_orig):
             self.spawn(['cmake', '--install', '.'])
         os.chdir(str(cwd))
 
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
 setup(
     name='SimpleImageIO',
     version='0.2.2',
     author='Pascal Grittmann',
     url='https://github.com/pgrit/SimpleImageIO',
+
+    description='Python wrapper around TinyEXR and stb_image',
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+
     packages=['simpleimageio'],
     package_dir={'simpleimageio': 'PyWrapper/simpleimageio'},
     classifiers=[
