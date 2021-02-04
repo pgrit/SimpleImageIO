@@ -24,6 +24,19 @@ set_target_properties(SimpleImageIOCore
         CXX_EXTENSIONS NO
 )
 
-install(TARGETS SimpleImageIOCore
-    DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../Runtimes
-)
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(SimpleImageIOCore PUBLIC OpenMP::OpenMP_CXX)
+else()
+    message("WARNING: Could not find OpenMP!")
+endif()
+
+if (DEFINED PYLIB)
+    install(TARGETS SimpleImageIOCore
+        DESTINATION ${PYLIB}
+    )
+else()
+    install(TARGETS SimpleImageIOCore
+        DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../Runtimes
+    )
+endif()

@@ -7,6 +7,7 @@
 #include <mutex>
 
 #define TINYEXR_IMPLEMENTATION
+#define TINYEXR_USE_THREAD (1)
 #include "External/tinyexr.h"
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -218,6 +219,7 @@ void ConvertToSRGB(const float* data, uint8_t* buffer, int width, int height, in
         // TODO proper error handling
     }
 
+    #pragma omp parallel for
     for (int row = 0; row < height; ++row) {
         for (int col = 0; col < width; ++col) {
             for (int chan = 0; chan < numChannels; ++chan) {
