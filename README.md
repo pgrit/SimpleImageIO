@@ -1,18 +1,19 @@
+<a href="https://www.nuget.org/packages/SimpleImageIO/">
+<img src="https://buildstats.info/nuget/SimpleImageIO" />
+</a>
+
 # Simple Image IO
 
 A *very* simple C# and Python wrapper to read and write RGB images from / to various file formats.
 Supports .exr via [tinyexr](https://github.com/syoyo/tinyexr) and a number of other formats (including .png, .jpg, .bmp) via [stb_image](https://github.com/nothings/stb/blob/master/stb_image.h) and [stb_image_write](https://github.com/nothings/stb/blob/master/stb_image_write.h).
 
-Download from Nuget:
+The **Nuget package** contains prebuilt binaries of the C++ wrapper, compiled with the x86-64 versions of Windows 10, Ubuntu 20.04, and macOS 10.15. These should be compatible with most other x86-64 versions of Windows, Linux, and macOS, so most users can simply grab the package off [Nuget](https://www.nuget.org/packages/SimpleImageIO/).
 
-<a href="https://www.nuget.org/packages/SimpleImageIO/">
-<img src="https://buildstats.info/nuget/SimpleImageIO" />
-</a>
-
-Installation via pip:
-```
+The **Python package** is set up to automatically download an adequate CMake version and compile the C++ code on any platform.
+Provided you have a C++11 compiler installed, you can simply run: 
+`
 pip install simpleimageio
-```
+`.
 
 ## Dependencies
 
@@ -24,16 +25,17 @@ All dependencies are header-only. Building requires
 
 ## Building the C# wrapper on x86-64 Windows, Linux, or macOS
 
-Build the C++ low level library by running:
+Build the C++ low level library with [CMake](https://cmake.org/):
 ```
 mkdir build
 cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 cmake --build . --config Release
+cmake --install .
 cd ..
 ```
 
-To compile and run the tests (optional):
+Compile and run the tests (optional):
 ```
 dotnet test
 ```
@@ -42,12 +44,12 @@ That's it. Simply add a reference to `SimpleImageIO/SimpleImageIO.csproj` to you
 
 ## Building the C# wrapper on other platforms
 
-In theory, the package works on any platform.
-However, the native dependencies have to be built for each.
-Currently, the workflow has been set up and tested for x86-64 versions of Windows, Linux (Ubuntu 20.04) and macOS 10.15.
-Other platforms need to be built from source.
-For these, the [SimpleImageIO.csproj](SimpleImageIO/SimpleImageIO.csproj) file needs to be adjusted, instructions can be found in the comments of that file.
-The process should be a simple copy&paste operation, provided nothing goes south when building the C++ library.
+The [SimpleImageIO.csproj](SimpleImageIO/SimpleImageIO.csproj) file needs to copy the correct .dll / .so / .dylib file to the appropriate runtime folder.
+Currently, the runtime identifiers (RID) and copy instructions are only set for the x86-64 versions of Windows, Linux, and macOS.
+To run the framework on other architectures, you will need to add them to the .csproj file.
+You can find the right RID for your platform here: [https://docs.microsoft.com/en-us/dotnet/core/rid-catalog](https://docs.microsoft.com/en-us/dotnet/core/rid-catalog).
+
+Then, you should be able to follow the steps above and proceed as usual.
 
 ## Building the Python wrapper
 
