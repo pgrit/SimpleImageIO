@@ -4,7 +4,7 @@
 
 # Simple Image IO
 
-A *very* simple C# and Python wrapper to read and write RGB images from / to various file formats.
+A lightweight C# and Python wrapper to read and write RGB images from / to various file formats.
 Supports .exr via [tinyexr](https://github.com/syoyo/tinyexr) and a number of other formats (including .png, .jpg, .bmp) via [stb_image](https://github.com/nothings/stb/blob/master/stb_image.h) and [stb_image_write](https://github.com/nothings/stb/blob/master/stb_image_write.h).
 
 The **Nuget package** contains prebuilt binaries of the C++ wrapper, compiled with the x86-64 versions of Windows 10, Ubuntu 20.04, and macOS 10.15. These should be compatible with most other x86-64 versions of Windows, Linux, and macOS, so most users can simply grab the package off [Nuget](https://www.nuget.org/packages/SimpleImageIO/).
