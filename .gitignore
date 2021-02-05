@@ -20,3 +20,6 @@ Runtimes/*
 # Generated images
 PyTest/*.png
 PyTest/*.exr
+SimpleImageIO.Benchmark/*.png
+SimpleImageIO.Benchmark/*.jpg
+SimpleImageIO.Benchmark/*.exr
