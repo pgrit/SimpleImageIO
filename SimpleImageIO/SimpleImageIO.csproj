@@ -21,19 +21,19 @@
   <!-- Each additional platform requires an entry here, to copy the corresponding native binaries -->
   <ItemGroup>
     <Content CopyToOutputDirectory="Always"
-			Include="../Runtimes/SimpleImageIOCore.dll"
-			Pack="true"
-			PackagePath="runtimes/win-x64/native/"
+      Include="../Runtimes/SimpleImageIOCore.dll"
+      Pack="true"
+      PackagePath="runtimes/win-x64/native/"
       Condition="Exists('../Runtimes/SimpleImageIOCore.dll')"/>
     <Content CopyToOutputDirectory="Always"
-			Include="../Runtimes/libSimpleImageIOCore.so"
-			Pack="true"
-			PackagePath="runtimes/linux-x64/native/"
+      Include="../Runtimes/libSimpleImageIOCore.so"
+      Pack="true"
+      PackagePath="runtimes/linux-x64/native/"
       Condition="Exists('../Runtimes/libSimpleImageIOCore.so')"/>
     <Content CopyToOutputDirectory="Always"
-			Include="../Runtimes/libSimpleImageIOCore.dylib"
-			Pack="true"
-			PackagePath="runtimes/osx-x64/native/"
+      Include="../Runtimes/libSimpleImageIOCore.dylib"
+      Pack="true"
+      PackagePath="runtimes/osx-x64/native/"
       Condition="Exists('../Runtimes/libSimpleImageIOCore.dylib')"/>
   </ItemGroup>
 
