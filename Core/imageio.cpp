@@ -253,7 +253,7 @@ void WriteImageWithStbImage(float* data, int width, int height, int numChannels,
 
 extern "C" {
 
-SIMPLE_IMAGE_IO_API void WriteImage(float* data, int width, int height, int numChannels, const char* filename) {
+SIIO_API void WriteImage(float* data, int width, int height, int numChannels, const char* filename) {
     auto fname = std::string(filename);
     if (fname.compare(fname.size() - 4, 4, ".exr") == 0) {
         // This is an .exr image, load it with tinyexr
@@ -264,7 +264,7 @@ SIMPLE_IMAGE_IO_API void WriteImage(float* data, int width, int height, int numC
     }
 }
 
-SIMPLE_IMAGE_IO_API unsigned char* WritePngToMemory(float* data, int width, int height,
+SIIO_API unsigned char* WritePngToMemory(float* data, int width, int height,
                                                     int numChannels, int* len) {
     std::vector<uint8_t> buffer(width * height * numChannels);
     ConvertToSRGB(data, buffer.data(), width, height, numChannels);
@@ -273,11 +273,11 @@ SIMPLE_IMAGE_IO_API unsigned char* WritePngToMemory(float* data, int width, int 
         width, height, numChannels, len);
 }
 
-SIMPLE_IMAGE_IO_API void FreeMemory(unsigned char* mem) {
+SIIO_API void FreeMemory(unsigned char* mem) {
     STBIW_FREE(mem);
 }
 
-SIMPLE_IMAGE_IO_API int CacheImage(int* width, int* height, const char* filename) {
+SIIO_API int CacheImage(int* width, int* height, const char* filename) {
     auto fname = std::string(filename);
     if (fname.compare(fname.size() - 4, 4, ".exr") == 0) {
         // This is an .exr image, load it with tinyexr
@@ -288,7 +288,7 @@ SIMPLE_IMAGE_IO_API int CacheImage(int* width, int* height, const char* filename
     }
 }
 
-SIMPLE_IMAGE_IO_API void CopyCachedImage(int id, float* out) {
+SIIO_API void CopyCachedImage(int id, float* out) {
     cacheMutex.lock();
     if (exrHeaders.find(id) != exrHeaders.end()) {
         cacheMutex.unlock();

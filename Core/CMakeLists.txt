@@ -8,10 +8,15 @@ target_include_directories(SimpleImageIOCore PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
 
 target_sources(SimpleImageIOCore
     PUBLIC
-        "image.h"
 
     PRIVATE
-        "image.cpp"
+        "image.h"
+
+        "buffer.cpp"
+        "error_metrics.cpp"
+        "imageio.cpp"
+        "manipulation.cpp"
+
         "External/tinyexr.h"
         "External/stb_image.h"
         "External/stb_image_write.h"
@@ -19,16 +24,21 @@ target_sources(SimpleImageIOCore
 
 set_target_properties(SimpleImageIOCore
     PROPERTIES
-        CXX_STANDARD 11
-        CXX_STANDARD_REQUIRED YES
-        CXX_EXTENSIONS NO
+        CXX_STANDARD 17
+        CXX_STANDARD_REQUIRED OFF
+        CXX_EXTENSIONS OFF
 )
+
+# MSVC does not report the correct __cplusplus value unless this flag is set
+if(MSVC)
+    target_compile_options(SimpleImageIOCore PUBLIC "/Zc:__cplusplus")
+endif()
 
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND)
     target_link_libraries(SimpleImageIOCore PUBLIC OpenMP::OpenMP_CXX)
 else()
-    message("WARNING: Could not find OpenMP!")
+    message("WARNING: Could not find OpenMP! Performance will be lower.")
 endif()
 
 if (DEFINED PYLIB)

@@ -3,23 +3,21 @@
 // Used to generate correct DLL linkage on Windows
 #ifdef SIMPLE_IMAGE_IO_DLL
     #ifdef SIMPLE_IMAGE_IO_EXPORTS
-        #define SIMPLE_IMAGE_IO_API __declspec(dllexport)
+        #define SIIO_API __declspec(dllexport)
     #else
-        #define SIMPLE_IMAGE_IO_API __declspec(dllimport)
+        #define SIIO_API __declspec(dllimport)
     #endif
 #else
-    #define SIMPLE_IMAGE_IO_API
+    #define SIIO_API
 #endif
 
-extern "C" {
+struct Vec3 {
+    float x, y, z;
+    Vec3 operator+(const Vec3& other) const { return Vec3 { x + other.x, y + other.y, z + other.z }; }
+    Vec3 operator-(const Vec3& other) const { return Vec3 { x - other.x, y - other.y, z - other.z }; }
+    Vec3 operator*(const Vec3& other) const { return Vec3 { x * other.x, y * other.y, z * other.z }; }
+    Vec3 operator/(const Vec3& other) const { return Vec3 { x / other.x, y / other.y, z / other.z }; }
 
-SIMPLE_IMAGE_IO_API void WriteImage(float* data, int width, int height, int numChannels, const char* filename);
-
-SIMPLE_IMAGE_IO_API unsigned char* WritePngToMemory(float* data, int width, int height,
-                                                    int numChannels, int* len);
-SIMPLE_IMAGE_IO_API void FreeMemory(unsigned char* mem);
-
-SIMPLE_IMAGE_IO_API int CacheImage(int* width, int* height, const char* filename);
-SIMPLE_IMAGE_IO_API void CopyCachedImage(int id, float* out);
-
-} // extern "C"
+    Vec3 operator+(float other) const { return Vec3 { x + other, y + other, z + other }; }
+    Vec3 operator*(float other) const { return Vec3 { x * other, y * other, z * other }; }
+};
