@@ -11,6 +11,7 @@ testimg[462,462] *= 1000000
 testimg[513,1333] *= 1000000
 testimg[53,1] *= 1000000
 testimg[899,65] *= 1000000
+sio.write("noisy.exr", testimg)
 
 # Legacy python implemenations for speed comparison to plain numpy implementations
 
@@ -112,7 +113,7 @@ for i in range(n):
     m2 = sio.exposure(testimg, 2)
 print(f"Adjusting exposure for {n} images took {(time.time() - start) * 1000:.0f}ms")
 
-print(np.sum(m2 - m))
+assert np.abs(np.sum(m2 - m)) < 0.0001
 
 #######################################
 
@@ -154,4 +155,4 @@ for i in range(n):
     m2 = sio.luminance(testimg)
 print(f"Luminance for {n} images took {(time.time() - start) * 1000:.0f}ms")
 
-assert np.abs(np.sum(m2 - m)) < 0.01
+assert np.abs(np.sum(m2 - m)) < 0.1

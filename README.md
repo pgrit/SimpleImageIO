@@ -10,7 +10,7 @@ Supports .exr via [tinyexr](https://github.com/syoyo/tinyexr) and a number of ot
 The **Nuget package** contains prebuilt binaries of the C++ wrapper, compiled with the x86-64 versions of Windows 10, Ubuntu 20.04, and macOS 10.15. These should be compatible with most other x86-64 versions of Windows, Linux, and macOS, so most users can simply grab the package off [Nuget](https://www.nuget.org/packages/SimpleImageIO/).
 
 The **Python package** is set up to automatically download an adequate CMake version and compile the C++ code on any platform.
-Provided you have a C++11 compiler installed, you can simply run: 
+Provided you have a C++11 compiler installed, you can simply run:
 `
 pip install simpleimageio
 `.
@@ -82,7 +82,7 @@ img.WriteToFile("test.jpg");
 Reading an image from one of the supported formats is equally simple:
 ```C#
 RgbImage img = new("test.exr");
-Console.WriteLine(img.GetPixel(0, 0).X);
+Console.WriteLine(img.GetPixel(0, 0).Luminance);
 ```
 
 ## Usage example (Python)

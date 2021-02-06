@@ -12,7 +12,6 @@ target_sources(SimpleImageIOCore
     PRIVATE
         "image.h"
 
-        "buffer.cpp"
         "error_metrics.cpp"
         "imageio.cpp"
         "manipulation.cpp"

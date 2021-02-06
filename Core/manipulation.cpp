@@ -40,7 +40,7 @@ SIIO_API void RgbToMonoLuminance(Vec3* image, float* result, int width, int heig
     for (int row = 0; row < height; ++row) {
         for (int col = 0; col < width; ++col) {
             const auto& val = image[col + width * row];
-            result[col + width * row] = 0.2126 * val.x + 0.7152 * val.y + 0.0722 * val.z;
+            result[col + width * row] = 0.2126f * val.x + 0.7152f * val.y + 0.0722f * val.z;
         }
     }
 }

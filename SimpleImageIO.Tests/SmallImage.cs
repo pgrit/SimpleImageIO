@@ -17,14 +17,14 @@ namespace SimpleImageIO.Tests {
             Assert.Equal(15, loaded.Height);
 
             var pixel = loaded.GetPixel(0, 0);
-            Assert.Equal(0.0f, pixel.X, 2);
-            Assert.Equal(0.0f, pixel.Y, 2);
-            Assert.Equal(0.0f, pixel.Z, 2);
+            Assert.Equal(0.0f, pixel.R, 2);
+            Assert.Equal(0.0f, pixel.G, 2);
+            Assert.Equal(0.0f, pixel.B, 2);
 
             pixel = loaded.GetPixel(0, 15);
-            Assert.Equal(14.0f / 15.0f, pixel.X, 2);
-            Assert.Equal(14.0f / 15.0f, pixel.Y, 2);
-            Assert.Equal(14.0f / 15.0f, pixel.Z, 2);
+            Assert.Equal(14.0f / 15.0f, pixel.R, 2);
+            Assert.Equal(14.0f / 15.0f, pixel.G, 2);
+            Assert.Equal(14.0f / 15.0f, pixel.B, 2);
         }
 
         [Fact]
@@ -42,14 +42,14 @@ namespace SimpleImageIO.Tests {
             Assert.Equal(15, loaded.Height);
 
             var pixel = loaded.GetPixel(0, 0);
-            Assert.Equal(0.0f, pixel.X, 2);
-            Assert.Equal(0.0f, pixel.Y, 2);
-            Assert.Equal(0.0f, pixel.Z, 2);
+            Assert.Equal(0.0f, pixel.R, 2);
+            Assert.Equal(0.0f, pixel.G, 2);
+            Assert.Equal(0.0f, pixel.B, 2);
 
             pixel = loaded.GetPixel(0, 15);
-            Assert.Equal(14.0f / 15.0f, pixel.X, 2);
-            Assert.Equal(14.0f / 15.0f, pixel.Y, 2);
-            Assert.Equal(14.0f / 15.0f, pixel.Z, 2);
+            Assert.Equal(14.0f / 15.0f, pixel.R, 2);
+            Assert.Equal(14.0f / 15.0f, pixel.G, 2);
+            Assert.Equal(14.0f / 15.0f, pixel.B, 2);
         }
 
         [Fact]
@@ -67,14 +67,14 @@ namespace SimpleImageIO.Tests {
             Assert.Equal(15, loaded.Height);
 
             var pixel = loaded.GetPixel(0, 0);
-            Assert.Equal(0.0f, pixel.X, 1);
-            Assert.Equal(0.0f, pixel.Y, 1);
-            Assert.Equal(0.0f, pixel.Z, 1);
+            Assert.Equal(0.0f, pixel.R, 1);
+            Assert.Equal(0.0f, pixel.G, 1);
+            Assert.Equal(0.0f, pixel.B, 1);
 
             pixel = loaded.GetPixel(0, 15);
-            Assert.Equal(14.0f / 15.0f, pixel.X, 1);
-            Assert.Equal(14.0f / 15.0f, pixel.Y, 1);
-            Assert.Equal(14.0f / 15.0f, pixel.Z, 1);
+            Assert.Equal(14.0f / 15.0f, pixel.R, 1);
+            Assert.Equal(14.0f / 15.0f, pixel.G, 1);
+            Assert.Equal(14.0f / 15.0f, pixel.B, 1);
         }
 
         [Fact]
@@ -92,14 +92,14 @@ namespace SimpleImageIO.Tests {
             Assert.Equal(15, loaded.Height);
 
             var pixel = loaded.GetPixel(0, 0);
-            Assert.Equal(0.0f, pixel.X, 2);
-            Assert.Equal(0.0f, pixel.Y, 2);
-            Assert.Equal(0.0f, pixel.Z, 2);
+            Assert.Equal(0.0f, pixel.R, 2);
+            Assert.Equal(0.0f, pixel.G, 2);
+            Assert.Equal(0.0f, pixel.B, 2);
 
             pixel = loaded.GetPixel(0, 15);
-            Assert.Equal(14.0f / 15.0f, pixel.X, 2);
-            Assert.Equal(14.0f / 15.0f, pixel.Y, 2);
-            Assert.Equal(14.0f / 15.0f, pixel.Z, 2);
+            Assert.Equal(14.0f / 15.0f, pixel.R, 2);
+            Assert.Equal(14.0f / 15.0f, pixel.G, 2);
+            Assert.Equal(14.0f / 15.0f, pixel.B, 2);
         }
     }
 }
