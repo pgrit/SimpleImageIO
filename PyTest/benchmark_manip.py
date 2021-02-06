@@ -54,79 +54,79 @@ def zoom(img, scale=20):
 
 n = 10
 
-# start = time.time()
+start = time.time()
 
-# for i in range(n):
-#     m = mse(testimg, refimg)
+for i in range(n):
+    m = mse(testimg, refimg)
 
-# print(f"Computing MSE {m:.2f} for {n} images took {(time.time() - start) * 1000:.0f}ms")
+print(f"Computing MSE {m:.2f} for {n} images took {(time.time() - start) * 1000:.0f}ms")
 
-# start = time.time()
+start = time.time()
 
-# for i in range(n):
-#     m = sio.mse(testimg, refimg)
+for i in range(n):
+    m = sio.mse(testimg, refimg)
 
-# print(f"Computing MSE {m:.2f} with native for {n} images took {(time.time() - start) * 1000:.0f}ms")
-
-# ########################################
-
-# start = time.time()
-
-# for i in range(n):
-#     m = relative_mse(testimg, refimg)
-
-# print(f"Computing relMSE {m:.2f} for {n} images took {(time.time() - start) * 1000:.0f}ms")
-
-# start = time.time()
-
-# for i in range(n):
-#     m = sio.relative_mse(testimg, refimg)
-
-# print(f"Computing relMSE {m:.2f} with native for {n} images took {(time.time() - start) * 1000:.0f}ms")
-
-# ########################################
-
-# start = time.time()
-
-# for i in range(n):
-#     m = relative_mse_outlier_rejection(testimg, refimg)
-
-# print(f"Computing relMSE {m:.2f} w/o outliers for {n} images took {(time.time() - start) * 1000:.0f}ms")
-
-# start = time.time()
-
-# for i in range(n):
-#     m = sio.relative_mse_outlier_rejection(testimg, refimg)
-
-# print(f"Computing relMSE {m:.2f} w/o outliers with native for {n} images took {(time.time() - start) * 1000:.0f}ms")
-
-# ########################################
-
-# start = time.time()
-# for i in range(n):
-#     m = exposure(testimg, 2)
-# print(f"Adjusting exposure with numpy for {n} images took {(time.time() - start) * 1000:.0f}ms")
-
-# start = time.time()
-# for i in range(n):
-#     m2 = sio.exposure(testimg, 2)
-# print(f"Adjusting exposure for {n} images took {(time.time() - start) * 1000:.0f}ms")
-
-# print(np.sum(m2 - m))
+print(f"Computing MSE {m:.2f} with native for {n} images took {(time.time() - start) * 1000:.0f}ms")
 
 ########################################
 
-# start = time.time()
-# for i in range(n):
-#     m = zoom(testimg, 2)
-# print(f"Zooming with scipy for {n} images took {(time.time() - start) * 1000:.0f}ms")
+start = time.time()
 
-# start = time.time()
-# for i in range(n):
-#     m2 = sio.zoom(testimg, 2)
-# print(f"Zooming {n} images took {(time.time() - start) * 1000:.0f}ms")
+for i in range(n):
+    m = relative_mse(testimg, refimg)
 
-# assert np.abs(np.sum(m2 - m)) < 0.0001
+print(f"Computing relMSE {m:.2f} for {n} images took {(time.time() - start) * 1000:.0f}ms")
+
+start = time.time()
+
+for i in range(n):
+    m = sio.relative_mse(testimg, refimg)
+
+print(f"Computing relMSE {m:.2f} with native for {n} images took {(time.time() - start) * 1000:.0f}ms")
+
+########################################
+
+start = time.time()
+
+for i in range(n):
+    m = relative_mse_outlier_rejection(testimg, refimg)
+
+print(f"Computing relMSE {m:.2f} w/o outliers for {n} images took {(time.time() - start) * 1000:.0f}ms")
+
+start = time.time()
+
+for i in range(n):
+    m = sio.relative_mse_outlier_rejection(testimg, refimg)
+
+print(f"Computing relMSE {m:.2f} w/o outliers with native for {n} images took {(time.time() - start) * 1000:.0f}ms")
+
+########################################
+
+start = time.time()
+for i in range(n):
+    m = exposure(testimg, 2)
+print(f"Adjusting exposure with numpy for {n} images took {(time.time() - start) * 1000:.0f}ms")
+
+start = time.time()
+for i in range(n):
+    m2 = sio.exposure(testimg, 2)
+print(f"Adjusting exposure for {n} images took {(time.time() - start) * 1000:.0f}ms")
+
+print(np.sum(m2 - m))
+
+#######################################
+
+start = time.time()
+for i in range(n):
+    m = zoom(testimg, 2)
+print(f"Zooming with scipy for {n} images took {(time.time() - start) * 1000:.0f}ms")
+
+start = time.time()
+for i in range(n):
+    m2 = sio.zoom(testimg, 2)
+print(f"Zooming {n} images took {(time.time() - start) * 1000:.0f}ms")
+
+assert np.abs(np.sum(m2 - m)) < 0.0001
 
 ########################################
 
