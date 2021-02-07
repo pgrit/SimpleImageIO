@@ -40,6 +40,12 @@ clipped[clipped > 255] = 255
 cv2.imwrite("cv2.png", cv2.cvtColor(clipped.astype('uint8'), cv2.COLOR_RGB2BGR))
 print(f"Writing .png with numpy and OpenCV took {time.time() - start} seconds")
 
+# writing .png with our and cv2
+start = time.time()
+clipped = sio.to_byte_image(sio.lin_to_srgb(img))
+cv2.imwrite("cv2.png", cv2.cvtColor(clipped, cv2.COLOR_RGB2BGR))
+print(f"Writing .png with ours and OpenCV took {time.time() - start} seconds")
+
 # reading .png
 start = time.time()
 sio.read("our.png")

@@ -6,6 +6,14 @@ _exposure = _core.AdjustExposure
 _exposure.argtypes = (POINTER(c_float), POINTER(c_float), c_int, c_int, c_float)
 _exposure.restype = None
 
+_lin_to_srgb = _core.LinearToSrgb
+_lin_to_srgb.argtypes = (POINTER(c_float), POINTER(c_float), c_int, c_int, c_int)
+_lin_to_srgb.restype = None
+
+_to_byte_img = _core.ToByteImage
+_to_byte_img.argtypes = (POINTER(c_float), POINTER(c_uint8), c_int, c_int, c_int)
+_to_byte_img.restype = None
+
 _zoom = _core.ZoomWithNearestInterp
 _zoom.argtypes = (POINTER(c_float), POINTER(c_float), c_int, c_int, c_int)
 _zoom.restype = None
@@ -29,6 +37,32 @@ def exposure(img, exposure=0):
     w = img.shape[1]
     buf = np.zeros((h, w, 3), dtype=np.float32)
     _exposure(img.ctypes.data_as(POINTER(c_float)), buf.ctypes.data_as(POINTER(c_float)), w, h, exposure)
+    return buf
+
+def lin_to_srgb(img):
+    h = img.shape[0]
+    w = img.shape[1]
+
+    if len(img.shape) == 2:
+        chans = 1
+    else:
+        chans = img.shape[2]
+
+    buf = np.zeros((h, w, chans), dtype=np.float32)
+    _lin_to_srgb(img.ctypes.data_as(POINTER(c_float)), buf.ctypes.data_as(POINTER(c_float)), w, h, chans)
+    return buf
+
+def to_byte_image(img):
+    h = img.shape[0]
+    w = img.shape[1]
+
+    if len(img.shape) == 2:
+        chans = 1
+    else:
+        chans = img.shape[2]
+
+    buf = np.zeros((h, w, chans), dtype=np.uint8)
+    _to_byte_img(img.ctypes.data_as(POINTER(c_float)), buf.ctypes.data_as(POINTER(c_uint8)), w, h, chans)
     return buf
 
 def zoom(img, scale: int):

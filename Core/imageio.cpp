@@ -207,14 +207,16 @@ void CopyCachedStbImage(int id, float* out) {
     stbi_image_free(data.data);
 }
 
-uint8_t LinearToSrgb(float linear) {
-    float srgb = std::pow(linear, 1.0f / 2.2f) * 255;
-    float clipped = srgb < 0 ? 0 : srgb;
+uint8_t GammaCorrect(float rgb) {
+    rgb = std::pow(rgb, 1.0f / 2.2f) * 255;
+    float clipped = rgb < 0 ? 0 : rgb;
     clipped = clipped > 255 ? 255 : clipped;
     return (uint8_t) clipped;
 }
 
-void ConvertToSRGB(const float* data, uint8_t* buffer, int width, int height, int numChannels) {
+/// Applies the same gamma correction as the loading code of stb_image,
+/// which does not handle sRGB or gamma information stored in the file
+void ConvertToStbByteImage(const float* data, uint8_t* buffer, int width, int height, int numChannels) {
     if (numChannels != 1 || numChannels != 3) {
         // TODO proper error handling
     }
@@ -224,7 +226,7 @@ void ConvertToSRGB(const float* data, uint8_t* buffer, int width, int height, in
         for (int col = 0; col < width; ++col) {
             for (int chan = 0; chan < numChannels; ++chan) {
                 size_t idx = row * (width * numChannels) + col * numChannels + chan;
-                uint8_t v = LinearToSrgb(data[idx]);
+                uint8_t v = GammaCorrect(data[idx]);
                 buffer[idx] = v;
             }
         }
@@ -238,7 +240,7 @@ void WriteImageWithStbImage(float* data, int width, int height, int numChannels,
         stbi_write_hdr(filename, width, height, numChannels, data);
     else {
         std::vector<uint8_t> buffer(width * height * numChannels);
-        ConvertToSRGB(data, buffer.data(), width, height, numChannels);
+        ConvertToStbByteImage(data, buffer.data(), width, height, numChannels);
 
         if (fext == "png")
             stbi_write_png(filename, width, height, numChannels, buffer.data(), width * numChannels);
@@ -267,7 +269,7 @@ SIIO_API void WriteImage(float* data, int width, int height, int numChannels, co
 SIIO_API unsigned char* WritePngToMemory(float* data, int width, int height,
                                                     int numChannels, int* len) {
     std::vector<uint8_t> buffer(width * height * numChannels);
-    ConvertToSRGB(data, buffer.data(), width, height, numChannels);
+    ConvertToStbByteImage(data, buffer.data(), width, height, numChannels);
 
     return stbi_write_png_to_mem((const unsigned char *) buffer.data(), width * numChannels,
         width, height, numChannels, len);

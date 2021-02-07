@@ -53,7 +53,51 @@ def exposure(img, exposure):
 def zoom(img, scale=20):
     return scipy.ndimage.zoom(img, (scale, scale, 1), order=0)
 
+def lin2srgb(rgb):
+    return np.where(np.less_equal(rgb, 0.0031308),
+        rgb * 12.92,
+        1.055 * np.power(rgb, 1.0 / 2.4) - 0.055)
+
+def tobyte(rgb):
+    return (np.clip(rgb, 0, 1) * 255).astype(np.uint8)
+
 n = 10
+
+start = time.time()
+
+for i in range(n):
+    m = lin2srgb(testimg)
+
+print(f"Linear to sRGB for {n} images took {(time.time() - start) * 1000:.0f}ms")
+
+start = time.time()
+
+for i in range(n):
+    m2 = sio.lin_to_srgb(testimg)
+
+print(f"Linear to sRGB with native for {n} images took {(time.time() - start) * 1000:.0f}ms")
+
+assert(np.abs(np.sum(m2 - m)) < 0.000001 * np.sum(m))
+
+########################################
+
+start = time.time()
+
+for i in range(n):
+    m = tobyte(lin2srgb(testimg))
+
+print(f"Linear to sRGB byte image for {n} images took {(time.time() - start) * 1000:.0f}ms")
+
+start = time.time()
+
+for i in range(n):
+    m2 = sio.to_byte_image(sio.lin_to_srgb(testimg))
+
+print(f"Linear to sRGB byte image with native for {n} images took {(time.time() - start) * 1000:.0f}ms")
+
+assert(np.abs(np.sum(m2 - m)) < 0.000001 * np.sum(m))
+
+########################################
 
 start = time.time()
 
