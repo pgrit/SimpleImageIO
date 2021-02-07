@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <cstdint>
+#include <iostream>
 
 float LinearToSrgb(float linear) {
     if (linear > 0.0031308) {

@@ -37,5 +37,9 @@ namespace SimpleImageIO {
 
         [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
         public static extern void RgbToMonoLuminance(IntPtr image, IntPtr result, int width, int height);
+
+        [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void ZoomWithNearestInterp(IntPtr image, IntPtr result, int origWidth,
+                                                        int origHeight, int scale);
     }
 }

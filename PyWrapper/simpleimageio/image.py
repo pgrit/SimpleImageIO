@@ -33,7 +33,7 @@ def read(filename: str):
     return buffer
 
 def write(filename: str, data):
-    data = np.array(data, copy=False).astype(np.float32)
+    data = np.array(data, copy=False, dtype=np.float32)
     assert len(data.shape) == 3, "Only 3D arrays of shape [row, col, channel] are supported."
     h = data.shape[0]
     w = data.shape[1]
@@ -41,7 +41,7 @@ def write(filename: str, data):
     _write_image(data.ctypes.data_as(POINTER(c_float)), w, h, n, filename.encode('utf-8'))
 
 def base64_png(data):
-    data = np.array(data, copy=False).astype(np.float32)
+    data = np.array(data, copy=False, dtype=np.float32)
     assert len(data.shape) == 3, "Only 3D arrays of shape [row, col, channel] are supported."
     h = data.shape[0]
     w = data.shape[1]

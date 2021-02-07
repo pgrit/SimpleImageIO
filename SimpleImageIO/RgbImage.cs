@@ -9,6 +9,10 @@ namespace SimpleImageIO {
             Debug.Assert(numChannels == 3);
         }
 
+        public RgbImage(RgbImage other, int zoom = 1) {
+            Zoom(other, zoom);
+        }
+
         public RgbColor GetPixel(int col, int row) => new(
             GetPixelChannel(col, row, 0),
             GetPixelChannel(col, row, 1),

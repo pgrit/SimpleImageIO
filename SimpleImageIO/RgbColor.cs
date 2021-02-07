@@ -43,11 +43,11 @@ namespace SimpleImageIO {
             if (obj == null) return false;
 
             if (this.GetType().Equals(obj.GetType())) {
-                Vector3 v = (Vector3) obj;
-                return data == v;
-            } else if (data.GetType().Equals(obj.GetType())) {
                 RgbColor p = (RgbColor) obj;
                 return data == p.data;
+            } else if (data.GetType().Equals(obj.GetType())) {
+                Vector3 v = (Vector3) obj;
+                return data == v;
             }
 
             return false;

@@ -128,6 +128,19 @@ namespace SimpleImageIO {
         ~ImageBase() => Free();
         public void Dispose() => Free();
 
+        protected void Zoom(ImageBase other, int scale) {
+            Debug.Assert(scale > 0);
+
+            if (dataRaw != IntPtr.Zero) Free();
+
+            width = other.width * scale;
+            height = other.height * scale;
+            numChannels = other.numChannels;
+            Alloc();
+
+            SimpleImageIOCore.ZoomWithNearestInterp(other.dataRaw, dataRaw, other.width, other.height, scale);
+        }
+
         public IntPtr dataRaw;
     }
 }
