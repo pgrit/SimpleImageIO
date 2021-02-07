@@ -63,6 +63,10 @@ def tobyte(rgb):
 
 n = 10
 
+# Initialized just to suppress linter warnings
+m = 0
+m2 = 0
+
 start = time.time()
 
 for i in range(n):
