@@ -7,7 +7,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-latest, windows-latest, ubuntu-18.04]
+        os: [windows-latest] #, macos-latest,  ubuntu-18.04
 
     steps:
     - uses: actions/checkout@v2
@@ -34,3 +34,8 @@ jobs:
     - name: Test
       working-directory: ${{github.workspace}}
       run: dotnet test
+      
+    - name: Upload Binaries
+      uses: actions/upload-artifact@v2
+      with:
+        path: ${{github.workspace}}/Runtimes/*
