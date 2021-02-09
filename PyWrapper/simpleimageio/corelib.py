@@ -90,9 +90,6 @@ def invoke_on_pair(func, first, second, *args):
     img_a, dims_a = get_numpy_data(first)
     img_b, dims_b = get_numpy_data(second)
 
-    print(dims_a[0])
-    print(dims_b[0])
-
     return func(img_a.ctypes.data_as(POINTER(c_float)), dims_a[0],
         img_b.ctypes.data_as(POINTER(c_float)), dims_b[0],
         dims_a[1], dims_a[2], dims_a[3], *args)
