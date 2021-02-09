@@ -67,6 +67,13 @@ You can then simply install the result via:
 pip install ./dist/SimpleImageIO-*.whl
 ```
 
+The tests can be run via:
+
+```
+cd PyTest
+python -m unittest
+```
+
 ## Usage example (C#)
 
 The following creates a one pixel image and writes it to various file formats:

@@ -105,7 +105,7 @@ void CopyCachedExr(int id, float* out) {
     cacheMutex.unlock();
 }
 
-void WriteImageToExr(float* data, int width, int height, int numChannels, const char* filename) {
+void WriteImageToExr(float* data, int rowStride, int width, int height, int numChannels, const char* filename) {
     EXRImage image;
     InitEXRImage(&image);
 
@@ -122,14 +122,16 @@ void WriteImageToExr(float* data, int width, int height, int numChannels, const 
 
     // Copy the data into the buffers
     float* val = (float*) alloca(sizeof(float) * numChannels);
-    for (int r = 0; r < height; ++r) for (int c = 0; c < width; ++c) {
-        // Copy the values for all channels to the temporary buffer
-        auto start = (r * width + c) * numChannels;
-        std::copy(data + start, data + start + numChannels, val);
+    for (int r = 0; r < height; ++r) {
+        for (int c = 0; c < width; ++c) {
+            // Copy the values for all channels to the temporary buffer
+            auto start = r * rowStride + c * numChannels;
+            std::copy(data + start, data + start + numChannels, val);
 
-        // Write to the correct channel buffers
-        for (int i = 0; i < numChannels; ++i)
-            channelImages[i][r * width + c] = val[i];
+            // Write to the correct channel buffers
+            for (int i = 0; i < numChannels; ++i)
+                channelImages[i][r * width + c] = val[i];
+        }
     }
 
     // Gather an array of pointers to the channel buffers, as input to TinyEXR
@@ -162,8 +164,9 @@ void WriteImageToExr(float* data, int width, int height, int numChannels, const 
         header.channels[2].name[1] = '\0';
         imagePtr[2] = channelImages[0].data();
     } else {
-        // TODO support other channel configurations as well
-        //      raise error for unsupported configuration
+        std::cerr << "ERROR while writing " << filename
+                  << ": images with " << numChannels << " channels are currently not supported. "
+                  << "no file has been written." << std::endl;
     }
 
     // Define pixel type of the buffer and requested output pixel type in the file
@@ -179,8 +182,8 @@ void WriteImageToExr(float* data, int width, int height, int numChannels, const 
     const char* errorMsg = nullptr;
     const int retCode = SaveEXRImageToFile(&image, &header, filename, &errorMsg);
     if (retCode != TINYEXR_SUCCESS) {
+        std::cerr << "TinyEXR error (" << retCode << "): " << errorMsg << std::endl;
         FreeEXRErrorMessage(errorMsg);
-        // TODO report the error with code "retCode" and message "errorMsg"
     }
 }
 
@@ -216,31 +219,35 @@ uint8_t GammaCorrect(float rgb) {
 
 /// Applies the same gamma correction as the loading code of stb_image,
 /// which does not handle sRGB or gamma information stored in the file
-void ConvertToStbByteImage(const float* data, uint8_t* buffer, int width, int height, int numChannels) {
-    if (numChannels != 1 || numChannels != 3) {
-        // TODO proper error handling
-    }
-
-    #pragma omp parallel for
-    for (int row = 0; row < height; ++row) {
-        for (int col = 0; col < width; ++col) {
-            for (int chan = 0; chan < numChannels; ++chan) {
-                size_t idx = row * (width * numChannels) + col * numChannels + chan;
-                uint8_t v = GammaCorrect(data[idx]);
-                buffer[idx] = v;
-            }
-        }
-    }
+void ConvertToStbByteImage(const float* data, int rowStride, uint8_t* buffer, int width, int height,
+                           int numChannels) {
+    ForAllPixels(width, height, numChannels, rowStride, width * numChannels,
+        [&](int idxIn, int idxOut, int col, int row, int chan) {
+            buffer[idxOut] = GammaCorrect(data[idxIn]);
+        });
 }
 
-void WriteImageWithStbImage(float* data, int width, int height, int numChannels, const char* filename) {
+void AlignImage(const float* data, int rowStride, float* buffer, int width, int height, int numChannels) {
+    ForAllPixels(width, height, numChannels, rowStride, width * numChannels,
+        [&](int idxIn, int idxOut, int col, int row, int chan) {
+            buffer[chan + numChannels * (col + width * row)] = data[idxIn];
+        });
+}
+
+void WriteImageWithStbImage(float* data, int rowStride, int width, int height, int numChannels,
+                            const char* filename, int jpegQuality) {
     auto fname = std::string(filename);
     auto fext = fname.substr(fname.size() - 3, 3);
-    if (fext == "hdr")
-        stbi_write_hdr(filename, width, height, numChannels, data);
-    else {
+    if (fext == "hdr") {
+        if (rowStride != width * numChannels) {
+            std::vector<float> buffer(width * height * numChannels);
+            AlignImage(data, rowStride, buffer.data(), width, height, numChannels);
+            stbi_write_hdr(filename, width, height, numChannels, buffer.data());
+        } else
+            stbi_write_hdr(filename, width, height, numChannels, data);
+    } else {
         std::vector<uint8_t> buffer(width * height * numChannels);
-        ConvertToStbByteImage(data, buffer.data(), width, height, numChannels);
+        ConvertToStbByteImage(data, rowStride, buffer.data(), width, height, numChannels);
 
         if (fext == "png")
             stbi_write_png(filename, width, height, numChannels, buffer.data(), width * numChannels);
@@ -249,27 +256,33 @@ void WriteImageWithStbImage(float* data, int width, int height, int numChannels,
         else if (fext == "tga")
             stbi_write_tga(filename, width, height, numChannels, buffer.data());
         else if (fext == "jpg")
-            stbi_write_jpg(filename, width, height, numChannels, buffer.data(), 85);
+            stbi_write_jpg(filename, width, height, numChannels, buffer.data(), jpegQuality);
     }
 }
 
 extern "C" {
 
-SIIO_API void WriteImage(float* data, int width, int height, int numChannels, const char* filename) {
+SIIO_API void WriteLayeredExr(int width, int height, int numChannels, const char* filename,
+                              int numLayers, const char** names, const float** datas) {
+    // TODO write multi-layer file
+}
+
+SIIO_API void WriteImage(float* data, int rowStride, int width, int height, int numChannels,
+                         const char* filename, int jpegQuality) {
     auto fname = std::string(filename);
     if (fname.compare(fname.size() - 4, 4, ".exr") == 0) {
         // This is an .exr image, load it with tinyexr
-        WriteImageToExr(data, width, height, numChannels, filename);
+        WriteImageToExr(data, rowStride, width, height, numChannels, filename);
     } else {
         // This is some other format, assume that stb_image can handle it
-        WriteImageWithStbImage(data, width, height, numChannels, filename);
+        WriteImageWithStbImage(data, rowStride, width, height, numChannels, filename, jpegQuality);
     }
 }
 
-SIIO_API unsigned char* WritePngToMemory(float* data, int width, int height,
-                                                    int numChannels, int* len) {
+SIIO_API unsigned char* WritePngToMemory(float* data, int rowStride, int width, int height,
+                                         int numChannels, int* len) {
     std::vector<uint8_t> buffer(width * height * numChannels);
-    ConvertToStbByteImage(data, buffer.data(), width, height, numChannels);
+    ConvertToStbByteImage(data, rowStride, buffer.data(), width, height, numChannels);
 
     return stbi_write_png_to_mem((const unsigned char *) buffer.data(), width * numChannels,
         width, height, numChannels, len);

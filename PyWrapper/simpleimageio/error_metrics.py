@@ -1,17 +1,17 @@
 from ctypes import *
 import numpy as np
-from .corelib import _core
+from . import corelib
 
 # Define the call signatures
-_compute_mse = _core.ComputeMSE
+_compute_mse = corelib.core.ComputeMSE
 _compute_mse.argtypes = [POINTER(c_float), POINTER(c_float), c_int, c_int ]
 _compute_mse.restype = c_float
 
-_compute_rel_mse = _core.ComputeRelMSE
+_compute_rel_mse = corelib.core.ComputeRelMSE
 _compute_rel_mse.argtypes = [POINTER(c_float), POINTER(c_float), c_int, c_int, c_float ]
 _compute_rel_mse.restype = c_float
 
-_compute_rel_mse_outlier_reject = _core.ComputeRelMSEOutlierReject
+_compute_rel_mse_outlier_reject = corelib.core.ComputeRelMSEOutlierReject
 _compute_rel_mse_outlier_reject.argtypes = [POINTER(c_float), POINTER(c_float), c_int, c_int, c_float, c_float ]
 _compute_rel_mse_outlier_reject.restype = c_float
 

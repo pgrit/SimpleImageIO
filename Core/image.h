@@ -11,13 +11,32 @@
     #define SIIO_API
 #endif
 
-struct Vec3 {
-    float x, y, z;
-    Vec3 operator+(const Vec3& other) const { return Vec3 { x + other.x, y + other.y, z + other.z }; }
-    Vec3 operator-(const Vec3& other) const { return Vec3 { x - other.x, y - other.y, z - other.z }; }
-    Vec3 operator*(const Vec3& other) const { return Vec3 { x * other.x, y * other.y, z * other.z }; }
-    Vec3 operator/(const Vec3& other) const { return Vec3 { x / other.x, y / other.y, z / other.z }; }
+template<typename Fn>
+inline void ForAllPixels(int width, int height, int numChannels, int rowStrideIn, int rowStrideOut, Fn fn) {
+    #pragma omp parallel for
+    for (int row = 0; row < height; ++row) {
+        for (int col = 0; col < width; ++col) {
+            for (int chan = 0; chan < numChannels; ++chan) {
+                int idxIn = chan + rowStrideIn * row + col * numChannels;
+                int idxOut = chan + rowStrideOut * row + col * numChannels;
+                fn(idxIn, idxOut, col, row, chan);
+            }
+        }
+    }
+}
 
-    Vec3 operator+(float other) const { return Vec3 { x + other, y + other, z + other }; }
-    Vec3 operator*(float other) const { return Vec3 { x * other, y * other, z * other }; }
-};
+template<typename Fn>
+inline float Accumulate(int width, int height, int numChannels, int rowStrideIn, int rowStrideOut, Fn fn) {
+    float result = 0;
+    #pragma omp parallel for reduction(+ : result)
+    for (int row = 0; row < height; ++row) {
+        for (int col = 0; col < width; ++col) {
+            for (int chan = 0; chan < numChannels; ++chan) {
+                int idxIn = chan + rowStrideIn * row + col * numChannels;
+                int idxOut = chan + rowStrideOut * row + col * numChannels;
+                result += fn(idxIn, idxOut, col, row, chan);
+            }
+        }
+    }
+    return result;
+}

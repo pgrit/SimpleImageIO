@@ -1,28 +1,28 @@
-from .corelib import _core
+from . import corelib
 from ctypes import *
 import numpy as np
 
-_exposure = _core.AdjustExposure
+_exposure = corelib.core.AdjustExposure
 _exposure.argtypes = (POINTER(c_float), POINTER(c_float), c_int, c_int, c_float)
 _exposure.restype = None
 
-_lin_to_srgb = _core.LinearToSrgb
+_lin_to_srgb = corelib.core.LinearToSrgb
 _lin_to_srgb.argtypes = (POINTER(c_float), POINTER(c_float), c_int, c_int, c_int)
 _lin_to_srgb.restype = None
 
-_to_byte_img = _core.ToByteImage
+_to_byte_img = corelib.core.ToByteImage
 _to_byte_img.argtypes = (POINTER(c_float), POINTER(c_uint8), c_int, c_int, c_int)
 _to_byte_img.restype = None
 
-_zoom = _core.ZoomWithNearestInterp
+_zoom = corelib.core.ZoomWithNearestInterp
 _zoom.argtypes = (POINTER(c_float), POINTER(c_float), c_int, c_int, c_int)
 _zoom.restype = None
 
-_average_to_mono = _core.RgbToMonoAverage
+_average_to_mono = corelib.core.RgbToMonoAverage
 _average_to_mono.argtypes = (POINTER(c_float), POINTER(c_float), c_int, c_int)
 _average_to_mono.restype = None
 
-_lum_to_mono = _core.RgbToMonoLuminance
+_lum_to_mono = corelib.core.RgbToMonoLuminance
 _lum_to_mono.argtypes = (POINTER(c_float), POINTER(c_float), c_int, c_int)
 _lum_to_mono.restype = None
 

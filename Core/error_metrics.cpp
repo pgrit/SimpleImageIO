@@ -13,58 +13,39 @@
 
 extern "C" {
 
-SIIO_API float ComputeMSE(Vec3* image, Vec3* reference, int width, int height) {
-    float error = 0;
-    #pragma omp parallel for reduction(+ : error)
-    for (int row = 0; row < height; ++row) {
-        for (int col = 0; col < width; ++col) {
-            const auto& i = image[col + width * row];
-            const auto& r = reference[col + width * row];
-            auto delta = (i - r);
-            delta = delta * delta;
-            float avg = (delta.x + delta.y + delta.z) / 3.0f;
-            error += avg / (height * width);
-        }
-    }
-    return error;
+SIIO_API float ComputeMSE(float* image, int imgStride, float* reference, int refStride,
+                          int width, int height, int numChans) {
+    return Accumulate(width, height, numChans, imgStride, refStride,
+        [&](int imgIdx, int refIdx, int col, int row, int chan) {
+            float delta = (image[imgIdx] - reference[refIdx]);
+            return delta * delta / (height * width * numChans);
+        });
 }
 
-SIIO_API float ComputeRelMSE(Vec3* image, Vec3* reference, int width, int height, float epsilon) {
-    float error = 0;
-    #pragma omp parallel for reduction(+ : error)
-    for (int row = 0; row < height; ++row) {
-        for (int col = 0; col < width; ++col) {
-            const auto& i = image[col + width * row];
-            const auto& r = reference[col + width * row];
-            auto delta = (i - r);
-            delta = delta * delta;
-            delta = delta / (r * r + epsilon);
-            float avg = (delta.x + delta.y + delta.z) / 3.0f;
-            error += avg / (height * width);
-        }
-    }
-    return error;
+SIIO_API float ComputeRelMSE(float* image, int imgStride, float* reference, int refStride,
+                             int width, int height, int numChans, float epsilon) {
+    return Accumulate(width, height, numChans, imgStride, refStride,
+        [&](int imgIdx, int refIdx, int col, int row, int chan) {
+            float r = reference[refIdx];
+            float delta = (image[imgIdx] - r);
+            return delta * delta / (r * r + epsilon) / (height * width * numChans);
+        });
 }
 
-SIIO_API float ComputeRelMSEOutlierReject(Vec3* image, Vec3* reference, int width, int height,
-                                          float epsilon, float percentage) {
-    int numOutliers = int(width * height * 0.01 * percentage);
+SIIO_API float ComputeRelMSEOutlierReject(float* image, int imgStride, float* reference, int refStride,
+                                          int width, int height, int numChans, float epsilon, float percentage) {
+    int numOutliers = int(width * height * numChans * 0.01 * percentage);
 
     // First, we compute all pixel errors in one big array.
-    std::vector<float> errorBuffer(width * height);
+    std::vector<float> errorBuffer(width * height * numChans);
 
-    #pragma omp parallel for
-    for (int row = 0; row < height; ++row) {
-        for (int col = 0; col < width; ++col) {
-            const auto& i = image[col + width * row];
-            const auto& r = reference[col + width * row];
-            auto delta = (i - r);
-            delta = delta * delta;
-            delta = delta / (r * r + epsilon);
-            float contrib = (delta.x + delta.y + delta.z) / 3.0f / (height * width - numOutliers);
-            errorBuffer[col + width * row] = contrib;
-        }
-    }
+    ForAllPixels(width, height, numChans, imgStride, refStride,
+        [&](int imgIdx, int refIdx, int col, int row, int chan) {
+            float r = reference[refIdx];
+            auto delta = (image[imgIdx] - r);
+            float contrib = delta * delta / (r * r + epsilon) / (numChans * height * width - numOutliers);
+            errorBuffer[numChans * (col + width * row) + chan] = contrib;
+        });
 
     // Next, we partially sort the array, ensuring that the outliers are all at the end
 #if (__cplusplus >= 201703L)
