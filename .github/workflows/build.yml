@@ -90,7 +90,7 @@ jobs:
         run: python3 -m pip install --user wheel build
 
       - name: Build Python Wheel
-        run: python3 -m build
+        run: python setup.py sdist
         
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@master
