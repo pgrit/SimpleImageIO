@@ -3,7 +3,6 @@ import numpy as np
 from . import corelib
 import base64
 
-# Define the call signatures
 _write_image = corelib.core.WriteImage
 _write_image.argtypes = [POINTER(c_float), c_int, c_int, c_int, c_int, c_char_p, c_int]
 _write_image.restype = None

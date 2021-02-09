@@ -18,25 +18,24 @@ def get_numpy_data(img):
     # This also automatically generates a numpy array in case img was just a plain list of lists
     img = np.array(img, dtype=np.float32, copy=False)
 
-    if img.strides[2] != 4 or img.strides[1] != 4 * 3:
+    if len(img.shape) == 3 and (img.strides[2] != 4 or img.strides[1] != 4 * 3):
         # we could have been given a masked array with gaps between values
         # our C-API does not support this, so we need to copy
         img = np.array(img, dtype=np.float32, copy=True)
 
-    assert img.strides[2] == 4
-    assert img.strides[1] == 4 * 3
-
-    # If we are given a slice that is, e.g., a tile of the image, the stride between rows can differ
-    # The C-API expects the stride in multiples of sizeof(float32), which is 4
-    stride = int(img.strides[0] / 4)
-
-    # Everything else we can get from the shape
     height = img.shape[0]
     width = img.shape[1]
     if len(img.shape) == 2:
         num_channels = 1
     else:
         num_channels = img.shape[2]
+
+    assert len(img.shape) == 2 or img.strides[2] == 4
+    assert img.strides[1] == 4 * num_channels
+
+    # If we are given a slice that is, e.g., a tile of the image, the stride between rows can differ
+    # The C-API expects the stride in multiples of sizeof(float32), which is 4
+    stride = int(img.strides[0] / 4)
 
     # Now the data is in a format that our C-API will understand
     return img, (stride, width, height, num_channels)
@@ -57,9 +56,12 @@ def invoke_with_output(func, img, *args):
     Returns the numpy array that contains the data written to 'output'
     """
     img, dims = get_numpy_data(img)
-    buffer = np.zeros((dims[1], dims[0], dims[2]), dtype=np.float32)
+    if dims[3] == 1:
+        buffer = np.zeros((dims[2], dims[1]), dtype=np.float32)
+    else:
+        buffer = np.zeros((dims[2], dims[1], dims[3]), dtype=np.float32)
     func(img.ctypes.data_as(POINTER(c_float)), dims[0],
-        buffer.ctypes.data_as(POINTER(c_float)), buffer.strides[0] / 4,
+        buffer.ctypes.data_as(POINTER(c_float)), int(buffer.strides[0] / 4),
         dims[1], dims[2], dims[3], *args)
     return buffer
 
@@ -70,9 +72,12 @@ def invoke_with_byte_output(func, img, *args):
     Returns the numpy array that contains the data written to 'output'
     """
     img, dims = get_numpy_data(img)
-    buffer = np.zeros((dims[1], dims[0], dims[2]), dtype=np.uint8)
+    if dims[3] == 1:
+        buffer = np.zeros((dims[2], dims[1]), dtype=np.uint8)
+    else:
+        buffer = np.zeros((dims[2], dims[1], dims[3]), dtype=np.uint8)
     func(img.ctypes.data_as(POINTER(c_float)), dims[0],
-        buffer.ctypes.data_as(POINTER(c_uint8)), buffer.strides[0] / 4,
+        buffer.ctypes.data_as(POINTER(c_uint8)), buffer.strides[0],
         dims[1], dims[2], dims[3], *args)
     return buffer
 
@@ -85,9 +90,8 @@ def invoke_on_pair(func, first, second, *args):
     img_a, dims_a = get_numpy_data(first)
     img_b, dims_b = get_numpy_data(second)
 
-    assert dims_a[1] == dims_b[1], "image width does not match"
-    assert dims_a[2] == dims_b[2], "image height does not match"
-    assert dims_a[3] == dims_b[3], "image channel count does not match"
+    print(dims_a[0])
+    print(dims_b[0])
 
     return func(img_a.ctypes.data_as(POINTER(c_float)), dims_a[0],
         img_b.ctypes.data_as(POINTER(c_float)), dims_b[0],

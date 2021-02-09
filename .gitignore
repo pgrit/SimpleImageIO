@@ -13,6 +13,7 @@ obj
 __pycache__
 /dist
 /SimpleImageIO.egg-info
+launchSettings.json
 
 # Compiled shared libraries
 Runtimes/*

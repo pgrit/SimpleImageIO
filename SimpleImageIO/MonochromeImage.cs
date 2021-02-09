@@ -14,9 +14,11 @@ namespace SimpleImageIO {
 
         public MonochromeImage(RgbImage image, RgbConvertMode mode) : base(image.Width, image.Height, 1) {
             if (mode == RgbConvertMode.Average)
-                SimpleImageIOCore.RgbToMonoAverage(image.dataRaw, dataRaw, Width, Height);
+                SimpleImageIOCore.RgbToMonoAverage(image.dataRaw, 3 * image.Width, dataRaw, Width,
+                    Width, Height, numChannels);
             else
-                SimpleImageIOCore.RgbToMonoLuminance(image.dataRaw, dataRaw, Width, Height);
+                SimpleImageIOCore.RgbToMonoLuminance(image.dataRaw, 3 * image.Width, dataRaw, Width,
+                    Width, Height, numChannels);
         }
 
         public float GetPixel(int col, int row) => GetPixelChannel(col, row, 0);

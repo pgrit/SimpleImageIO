@@ -91,12 +91,13 @@ namespace SimpleImageIO {
             if (dirname != "")
                 System.IO.Directory.CreateDirectory(dirname);
 
-            SimpleImageIOCore.WriteImage(dataRaw, Width, Height, numChannels, filename);
+            SimpleImageIOCore.WriteImage(dataRaw, numChannels * Width, Width, Height, numChannels, filename);
         }
 
         public string AsBase64Png() {
             int numBytes;
-            IntPtr mem = SimpleImageIOCore.WritePngToMemory(dataRaw, Width, Height, numChannels, out numBytes);
+            IntPtr mem = SimpleImageIOCore.WritePngToMemory(dataRaw, numChannels * Width, Width, Height,
+                numChannels, out numBytes);
 
             byte[] bytes = new byte[numBytes];
             Marshal.Copy(mem, bytes, 0, numBytes);
@@ -138,7 +139,35 @@ namespace SimpleImageIO {
             numChannels = other.numChannels;
             Alloc();
 
-            SimpleImageIOCore.ZoomWithNearestInterp(other.dataRaw, dataRaw, other.width, other.height, scale);
+            SimpleImageIOCore.ZoomWithNearestInterp(other.dataRaw, numChannels * other.width, dataRaw,
+                numChannels * width, other.width, other.height, numChannels, scale);
+        }
+
+        public static float MSE(ImageBase image, ImageBase reference) {
+            Debug.Assert(image.Width == reference.Width);
+            Debug.Assert(image.Height == reference.Height);
+            Debug.Assert(image.numChannels == reference.numChannels);
+            return SimpleImageIOCore.ComputeMSE(image.dataRaw, image.numChannels * image.Width, reference.dataRaw,
+                image.numChannels * reference.Width, image.Width, image.Height, image.numChannels);
+        }
+
+        public static float RelMSE(ImageBase image, ImageBase reference, float epsilon = 0.001f) {
+            Debug.Assert(image.Width == reference.Width);
+            Debug.Assert(image.Height == reference.Height);
+            Debug.Assert(image.numChannels == reference.numChannels);
+            return SimpleImageIOCore.ComputeRelMSE(image.dataRaw, image.numChannels * image.Width,
+                reference.dataRaw, image.numChannels * reference.Width, image.Width, image.Height,
+                image.numChannels, epsilon);
+        }
+
+        public static float RelMSE_OutlierRejection(ImageBase image, ImageBase reference,
+                                                    float epsilon = 0.001f, float percentage = 0.1f) {
+            Debug.Assert(image.Width == reference.Width);
+            Debug.Assert(image.Height == reference.Height);
+            Debug.Assert(image.numChannels == reference.numChannels);
+            return SimpleImageIOCore.ComputeRelMSEOutlierReject(image.dataRaw, image.numChannels * image.Width,
+                reference.dataRaw, image.numChannels * reference.Width, image.Width, image.Height,
+                image.numChannels, epsilon, percentage);
         }
 
         public IntPtr dataRaw;

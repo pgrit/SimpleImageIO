@@ -6,9 +6,9 @@
 
 float LinearToSrgb(float linear) {
     if (linear > 0.0031308) {
-        linear = 1.055 * (std::pow(linear, (1.0 / 2.4))) - 0.055;
+        linear = 1.055f * (std::pow(linear, (1.0f / 2.4f))) - 0.055f;
     } else {
-        linear = 12.92 * linear;
+        linear = 12.92f * linear;
     }
     return linear;
 }
@@ -36,8 +36,9 @@ SIIO_API void ToByteImage(float* image, int imgStride, uint8_t* result, int resS
                           int width, int height, int numChans) {
     ForAllPixels(width, height, numChans, imgStride, resStride,
         [&](int imgIdx, int resIdx, int col, int row, int chan) {
-            float v = image[imgIdx] * 255;
-            result[resIdx] = v < 0 ? 0 : (v > 255 ? 255 : v);
+            int v = (int)(image[imgIdx] * 255);
+            uint8_t clipped = v < 0 ? 0 : (v > 255 ? 255 : (uint8_t)v);
+            result[resIdx] = clipped;
         });
 }
 
@@ -49,7 +50,7 @@ SIIO_API void ZoomWithNearestInterp(float* image, int imgStride, float* result, 
             int origCol = col / scale;
             int origRow = row / scale;
             int origIdx = numChans * origCol + imgStride * origRow;
-            int resIdx = numChans * col + scale * resStride * row;
+            int resIdx = numChans * col + resStride * row;
             for (int chan = 0; chan < numChans; ++chan) {
                 result[resIdx + chan] = image[origIdx + chan];
             }

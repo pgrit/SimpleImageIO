@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "SimpleImageIO.Tests": {
-      "commandName": "Project",
-      "nativeDebugging": false
-    }
-  }
-}

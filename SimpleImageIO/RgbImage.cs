@@ -22,21 +22,6 @@ namespace SimpleImageIO {
         public void SetPixel(int col, int row, RgbColor rgb)
         => SetPixelChannels(col, row, rgb.R, rgb.G, rgb.B);
 
-        public static float MSE(RgbImage image, RgbImage reference) {
-            return SimpleImageIOCore.ComputeMSE(image.dataRaw, reference.dataRaw, image.Width, image.Height);
-        }
-
-        public static float RelMSE(RgbImage image, RgbImage reference, float epsilon = 0.001f) {
-            return SimpleImageIOCore.ComputeRelMSE(image.dataRaw, reference.dataRaw, image.Width,
-                image.Height, epsilon);
-        }
-
-        public static float RelMSE_OutlierRejection(RgbImage image, RgbImage reference,
-                                                    float epsilon = 0.001f, float percentage = 0.1f) {
-            return SimpleImageIOCore.ComputeRelMSEOutlierReject(image.dataRaw, reference.dataRaw,
-                image.Width, image.Height, epsilon, percentage);
-        }
-
         public void AtomicAdd(int col, int row, RgbColor rgb)
         => AtomicAddChannels(col, row, rgb.R, rgb.G, rgb.B);
     }

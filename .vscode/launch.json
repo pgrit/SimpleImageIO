@@ -18,9 +18,9 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/SimpleImageIO.Tests/bin/Debug/net5.0/SimpleImageIO.Tests.dll",
+            "program": "${workspaceFolder}/SimpleImageIO.Benchmark/bin/Debug/net5.0/SimpleImageIO.Benchmark.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/SimpleImageIO.Tests",
+            "cwd": "${workspaceFolder}/SimpleImageIO.Benchmark",
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
             "console": "internalConsole",
             "stopAtEntry": false

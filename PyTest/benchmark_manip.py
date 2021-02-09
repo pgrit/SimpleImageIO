@@ -61,7 +61,7 @@ def lin2srgb(rgb):
 def tobyte(rgb):
     return (np.clip(rgb, 0, 1) * 255).astype(np.uint8)
 
-n = 10
+n = 1
 
 # Initialized just to suppress linter warnings
 m = 0
@@ -113,9 +113,11 @@ print(f"Computing MSE {m:.2f} for {n} images took {(time.time() - start) * 1000:
 start = time.time()
 
 for i in range(n):
-    m = sio.mse(testimg, refimg)
+    m2 = sio.mse(testimg, refimg)
 
-print(f"Computing MSE {m:.2f} with native for {n} images took {(time.time() - start) * 1000:.0f}ms")
+print(f"Computing MSE {m2:.2f} with native for {n} images took {(time.time() - start) * 1000:.0f}ms")
+
+assert abs(m2 - m) < 0.00001 * m
 
 ########################################
 
@@ -129,9 +131,11 @@ print(f"Computing relMSE {m:.2f} for {n} images took {(time.time() - start) * 10
 start = time.time()
 
 for i in range(n):
-    m = sio.relative_mse(testimg, refimg)
+    m2 = sio.relative_mse(testimg, refimg)
 
-print(f"Computing relMSE {m:.2f} with native for {n} images took {(time.time() - start) * 1000:.0f}ms")
+print(f"Computing relMSE {m2:.2f} with native for {n} images took {(time.time() - start) * 1000:.0f}ms")
+
+assert abs(m2 - m) < 0.00001 * m
 
 ########################################
 
@@ -145,9 +149,11 @@ print(f"Computing relMSE {m:.2f} w/o outliers for {n} images took {(time.time() 
 start = time.time()
 
 for i in range(n):
-    m = sio.relative_mse_outlier_rejection(testimg, refimg)
+    m2 = sio.relative_mse_outlier_rejection(testimg, refimg)
 
-print(f"Computing relMSE {m:.2f} w/o outliers with native for {n} images took {(time.time() - start) * 1000:.0f}ms")
+print(f"Computing relMSE {m2:.2f} w/o outliers with native for {n} images took {(time.time() - start) * 1000:.0f}ms")
+
+assert abs(m2 - m) < 0.01 * m
 
 ########################################
 
@@ -204,3 +210,7 @@ for i in range(n):
 print(f"Luminance for {n} images took {(time.time() - start) * 1000:.0f}ms")
 
 assert np.abs(np.sum(m2 - m)) < 0.1
+
+########################################
+
+print("Successfully finished all benchmarks!")
