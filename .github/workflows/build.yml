@@ -53,7 +53,8 @@ jobs:
 
     - uses: actions/download-artifact@v2
       with:
-        path: ${{github.workspace}}/Runtimes/*
+        path: ${{github.workspace}}/Runtimes
+    - run: ls -R
 
     - name: Setup .NET Core SDK
       uses: actions/setup-dotnet@v1.7.2
