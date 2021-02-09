@@ -31,6 +31,10 @@ jobs:
       working-directory: ${{github.workspace}}/build
       run: cmake --install .
 
+    # fixes sporadic build fails on Windows (https://github.com/actions/setup-dotnet/issues/155)
+    - name: Clean
+      run: dotnet clean -c Release && dotnet nuget locals all --clear
+
     - name: Test
       working-directory: ${{github.workspace}}
       run: dotnet test
@@ -55,7 +59,11 @@ jobs:
       uses: actions/setup-dotnet@v1.7.2
       with:
         dotnet-version: '5.0.x'
-    
+        
+    # fixes sporadic build fails on Windows (https://github.com/actions/setup-dotnet/issues/155)
+    - name: Clean
+      run: dotnet clean -c Release && dotnet nuget locals all --clear
+      
     - name: Pack
       run: dotnet pack -c Release
       
@@ -68,3 +76,23 @@ jobs:
       uses: rohith/publish-nuget@v2
       with:
         PROJECT_FILE_PATH: SimpleImageIO/SimpleImageIO.csproj
+  
+  pypi:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+        
+      - name: Fetch Python build dependencies
+        run: python3 -m pip install --user wheel build
+
+      - name: Build Python Wheel
+        run: python3 -m build
+        
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
