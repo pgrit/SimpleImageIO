@@ -1,3 +1,4 @@
+![Build](https://github.com/pgrit/SimpleImageIO/workflows/Build/badge.svg)
 <a href="https://www.nuget.org/packages/SimpleImageIO/">
 <img src="https://buildstats.info/nuget/SimpleImageIO" />
 </a>
