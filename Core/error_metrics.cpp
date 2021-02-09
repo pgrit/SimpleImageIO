@@ -7,10 +7,6 @@
 #include <chrono>
 #include <numeric>
 
-#if (__cplusplus >= 201703L)
-#include <execution>
-#endif
-
 extern "C" {
 
 SIIO_API float ComputeMSE(float* image, int imgStride, float* reference, int refStride,
@@ -48,15 +44,9 @@ SIIO_API float ComputeRelMSEOutlierReject(float* image, int imgStride, float* re
         });
 
     // Next, we partially sort the array, ensuring that the outliers are all at the end
-#if (__cplusplus >= 201703L)
-    std::nth_element(std::execution::par_unseq, errorBuffer.begin(),
-        errorBuffer.begin() + errorBuffer.size() - numOutliers - 1,
-        errorBuffer.end());
-#else
     std::nth_element(errorBuffer.begin(),
         errorBuffer.begin() + errorBuffer.size() - numOutliers - 1,
         errorBuffer.end());
-#endif
 
     // Finally, we accumulate all values except the largest [numOutlier]
     float error = 0;
