@@ -57,9 +57,14 @@ jobs:
         dotnet-version: '5.0.x'
     
     - name: Pack
-      run: dotnet pack
+      run: dotnet pack -c Release
       
     - name: Upload .nupkg
       uses: actions/upload-artifact@v2
       with:
         path: ${{github.workspace}}/SimpleImageIO/bin/**/*.nupkg
+    
+    - name: Publish on version change
+      uses: rohith/publish-nuget@v2
+      with:
+        PROJECT_FILE_PATH: SimpleImageIO/SimpleImageIO.csproj
