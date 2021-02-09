@@ -49,7 +49,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='SimpleImageIO',
-    version='0.3.3',
+    version='0.3.4',
     author='Pascal Grittmann',
     url='https://github.com/pgrit/SimpleImageIO',
 

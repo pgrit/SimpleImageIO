@@ -61,7 +61,7 @@ def lin2srgb(rgb):
 def tobyte(rgb):
     return (np.clip(rgb, 0, 1) * 255).astype(np.uint8)
 
-n = 1
+n = 10
 
 # Initialized just to suppress linter warnings
 m = 0
