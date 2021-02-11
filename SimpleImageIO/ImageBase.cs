@@ -111,11 +111,10 @@ namespace SimpleImageIO {
                 throw new FileNotFoundException("Image file does not exist.", filename);
 
             // Read the image from the file, it is cached in native memory
-            int id = SimpleImageIOCore.CacheImage(out width, out height, filename);
-            numChannels = 3;
+            int id = SimpleImageIOCore.CacheImage(out width, out height, out numChannels, filename);
             if (id < 0 || width <= 0 || height <= 0)
                 throw new System.IO.IOException($"ERROR: Could not load image file '{filename}'");
-
+            Console.WriteLine(numChannels);
             // Copy to managed memory array
             Alloc();
             SimpleImageIOCore.CopyCachedImage(id, dataRaw);

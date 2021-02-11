@@ -8,7 +8,7 @@ _write_image.argtypes = [POINTER(c_float), c_int, c_int, c_int, c_int, c_char_p,
 _write_image.restype = None
 
 _cache_image = corelib.core.CacheImage
-_cache_image.argtypes = [POINTER(c_int), POINTER(c_int), c_char_p]
+_cache_image.argtypes = [POINTER(c_int), POINTER(c_int), POINTER(c_int), c_char_p]
 _cache_image.restype = c_int
 
 _copy_cached_img = corelib.core.CopyCachedImage
@@ -26,9 +26,21 @@ _free_mem.restype = None
 def read(filename: str):
     w = c_int()
     h = c_int()
-    idx = _cache_image(byref(w), byref(h), filename.encode('utf-8'))
-    buffer = np.zeros((h.value,w.value,3), dtype=np.float32)
+    c = c_int()
+    idx = _cache_image(byref(w), byref(h), byref(c), filename.encode('utf-8'))
+    chans = c.value
+
+    if chans == 1:
+        buffer = np.zeros((h.value,w.value), dtype=np.float32)
+    else:
+        buffer = np.zeros((h.value,w.value,chans), dtype=np.float32)
+
     _copy_cached_img(idx, buffer.ctypes.data_as(POINTER(c_float)))
+
+    # We enforce rgb results and always drop any extra channels (alpha)
+    if chans > 3:
+        return buffer[:,:,:3]
+
     return buffer
 
 def write(filename: str, data, jpeg_quality = 80):

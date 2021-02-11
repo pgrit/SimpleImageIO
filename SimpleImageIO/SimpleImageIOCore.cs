@@ -9,7 +9,7 @@ namespace SimpleImageIO {
                                              string filename);
 
         [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
-        public static extern int CacheImage(out int width, out int height, string filename);
+        public static extern int CacheImage(out int width, out int height, out int numChannels, string filename);
 
         [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
         public static extern void CopyCachedImage(int id, IntPtr buffer);

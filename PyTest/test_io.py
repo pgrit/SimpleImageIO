@@ -46,6 +46,13 @@ class TestInputOutput(unittest.TestCase):
         self.assertEqual(px[1,2,2], 0.5)
         os.remove("image.exr")
 
+    def test_alphapng(self):
+        img = sio.read("ImageWithAlpha.png")
+
+        self.assertEqual(img.shape[0], 750)
+        self.assertEqual(img.shape[1], 2126)
+        self.assertEqual(img.shape[2], 3)
+
     def test_base64(self):
         sio.write("image.png", [
             [[1.0,0.0,0.0], [0.0,1.0,0.0], [0.0,0.0,1.0]],

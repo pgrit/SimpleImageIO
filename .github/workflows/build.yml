@@ -26,7 +26,7 @@ jobs:
     - name: Build
       working-directory: ${{github.workspace}}/build
       run: cmake --build . --config Release
-    
+
     - name: Install
       working-directory: ${{github.workspace}}/build
       run: cmake --install .
@@ -38,16 +38,16 @@ jobs:
     - name: Test
       working-directory: ${{github.workspace}}
       run: dotnet test
-      
+
     - name: Upload Binaries
       uses: actions/upload-artifact@v2
       with:
         path: ${{github.workspace}}/Runtimes/*
-  
+
   pack:
     runs-on: ubuntu-latest
     needs: [build]
-    
+
     steps:
     - uses: actions/checkout@v2
 
@@ -61,39 +61,65 @@ jobs:
       uses: actions/setup-dotnet@v1.7.2
       with:
         dotnet-version: '5.0.x'
-        
+
     # fixes sporadic build fails on Windows (https://github.com/actions/setup-dotnet/issues/155)
     - name: Clean
       run: dotnet clean -c Release && dotnet nuget locals all --clear
-      
+
     - name: Pack
       run: dotnet pack -c Release
-      
+
     - name: Upload .nupkg
       uses: actions/upload-artifact@v2
       with:
         path: ${{github.workspace}}/SimpleImageIO/bin/**/*.nupkg
-    
+
     - name: Publish on version change
       uses: rohith/publish-nuget@v2
       with:
         PROJECT_FILE_PATH: SimpleImageIO/SimpleImageIO.csproj
         NUGET_KEY: ${{secrets.NUGET_API_KEY}}
-  
+
+  testpython:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    setps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Fetch Python build dependencies
+        run: python3 -m pip install --user wheel build
+
+      - name: Build Python Wheel
+        run: python3 setup.py sdist
+
+      - name: Install
+        run: python3 -m pip install ./dist/*
+
+      - name: Run tests
+        working-directory: ${{github.workspace}}/PyTest
+        run: python3 -m unittest
+
   pypi:
     runs-on: ubuntu-latest
+    needs: [testpython]
+
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
           python-version: '3.x'
-        
+
       - name: Fetch Python build dependencies
         run: python3 -m pip install --user wheel build
 
       - name: Build Python Wheel
-        run: python setup.py sdist
-        
+        run: python3 setup.py sdist
+
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@master
         with:

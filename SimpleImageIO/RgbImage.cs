@@ -6,6 +6,22 @@ namespace SimpleImageIO {
 
         public RgbImage(string filename) {
             LoadFromFile(filename);
+
+            if (numChannels == 4) {
+                // drop the alpha channel (assume that we have ordering RGBA)
+                using (RgbImage rgb = new(Width, Height)) {
+                    for (int row = 0; row < Height; ++row) {
+                        for (int col = 0; col < Width; ++col) {
+                            rgb.SetPixel(col, row, GetPixel(col, row));
+                        }
+                    }
+
+                    // swap the buffers and channel counts
+                    (rgb.dataRaw, dataRaw) = (dataRaw, rgb.dataRaw);
+                    (rgb.numChannels, numChannels) = (numChannels, rgb.numChannels);
+                }
+            }
+
             Debug.Assert(numChannels == 3);
         }
 

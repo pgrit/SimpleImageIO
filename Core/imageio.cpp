@@ -28,7 +28,7 @@ static std::unordered_map<int, EXRImage> exrImages;
 static std::unordered_map<int, StbImageData> stbImages;
 static int nextIndex = 0;
 
-int CacheExrImage(int* width, int* height, const char* filename) {
+int CacheExrImage(int* width, int* height, int* numChannels, const char* filename) {
     EXRVersion exrVersion;
     int ret = ParseEXRVersionFromFile(&exrVersion, filename);
     if (ret != 0) {
@@ -71,6 +71,7 @@ int CacheExrImage(int* width, int* height, const char* filename) {
 
     *width = exrImage.width;
     *height = exrImage.height;
+    *numChannels = exrImage.num_channels;
 
     return idx;
 }
@@ -187,13 +188,12 @@ void WriteImageToExr(float* data, int rowStride, int width, int height, int numC
     }
 }
 
-int CacheStbImage(int* width, int* height, const char* filename) {
-    int n;
-    float *data = stbi_loadf(filename, width, height, &n, 3);
+int CacheStbImage(int* width, int* height, int* numChannels, const char* filename) {
+    float *data = stbi_loadf(filename, width, height, numChannels, 0);
 
     cacheMutex.lock();
     const int idx = nextIndex;
-    stbImages[idx] = StbImageData { data, *width, *height, n };
+    stbImages[idx] = StbImageData { data, *width, *height, *numChannels };
     nextIndex++;
     cacheMutex.unlock();
 
@@ -292,14 +292,14 @@ SIIO_API void FreeMemory(unsigned char* mem) {
     STBIW_FREE(mem);
 }
 
-SIIO_API int CacheImage(int* width, int* height, const char* filename) {
+SIIO_API int CacheImage(int* width, int* height, int* numChannels, const char* filename) {
     auto fname = std::string(filename);
     if (fname.compare(fname.size() - 4, 4, ".exr") == 0) {
         // This is an .exr image, load it with tinyexr
-        return CacheExrImage(width, height, filename);
+        return CacheExrImage(width, height, numChannels, filename);
     } else {
         // This is some other format, assume that stb_image can handle it
-        return CacheStbImage(width, height, filename);
+        return CacheStbImage(width, height, numChannels, filename);
     }
 }
 
