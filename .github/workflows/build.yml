@@ -85,7 +85,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        
+
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -95,11 +95,8 @@ jobs:
       - name: Fetch Python build dependencies
         run: python3 -m pip install --user wheel build
 
-      - name: Build Python Wheel
-        run: python3 setup.py sdist
-
-      - name: Install
-        run: python3 -m pip install ./dist/*
+      - name: Build and install
+        run: python3 setup.py install
 
       - name: Run tests
         working-directory: ${{github.workspace}}/PyTest
