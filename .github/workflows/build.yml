@@ -93,14 +93,14 @@ jobs:
           python-version: '3.x'
 
       - name: Fetch Python build dependencies
-        run: python3 -m pip install --user wheel build
+        run: python -m pip install --user wheel
 
       - name: Build and install
-        run: python3 setup.py install
+        run: python setup.py install
 
       - name: Run tests
         working-directory: ${{github.workspace}}/PyTest
-        run: python3 -m unittest
+        run: python -m unittest
 
   pypi:
     runs-on: ubuntu-latest
@@ -113,10 +113,10 @@ jobs:
           python-version: '3.x'
 
       - name: Fetch Python build dependencies
-        run: python3 -m pip install --user wheel build
+        run: python -m pip install --user wheel
 
       - name: Build Python Wheel
-        run: python3 setup.py sdist
+        run: python setup.py sdist
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@master
