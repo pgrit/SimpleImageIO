@@ -26,5 +26,21 @@ namespace SimpleImageIO.Tests {
             var dirPath = Path.GetDirectoryName(codeBasePath);
             RgbImage image = new("../../../../PyTest/ImageWithAlpha.png");
         }
+
+        [Fact]
+        public void RgbToMono_Average_AllShouldBe2() {
+            RgbImage image = new(2, 2);
+            image.SetPixel(0, 0, new(1, 2, 3));
+            image.SetPixel(0, 1, new(3, 1, 2));
+            image.SetPixel(1, 0, new(3, 2, 1));
+            image.SetPixel(1, 1, new(2, 2, 2));
+
+            MonochromeImage mono = new(image, MonochromeImage.RgbConvertMode.Average);
+
+            Assert.Equal(2, mono.GetPixel(0, 0), 6);
+            Assert.Equal(2, mono.GetPixel(0, 1), 6);
+            Assert.Equal(2, mono.GetPixel(1, 0), 6);
+            Assert.Equal(2, mono.GetPixel(1, 1), 6);
+        }
     }
 }

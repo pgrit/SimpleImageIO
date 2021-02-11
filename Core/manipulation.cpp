@@ -64,7 +64,7 @@ SIIO_API void RgbToMonoAverage(float* image, int imgStride, float* result, int r
     for (int row = 0; row < height; ++row) {
         for (int col = 0; col < width; ++col) {
             int origIdx = numChans * col + imgStride * row;
-            int resIdx = numChans * col + resStride * row;
+            int resIdx = col + resStride * row;
             float sum = 0;
             for (int chan = 0; chan < numChans; ++chan) {
                 sum += image[origIdx + chan];
