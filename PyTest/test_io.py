@@ -95,5 +95,22 @@ class TestInputOutput(unittest.TestCase):
 
         os.remove("image.hdr")
 
+    def test_write_layers(self):
+        img = np.array([
+            [[1.0,0.0,0.0], [0.0,1.0,0.0], [0.0,0.0,1.0]],
+            [[0.5,0.0,0.0], [0.0,0.5,0.0], [0.0,0.0,0.5]],
+            [[0.5,0.0,0.0], [0.0,0.5,0.0], [0.0,0.0,0.5]]
+        ], dtype=np.float32)
+
+        other = np.array([
+            [[1.0,0.0,1.0], [0.0,1.0,1.0], [1.0,0.0,1.0]],
+            [[0.5,0.0,2.0], [0.0,0.5,2.0], [0.0,2.0,0.5]],
+            [[0.5,0.0,3.0], [0.0,0.5,3.0], [0.0,0.0,3.5]]
+        ], dtype=np.float32)
+
+        sio.write_layered_exr("layered.exr", {"normal": img, "albedo": other})
+
+        self.assertTrue(os.path.exists("layered.exr"))
+
 if __name__ == "__main__":
     unittest.main()

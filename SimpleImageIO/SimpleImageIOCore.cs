@@ -9,6 +9,10 @@ namespace SimpleImageIO {
                                              string filename);
 
         [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void WriteLayeredExr(IntPtr[] datas, int[] strides, int width, int height,
+                                                  int[] numChannels, int numLayers, string[] names, string filename);
+
+        [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
         public static extern int CacheImage(out int width, out int height, out int numChannels, string filename);
 
         [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -85,13 +86,38 @@ namespace SimpleImageIO {
             return result;
         }
 
-        public void WriteToFile(string filename) {
-            // First, make sure that the full path exists
+        static void EnsureDirectory(string filename) {
             var dirname = System.IO.Path.GetDirectoryName(filename);
             if (dirname != "")
                 System.IO.Directory.CreateDirectory(dirname);
+        }
 
+        public void WriteToFile(string filename) {
+            EnsureDirectory(filename);
             SimpleImageIOCore.WriteImage(dataRaw, numChannels * Width, Width, Height, numChannels, filename);
+        }
+
+        public static void WriteLayeredExr(string filename, params (string, ImageBase)[] layers) {
+            EnsureDirectory(filename);
+
+            // Assemble the raw data in a C-API compatible format
+            List<IntPtr> dataPointers = new();
+            List<int> strides = new();
+            List<int> numChannels = new();
+            List<string> names = new();
+            int width = layers[0].Item2.Width;
+            int height = layers[0].Item2.Height;
+            foreach (var (name, img) in layers) {
+                dataPointers.Add(img.dataRaw);
+                strides.Add(img.numChannels * img.Width);
+                numChannels.Add(img.numChannels);
+                names.Add(name);
+                Debug.Assert(img.Width == width, "All layers must have the same resolution");
+                Debug.Assert(img.Height == height, "All layers must have the same resolution");
+            }
+
+            SimpleImageIOCore.WriteLayeredExr(dataPointers.ToArray(), strides.ToArray(), width, height,
+                numChannels.ToArray(), dataPointers.Count, names.ToArray(), filename);
         }
 
         public string AsBase64Png() {
@@ -114,7 +140,7 @@ namespace SimpleImageIO {
             int id = SimpleImageIOCore.CacheImage(out width, out height, out numChannels, filename);
             if (id < 0 || width <= 0 || height <= 0)
                 throw new System.IO.IOException($"ERROR: Could not load image file '{filename}'");
-            
+
             // Copy to managed memory array
             Alloc();
             SimpleImageIOCore.CopyCachedImage(id, dataRaw);

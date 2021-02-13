@@ -32,10 +32,6 @@ set_target_properties(SimpleImageIOCore
 if(MSVC)
     target_compile_options(SimpleImageIOCore PUBLIC "/Zc:__cplusplus")
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
-
-    set(MSVC_DISABLED_WARNING_LIST
-        "C5208" # unnamed class used in typedef name cannot declare members... (tinyexr.h)
-    )
 endif()
 
 find_package(OpenMP)

@@ -42,5 +42,24 @@ namespace SimpleImageIO.Tests {
             Assert.Equal(2, mono.GetPixel(1, 0), 6);
             Assert.Equal(2, mono.GetPixel(1, 1), 6);
         }
+
+        [Fact]
+        public void MultiLayerExr_IsWritten() {
+            RgbImage image = new(2, 2);
+            image.SetPixel(0, 0, new(1, 2, 3));
+            image.SetPixel(0, 1, new(3, 1, 2));
+            image.SetPixel(1, 0, new(3, 2, 1));
+            image.SetPixel(1, 1, new(2, 2, 2));
+
+            RgbImage otherImage = new(2, 2);
+            otherImage.SetPixel(0, 0, new(0, 0, 0));
+            otherImage.SetPixel(0, 1, new(0, 1, 0));
+            otherImage.SetPixel(1, 0, new(1, 0, 1));
+            otherImage.SetPixel(1, 1, new(1, 1, 1));
+
+            ImageBase.WriteLayeredExr("layered.exr", ("albedo", image), ("normal", otherImage));
+
+            Assert.True(File.Exists("layered.exr"));
+        }
     }
 }

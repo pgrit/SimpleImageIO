@@ -6,9 +6,17 @@
 #include <vector>
 #include <mutex>
 
+#ifdef _MSC_VER
+#pragma warning(disable: 5208)
+#endif
+
 #define TINYEXR_IMPLEMENTATION
 #define TINYEXR_USE_THREAD (1)
 #include "External/tinyexr.h"
+
+#ifdef _MSC_VER
+#pragma warning(default: 5208)
+#endif
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "External/stb_image.h"
@@ -106,68 +114,93 @@ void CopyCachedExr(int id, float* out) {
     cacheMutex.unlock();
 }
 
-void WriteImageToExr(float* data, int rowStride, int width, int height, int numChannels, const char* filename) {
+void WriteImageToExr(const float** layers, const int* rowStrides, int width, int height, const int* numChannels,
+                     int numLayers, const char** layerNames, const char* filename) {
     EXRImage image;
     InitEXRImage(&image);
+    EXRHeader header;
+    InitEXRHeader(&header);
+    header.compression_type = TINYEXR_COMPRESSIONTYPE_ZIP;
 
-    image.num_channels = numChannels;
+    // Count the total number of channels
+    int totalChannels = 0;
+    for (int i = 0; i < numLayers; ++i) totalChannels += numChannels[i];
+
+    header.num_channels = totalChannels;
+    image.num_channels = totalChannels;
     image.width = width;
     image.height = height;
 
-    // Copy image data and convert from AoS to SoA
-    // Create buffers for each channel
+    // Convert image data from AoS to SoA (i.e. one image per channel in each layer)
     std::vector<std::vector<float>> channelImages;
-    for (int i = 0; i < numChannels; ++i) {
-        channelImages.emplace_back(width * height);
-    }
+    float** imagePtr = (float **) alloca(sizeof(float*) * image.num_channels);
+    for (int layer = 0; layer < numLayers; ++layer) {
+        for (int chan = 0; chan < numChannels[layer]; ++chan) {
+            channelImages.emplace_back(width * height);
+        }
 
-    // Copy the data into the buffers
-    float* val = (float*) alloca(sizeof(float) * numChannels);
-    for (int r = 0; r < height; ++r) {
-        for (int c = 0; c < width; ++c) {
-            // Copy the values for all channels to the temporary buffer
-            auto start = r * rowStride + c * numChannels;
-            std::copy(data + start, data + start + numChannels, val);
+        size_t offset = channelImages.size() - numChannels[layer];
+        for (int r = 0; r < height; ++r) {
+            for (int c = 0; c < width; ++c) {
+                auto start = r * rowStrides[layer] + c * numChannels[layer];
+                for (int chan = 0; chan < numChannels[layer]; ++chan) {
+                    channelImages[offset + chan][r * width + c] = layers[layer][start + chan];
 
-            // Write to the correct channel buffers
-            for (int i = 0; i < numChannels; ++i)
-                channelImages[i][r * width + c] = val[i];
+                    // reverse channel order from RGB(A) to (A)BGR
+                    imagePtr[offset + numChannels[layer] - chan - 1] = channelImages[offset + chan].data();
+                }
+            }
         }
     }
-
-    // Gather an array of pointers to the channel buffers, as input to TinyEXR
-    float** imagePtr = (float **) alloca(sizeof(float*) * image.num_channels);
     image.images = (unsigned char**)imagePtr;
-
-    EXRHeader header;
-    InitEXRHeader(&header);
-
-    header.num_channels = numChannels;
 
     // Set the channel names
     std::vector<EXRChannelInfo> channels(header.num_channels);
     header.channels = channels.data();
+    int offset = 0;
+    for (int lay = 0; lay < numLayers; ++lay) {
+        char namePrefix[256];
+        size_t prefixLen = 0;
+        if (!layerNames) {
+            prefixLen = strlen("default");
+            strncpy(namePrefix, "default", 255);
+        } else {
+            prefixLen = strlen(layerNames[lay]);
+            strncpy(namePrefix, layerNames[lay], 255);
+        }
 
-    if (image.num_channels == 1) {
-        header.channels[0].name[0] = 'Y';
-        header.channels[0].name[1] = '\0';
-        imagePtr[0] = channelImages[0].data();
-    } else if (image.num_channels == 3) {
-        header.channels[0].name[0] = 'B';
-        header.channels[0].name[1] = '\0';
-        imagePtr[0] = channelImages[2].data();
+        if (numChannels[lay] == 1) {
+            strncpy(header.channels[offset + 0].name, namePrefix, 255);
+            strncpy(header.channels[offset + 0].name + prefixLen, ".Y", 255 - prefixLen);
+        } else if (numChannels[lay] == 3) {
+            strncpy(header.channels[offset + 0].name, namePrefix, 255);
+            strncpy(header.channels[offset + 0].name + prefixLen, ".B", 255 - prefixLen);
 
-        header.channels[1].name[0] = 'G';
-        header.channels[1].name[1] = '\0';
-        imagePtr[1] = channelImages[1].data();
+            strncpy(header.channels[offset + 1].name, namePrefix, 255);
+            strncpy(header.channels[offset + 1].name + prefixLen, ".G", 255 - prefixLen);
 
-        header.channels[2].name[0] = 'R';
-        header.channels[2].name[1] = '\0';
-        imagePtr[2] = channelImages[0].data();
-    } else {
-        std::cerr << "ERROR while writing " << filename
-                  << ": images with " << numChannels << " channels are currently not supported. "
-                  << "no file has been written." << std::endl;
+            strncpy(header.channels[offset + 2].name, namePrefix, 255);
+            strncpy(header.channels[offset + 2].name + prefixLen, ".R", 255 - prefixLen);
+        } else if (numChannels[lay] == 4) {
+            strncpy(header.channels[offset + 0].name, namePrefix, 255);
+            strncpy(header.channels[offset + 0].name + prefixLen, ".A", 255 - prefixLen);
+
+            strncpy(header.channels[offset + 1].name, namePrefix, 255);
+            strncpy(header.channels[offset + 1].name + prefixLen, ".B", 255 - prefixLen);
+
+            strncpy(header.channels[offset + 2].name, namePrefix, 255);
+            strncpy(header.channels[offset + 2].name + prefixLen, ".G", 255 - prefixLen);
+
+            strncpy(header.channels[offset + 3].name, namePrefix, 255);
+            strncpy(header.channels[offset + 3].name + prefixLen, ".R", 255 - prefixLen);
+        } else {
+            std::cerr << "ERROR while writing " << filename
+                    << ": images with " << numChannels << " channels are currently not supported. "
+                    << "no file has been written." << std::endl;
+            return;
+        }
+
+        offset += numChannels[lay];
     }
 
     // Define pixel type of the buffer and requested output pixel type in the file
@@ -234,7 +267,7 @@ void AlignImage(const float* data, int rowStride, float* buffer, int width, int 
         });
 }
 
-void WriteImageWithStbImage(float* data, int rowStride, int width, int height, int numChannels,
+void WriteImageWithStbImage(const float* data, int rowStride, int width, int height, int numChannels,
                             const char* filename, int jpegQuality) {
     auto fname = std::string(filename);
     auto fext = fname.substr(fname.size() - 3, 3);
@@ -262,17 +295,17 @@ void WriteImageWithStbImage(float* data, int rowStride, int width, int height, i
 
 extern "C" {
 
-SIIO_API void WriteLayeredExr(int width, int height, int numChannels, const char* filename,
-                              int numLayers, const char** names, const float** datas) {
-    // TODO write multi-layer file
+SIIO_API void WriteLayeredExr(const float** datas, int* strides, int width, int height, const int* numChannels,
+                              int numLayers, const char** names, const char* filename) {
+    WriteImageToExr(datas, strides, width, height, numChannels, numLayers, names, filename);
 }
 
-SIIO_API void WriteImage(float* data, int rowStride, int width, int height, int numChannels,
+SIIO_API void WriteImage(const float* data, int rowStride, int width, int height, int numChannels,
                          const char* filename, int jpegQuality) {
     auto fname = std::string(filename);
     if (fname.compare(fname.size() - 4, 4, ".exr") == 0) {
         // This is an .exr image, load it with tinyexr
-        WriteImageToExr(data, rowStride, width, height, numChannels, filename);
+        WriteImageToExr(&data, &rowStride, width, height, &numChannels, 1, nullptr, filename);
     } else {
         // This is some other format, assume that stb_image can handle it
         WriteImageWithStbImage(data, rowStride, width, height, numChannels, filename, jpegQuality);
