@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <mutex>
+#include <cassert>
 
 #ifdef _MSC_VER
 #pragma warning(disable: 5208)
@@ -30,13 +31,38 @@ struct StbImageData {
     int numChannels;
 };
 
+struct ExrChannelLayout {
+    int idxR = -1;
+    int idxG = -1;
+    int idxB = -1;
+    int idxA = -1;
+    int idxY = -1;
+
+    int CountChannels() const {
+        return
+            (idxR >= 0 ? 1 : 0) +
+            (idxG >= 0 ? 1 : 0) +
+            (idxB >= 0 ? 1 : 0) +
+            (idxA >= 0 ? 1 : 0) +
+            (idxY >= 0 ? 1 : 0);
+    }
+};
+
+struct ExrImageData {
+    std::unordered_map<std::string, ExrChannelLayout> channelsPerLayer;
+    std::vector<std::string> layerNames;
+    EXRHeader header;
+    EXRImage image;
+};
+
 static std::mutex cacheMutex;
-static std::unordered_map<int, EXRHeader> exrHeaders;
-static std::unordered_map<int, EXRImage> exrImages;
+static std::unordered_map<int, ExrImageData> exrImages;
 static std::unordered_map<int, StbImageData> stbImages;
 static int nextIndex = 0;
 
-int CacheExrImage(int* width, int* height, int* numChannels, const char* filename) {
+int CacheExrImage(const char* filename) {
+    ExrImageData result;
+
     EXRVersion exrVersion;
     int ret = ParseEXRVersionFromFile(&exrVersion, filename);
     if (ret != 0) {
@@ -45,8 +71,8 @@ int CacheExrImage(int* width, int* height, int* numChannels, const char* filenam
     }
 
     const char* err;
-    EXRHeader exrHeader;
-    ret = ParseEXRHeaderFromFile(&exrHeader, &exrVersion, filename, &err);
+    InitEXRHeader(&result.header);
+    ret = ParseEXRHeaderFromFile(&result.header, &exrVersion, filename, &err);
     if (ret) {
         std::cerr << "Error loading '" << filename << "': " << err << std::endl;
         FreeEXRErrorMessage(err);
@@ -54,63 +80,133 @@ int CacheExrImage(int* width, int* height, int* numChannels, const char* filenam
     }
 
     // Read half as float
-    for (int i = 0; i < exrHeader.num_channels; i++) {
-        if (exrHeader.pixel_types[i] == TINYEXR_PIXELTYPE_HALF)
-            exrHeader.requested_pixel_types[i] = TINYEXR_PIXELTYPE_FLOAT;
+    for (int i = 0; i < result.header.num_channels; i++) {
+        if (result.header.pixel_types[i] == TINYEXR_PIXELTYPE_HALF)
+            result.header.requested_pixel_types[i] = TINYEXR_PIXELTYPE_FLOAT;
     }
 
-    EXRImage exrImage;
-    InitEXRImage(&exrImage);
-
-    ret = LoadEXRImageFromFile(&exrImage, &exrHeader, filename, &err);
+    InitEXRImage(&result.image);
+    ret = LoadEXRImageFromFile(&result.image, &result.header, filename, &err);
     if (ret) {
         std::cerr << "Error loading '" << filename << "': " << err << std::endl;
-        FreeEXRHeader(&exrHeader);
+        FreeEXRHeader(&result.header);
         FreeEXRErrorMessage(err);
         return -1;
     }
 
+    // Read the number of channels in each layer
+    int freeChannels = 0;
+    for (int chan = 0; chan < result.header.num_channels; ++chan) {
+        // Extract the layer name by assuming a channel name of the form "layername.R", "layername.B" and so on
+        size_t len = strlen(result.header.channels[chan].name);
+
+        std::string layerName;
+        if (len <= 2) layerName = "default";
+        else layerName = std::string(result.header.channels[chan].name, len - 2);
+
+        char chanName = result.header.channels[chan].name[len - 1];
+
+        // Update the channel layout info
+        auto iter = result.channelsPerLayer.find(layerName);
+        if (iter == result.channelsPerLayer.end()) {
+            result.channelsPerLayer[layerName] = ExrChannelLayout();
+            result.layerNames.emplace_back(layerName);
+        }
+
+        auto& layout = result.channelsPerLayer[layerName];
+
+        switch (chanName) {
+        case 'R':
+            layout.idxR = chan;
+            break;
+        case 'G':
+            layout.idxG = chan;
+            break;
+        case 'B':
+            layout.idxB = chan;
+            break;
+        case 'A':
+            layout.idxA = chan;
+            break;
+        case 'Y':
+        default:
+            layout.idxY = chan;
+            break;
+        }
+    }
+
     cacheMutex.lock();
     const int idx = nextIndex;
-    exrHeaders[idx] = exrHeader;
-    exrImages[idx] = exrImage;
+    exrImages[idx] = result;
     nextIndex++;
     cacheMutex.unlock();
-
-    *width = exrImage.width;
-    *height = exrImage.height;
-    *numChannels = exrImage.num_channels;
 
     return idx;
 }
 
-void CopyCachedExr(int id, float* out) {
+void DeleteCachedExr(int id) {
     cacheMutex.lock();
-    auto& header = exrHeaders[id];
     auto& img = exrImages[id];
+
+    FreeEXRImage(&img.image);
+    FreeEXRHeader(&img.header);
+
+    exrImages.erase(id);
     cacheMutex.unlock();
+}
+
+void CopyCachedExrLayer(int id, std::string layerName, float* out) {
+    cacheMutex.lock();
+    auto& img = exrImages[id];
+
+    const auto& layerInfo = img.channelsPerLayer[layerName];
+    int numChannels = layerInfo.CountChannels();
 
     // Copy image data and convert from SoA to AoS
     int idx = 0;
-    for (int r = 0; r < img.height; ++r) for (int c = 0; c < img.width; ++c) {
-        for (int chan = img.num_channels - 1; chan >= 0; --chan) { // BGR -> RGB
-            // TODO allow arbitrary ordering of channels and grayscale images?
-            auto channel = reinterpret_cast<const float*>(img.images[chan]);
-            out[idx++] = channel[r * img.width + c];
+    for (int r = 0; r < img.image.height; ++r) {
+        for (int c = 0; c < img.image.width; ++c) {
+            if (numChannels == 1) { // Y
+                assert(layerInfo.idxY >= 0);
+                auto chanImg = (float*)img.image.images[layerInfo.idxY];
+                out[idx++] = chanImg[r * img.image.width + c];
+            } else if (numChannels == 3) { // RGB
+                assert(layerInfo.idxR >= 0);
+                auto chanImg = (float*)img.image.images[layerInfo.idxR];
+                out[idx++] = chanImg[r * img.image.width + c];
 
-            if (img.num_channels - chan == 3) {
-                // HACK to allow RGBA images. The proper solution would be to heed channel names!
-                break;
+                assert(layerInfo.idxG >= 0);
+                chanImg = (float*)img.image.images[layerInfo.idxG];
+                out[idx++] = chanImg[r * img.image.width + c];
+
+                assert(layerInfo.idxB >= 0);
+                chanImg = (float*)img.image.images[layerInfo.idxB];
+                out[idx++] = chanImg[r * img.image.width + c];
+            } else if (numChannels == 4) { // RGBA
+                assert(layerInfo.idxR >= 0);
+                auto chanImg = (float*)img.image.images[layerInfo.idxR];
+                out[idx++] = chanImg[r * img.image.width + c];
+
+                assert(layerInfo.idxG >= 0);
+                chanImg = (float*)img.image.images[layerInfo.idxG];
+                out[idx++] = chanImg[r * img.image.width + c];
+
+                assert(layerInfo.idxB >= 0);
+                chanImg = (float*)img.image.images[layerInfo.idxB];
+                out[idx++] = chanImg[r * img.image.width + c];
+
+                assert(layerInfo.idxA >= 0);
+                chanImg = (float*)img.image.images[layerInfo.idxA];
+                out[idx++] = chanImg[r * img.image.width + c];
+            } else {
+                std::cerr << "ERROR while reading .exr layer " << layerName << ": Images with "
+                          << numChannels << " channels are currently not supported." << std::endl;
+                cacheMutex.unlock();
+                return;
             }
         }
     }
 
-    FreeEXRImage(&img);
-    FreeEXRHeader(&header);
-
-    cacheMutex.lock();
-    exrImages.erase(id);
-    exrHeaders.erase(id);
     cacheMutex.unlock();
 }
 
@@ -304,7 +400,7 @@ SIIO_API void WriteImage(const float* data, int rowStride, int width, int height
                          const char* filename, int jpegQuality) {
     auto fname = std::string(filename);
     if (fname.compare(fname.size() - 4, 4, ".exr") == 0) {
-        // This is an .exr image, load it with tinyexr
+        // This is an .exr image, write it with tinyexr
         WriteImageToExr(&data, &rowStride, width, height, &numChannels, 1, nullptr, filename);
     } else {
         // This is some other format, assume that stb_image can handle it
@@ -329,24 +425,80 @@ SIIO_API int CacheImage(int* width, int* height, int* numChannels, const char* f
     auto fname = std::string(filename);
     if (fname.compare(fname.size() - 4, 4, ".exr") == 0) {
         // This is an .exr image, load it with tinyexr
-        return CacheExrImage(width, height, numChannels, filename);
+        int idx = CacheExrImage(filename);
+
+        cacheMutex.lock();
+        auto& img = exrImages[idx];
+        *width = img.image.width;
+        *height = img.image.height;
+        auto& defLayout = img.channelsPerLayer["default"];
+        *numChannels = defLayout.CountChannels();
+        cacheMutex.unlock();
+
+        return idx;
     } else {
         // This is some other format, assume that stb_image can handle it
         return CacheStbImage(width, height, numChannels, filename);
     }
 }
 
+SIIO_API int GetExrLayerCount(int id) {
+    cacheMutex.lock();
+    int num = (int) exrImages[id].channelsPerLayer.size();
+    cacheMutex.unlock();
+    return num;
+}
+
+SIIO_API int GetExrLayerChannelCount(int id, const char* name) {
+    cacheMutex.lock();
+    int num = exrImages[id].channelsPerLayer[name].CountChannels();
+    cacheMutex.unlock();
+    return num;
+}
+
+SIIO_API int GetExrLayerNameLen(int id, int layerIdx) {
+    cacheMutex.lock();
+    int len = (int) exrImages[id].layerNames[layerIdx].size();
+    cacheMutex.unlock();
+    return len;
+}
+
+SIIO_API void GetExrLayerName(int id, int layerIdx, char* out) {
+    cacheMutex.lock();
+    strcpy(out, exrImages[id].layerNames[layerIdx].c_str());
+    cacheMutex.unlock();
+}
+
+SIIO_API void CopyCachedLayer(int id, const char* name, float* out) {
+    CopyCachedExrLayer(id, name, out);
+}
+
+SIIO_API void DeleteCachedImage(int id) {
+    cacheMutex.lock();
+    if (exrImages.find(id) != exrImages.end()) {
+        cacheMutex.unlock();
+        DeleteCachedExr(id);
+    } else if (stbImages.find(id) != stbImages.end()) {
+        stbImages.erase(id);
+        cacheMutex.unlock();
+    } else {
+        cacheMutex.unlock();
+        std::cerr << "ERROR: attempted to delete non-existing image id " << id << std::endl;
+    }
+}
+
 SIIO_API void CopyCachedImage(int id, float* out) {
     cacheMutex.lock();
-    if (exrHeaders.find(id) != exrHeaders.end()) {
+    if (exrImages.find(id) != exrImages.end()) {
         cacheMutex.unlock();
-        CopyCachedExr(id, out);
+        CopyCachedExrLayer(id, "default", out);
+        DeleteCachedExr(id);
     } else if (stbImages.find(id) != stbImages.end()) {
         cacheMutex.unlock();
         CopyCachedStbImage(id, out);
     } else {
         cacheMutex.unlock();
-        // The image was never cached! TODO report error
+        std::cerr << "ERROR: attempted to copy non-existing image id " << id << std::endl;
     }
 }
 

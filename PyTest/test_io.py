@@ -95,7 +95,7 @@ class TestInputOutput(unittest.TestCase):
 
         os.remove("image.hdr")
 
-    def test_write_layers(self):
+    def test_write_layers_read_default(self):
         img = np.array([
             [[1.0,0.0,0.0], [0.0,1.0,0.0], [0.0,0.0,1.0]],
             [[0.5,0.0,0.0], [0.0,0.5,0.0], [0.0,0.0,0.5]],
@@ -108,9 +108,46 @@ class TestInputOutput(unittest.TestCase):
             [[0.5,0.0,3.0], [0.0,0.5,3.0], [0.0,0.0,3.5]]
         ], dtype=np.float32)
 
-        sio.write_layered_exr("layered.exr", {"normal": img, "albedo": other})
+        sio.write_layered_exr("layered.exr", {"default": img, "albedo": other})
+        sio.read("layered.exr")
 
-        self.assertTrue(os.path.exists("layered.exr"))
+        self.assertEqual(img[0,0,0], 1.0)
+        self.assertEqual(img[0,0,1], 0.0)
+        self.assertEqual(img[0,0,2], 0.0)
+
+        self.assertEqual(img[0,1,0], 0.0)
+        self.assertEqual(img[0,1,1], 1.0)
+        self.assertEqual(img[0,1,2], 0.0)
+
+        self.assertEqual(img[0,2,0], 0.0)
+        self.assertEqual(img[0,2,1], 0.0)
+        self.assertEqual(img[0,2,2], 1.0)
+
+        self.assertEqual(img[1,0,0], 0.5)
+        self.assertEqual(img[1,0,1], 0.0)
+        self.assertEqual(img[1,0,2], 0.0)
+
+        self.assertEqual(img[1,1,0], 0.0)
+        self.assertEqual(img[1,1,1], 0.5)
+        self.assertEqual(img[1,1,2], 0.0)
+
+        self.assertEqual(img[1,2,0], 0.0)
+        self.assertEqual(img[1,2,1], 0.0)
+        self.assertEqual(img[1,2,2], 0.5)
+
+        self.assertEqual(img[2,0,0], 0.5)
+        self.assertEqual(img[2,0,1], 0.0)
+        self.assertEqual(img[2,0,2], 0.0)
+
+        self.assertEqual(img[2,1,0], 0.0)
+        self.assertEqual(img[2,1,1], 0.5)
+        self.assertEqual(img[2,1,2], 0.0)
+
+        self.assertEqual(img[2,2,0], 0.0)
+        self.assertEqual(img[2,2,1], 0.0)
+        self.assertEqual(img[2,2,2], 0.5)
+
+        os.remove("layered.exr")
 
 if __name__ == "__main__":
     unittest.main()

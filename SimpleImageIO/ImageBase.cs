@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -10,10 +11,9 @@ namespace SimpleImageIO {
     public unsafe class ImageBase : IDisposable {
         public int Width => width;
         public int Height => height;
-        int width, height;
-        protected int numChannels;
+        public int NumChannels => numChannels;
 
-        public ImageBase() {}
+        protected ImageBase() {}
 
         public ImageBase(int w, int h, int numChannels) {
             width = w;
@@ -139,11 +139,38 @@ namespace SimpleImageIO {
             // Read the image from the file, it is cached in native memory
             int id = SimpleImageIOCore.CacheImage(out width, out height, out numChannels, filename);
             if (id < 0 || width <= 0 || height <= 0)
-                throw new System.IO.IOException($"ERROR: Could not load image file '{filename}'");
+                throw new IOException($"ERROR: Could not load image file '{filename}'");
 
             // Copy to managed memory array
             Alloc();
             SimpleImageIOCore.CopyCachedImage(id, dataRaw);
+        }
+
+        public static Dictionary<string, ImageBase> LoadLayersFromFile(string filename) {
+            if (!File.Exists(filename))
+                throw new FileNotFoundException("Image file does not exist.", filename);
+
+            // Read the image from the file, it is cached in native memory
+            int width, height;
+            int id = SimpleImageIOCore.CacheImage(out width, out height, out _, filename);
+            if (id < 0 || width <= 0 || height <= 0)
+                throw new IOException($"ERROR: Could not load image file '{filename}'");
+
+            Dictionary<string, ImageBase> layers = new();
+
+            int numLayers = SimpleImageIOCore.GetExrLayerCount(id);
+            for (int i = 0; i < numLayers; ++i) {
+                int len = SimpleImageIOCore.GetExrLayerNameLen(id, i);
+                StringBuilder nameBuilder = new(len);
+                SimpleImageIOCore.GetExrLayerName(id, i, nameBuilder);
+                string name = nameBuilder.ToString();
+
+                int numChans = SimpleImageIOCore.GetExrLayerChannelCount(id, name);
+                layers[name] = new(width, height, numChans);
+                SimpleImageIOCore.CopyCachedLayer(id, name, layers[name].dataRaw);
+            }
+
+            return layers;
         }
 
         protected void Alloc()
@@ -196,5 +223,7 @@ namespace SimpleImageIO {
         }
 
         public IntPtr dataRaw;
+        protected int width, height;
+        protected int numChannels;
     }
 }

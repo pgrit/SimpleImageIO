@@ -1,8 +1,28 @@
+using System;
 using System.Diagnostics;
 
 namespace SimpleImageIO {
     public class RgbImage : ImageBase {
+        private RgbImage() {}
         public RgbImage(int w, int h) : base(w, h, 3) {}
+
+        /// <summary>
+        /// Moves the data of another image into a new RgbImage instance.
+        /// The other image is empty after this operation.
+        /// </summary>
+        public static RgbImage StealData(ImageBase img) {
+            Debug.Assert(img.NumChannels == 3);
+
+            RgbImage result = new();
+            result.dataRaw = img.dataRaw;
+            img.dataRaw = IntPtr.Zero;
+
+            result.width = img.Width;
+            result.height = img.Height;
+            result.numChannels = 3;
+
+            return result;
+        }
 
         public RgbImage(string filename) {
             LoadFromFile(filename);
