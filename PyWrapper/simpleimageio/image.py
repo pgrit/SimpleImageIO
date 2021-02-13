@@ -28,6 +28,30 @@ _free_mem = corelib.core.FreeMemory
 _free_mem.argtypes = [POINTER(c_ubyte)]
 _free_mem.restype = None
 
+_get_layer_count = corelib.core.GetExrLayerCount
+_get_layer_count.argtypes = [c_int]
+_get_layer_count.restype = c_int
+
+_get_layer_chan_count = corelib.core.GetExrLayerChannelCount
+_get_layer_chan_count.argtypes = [c_int, c_char_p]
+_get_layer_chan_count.restype = c_int
+
+_get_layer_name_len = corelib.core.GetExrLayerNameLen
+_get_layer_name_len.argtypes = [c_int, c_int]
+_get_layer_name_len.restype = c_int
+
+_get_layer_name = corelib.core.GetExrLayerName
+_get_layer_name.argtypes = [c_int, c_int, POINTER(c_char)]
+_get_layer_name.restype = None
+
+_copy_layer = corelib.core.CopyCachedLayer
+_copy_layer.argtypes = [c_int, c_char_p, POINTER(c_float)]
+_copy_layer.restype = None
+
+_delete_image = corelib.core.DeleteCachedImage
+_delete_image.argtypes = [c_int]
+_delete_image.restype = None
+
 def read(filename: str):
     w = c_int()
     h = c_int()
@@ -47,6 +71,35 @@ def read(filename: str):
         return buffer[:,:,:3]
 
     return buffer
+
+def read_layered_exr(filename: str):
+    w = c_int()
+    h = c_int()
+    c = c_int()
+    idx = _cache_image(byref(w), byref(h), byref(c), filename.encode('utf-8'))
+    num_layer = _get_layer_count(idx)
+
+    layers = {}
+
+    for i in range(num_layer):
+        num_char = _get_layer_name_len(idx, i)
+        str_buf = create_string_buffer(num_char)
+        _get_layer_name(idx, i, str_buf)
+        name = str_buf.value
+
+        num_chans = _get_layer_chan_count(idx, name)
+        if num_chans == 1:
+            buffer = np.zeros((h.value,w.value), dtype=np.float32)
+        else:
+            buffer = np.zeros((h.value,w.value,num_chans), dtype=np.float32)
+
+        _copy_layer(idx, name, buffer.ctypes.data_as(POINTER(c_float)))
+
+        layers[name.decode('utf-8')] = buffer
+
+    _delete_image(idx)
+
+    return layers
 
 def write(filename: str, data, jpeg_quality = 80):
     corelib.invoke(_write_image, data, filename.encode('utf-8'), jpeg_quality)

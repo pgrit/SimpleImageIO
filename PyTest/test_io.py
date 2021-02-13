@@ -109,43 +109,100 @@ class TestInputOutput(unittest.TestCase):
         ], dtype=np.float32)
 
         sio.write_layered_exr("layered.exr", {"default": img, "albedo": other})
-        sio.read("layered.exr")
+        i = sio.read("layered.exr")
 
-        self.assertEqual(img[0,0,0], 1.0)
-        self.assertEqual(img[0,0,1], 0.0)
-        self.assertEqual(img[0,0,2], 0.0)
+        self.assertEqual(img[0,0,0], i[0,0,0])
+        self.assertEqual(img[0,0,1], i[0,0,1])
+        self.assertEqual(img[0,0,2], i[0,0,2])
 
-        self.assertEqual(img[0,1,0], 0.0)
-        self.assertEqual(img[0,1,1], 1.0)
-        self.assertEqual(img[0,1,2], 0.0)
+        self.assertEqual(img[0,1,0], i[0,1,0])
+        self.assertEqual(img[0,1,1], i[0,1,1])
+        self.assertEqual(img[0,1,2], i[0,1,2])
 
-        self.assertEqual(img[0,2,0], 0.0)
-        self.assertEqual(img[0,2,1], 0.0)
-        self.assertEqual(img[0,2,2], 1.0)
+        self.assertEqual(img[0,2,0], i[0,2,0])
+        self.assertEqual(img[0,2,1], i[0,2,1])
+        self.assertEqual(img[0,2,2], i[0,2,2])
 
-        self.assertEqual(img[1,0,0], 0.5)
-        self.assertEqual(img[1,0,1], 0.0)
-        self.assertEqual(img[1,0,2], 0.0)
+        self.assertEqual(img[1,0,0], i[1,0,0])
+        self.assertEqual(img[1,0,1], i[1,0,1])
+        self.assertEqual(img[1,0,2], i[1,0,2])
 
-        self.assertEqual(img[1,1,0], 0.0)
-        self.assertEqual(img[1,1,1], 0.5)
-        self.assertEqual(img[1,1,2], 0.0)
+        self.assertEqual(img[1,1,0], i[1,1,0])
+        self.assertEqual(img[1,1,1], i[1,1,1])
+        self.assertEqual(img[1,1,2], i[1,1,2])
 
-        self.assertEqual(img[1,2,0], 0.0)
-        self.assertEqual(img[1,2,1], 0.0)
-        self.assertEqual(img[1,2,2], 0.5)
+        self.assertEqual(img[1,2,0], i[1,2,0])
+        self.assertEqual(img[1,2,1], i[1,2,1])
+        self.assertEqual(img[1,2,2], i[1,2,2])
 
-        self.assertEqual(img[2,0,0], 0.5)
-        self.assertEqual(img[2,0,1], 0.0)
-        self.assertEqual(img[2,0,2], 0.0)
+        self.assertEqual(img[2,0,0], i[2,0,0])
+        self.assertEqual(img[2,0,1], i[2,0,1])
+        self.assertEqual(img[2,0,2], i[2,0,2])
 
-        self.assertEqual(img[2,1,0], 0.0)
-        self.assertEqual(img[2,1,1], 0.5)
-        self.assertEqual(img[2,1,2], 0.0)
+        self.assertEqual(img[2,1,0], i[2,1,0])
+        self.assertEqual(img[2,1,1], i[2,1,1])
+        self.assertEqual(img[2,1,2], i[2,1,2])
 
-        self.assertEqual(img[2,2,0], 0.0)
-        self.assertEqual(img[2,2,1], 0.0)
-        self.assertEqual(img[2,2,2], 0.5)
+        self.assertEqual(img[2,2,0], i[2,2,0])
+        self.assertEqual(img[2,2,1], i[2,2,1])
+        self.assertEqual(img[2,2,2], i[2,2,2])
+
+        os.remove("layered.exr")
+
+    def test_write_layers_read_all(self):
+        img = np.array([
+            [[1.0,0.0,0.0], [0.0,1.0,0.0], [0.0,0.0,1.0]],
+            [[0.5,0.0,0.0], [0.0,0.5,0.0], [0.0,0.0,0.5]],
+            [[0.5,0.0,0.0], [0.0,0.5,0.0], [0.0,0.0,0.5]]
+        ], dtype=np.float32)
+
+        other = np.array([
+            [[1.0,0.0,1.0], [0.0,1.0,1.0], [1.0,0.0,1.0]],
+            [[0.5,0.0,2.0], [0.0,0.5,2.0], [0.0,2.0,0.5]],
+            [[0.5,0.0,3.0], [0.0,0.5,3.0], [0.0,0.0,3.5]]
+        ], dtype=np.float32)
+
+        sio.write_layered_exr("layered.exr", {"default": img, "albedo": other})
+        layers = sio.read_layered_exr("layered.exr")
+
+        self.assertTrue("default" in layers)
+        self.assertTrue("albedo" in layers)
+
+        self.assertEqual(other[0,0,0], layers["albedo"][0,0,0])
+        self.assertEqual(other[0,0,1], layers["albedo"][0,0,1])
+        self.assertEqual(other[0,0,2], layers["albedo"][0,0,2])
+
+        self.assertEqual(other[0,1,0], layers["albedo"][0,1,0])
+        self.assertEqual(other[0,1,1], layers["albedo"][0,1,1])
+        self.assertEqual(other[0,1,2], layers["albedo"][0,1,2])
+
+        self.assertEqual(other[0,2,0], layers["albedo"][0,2,0])
+        self.assertEqual(other[0,2,1], layers["albedo"][0,2,1])
+        self.assertEqual(other[0,2,2], layers["albedo"][0,2,2])
+
+        self.assertEqual(other[1,0,0], layers["albedo"][1,0,0])
+        self.assertEqual(other[1,0,1], layers["albedo"][1,0,1])
+        self.assertEqual(other[1,0,2], layers["albedo"][1,0,2])
+
+        self.assertEqual(other[1,1,0], layers["albedo"][1,1,0])
+        self.assertEqual(other[1,1,1], layers["albedo"][1,1,1])
+        self.assertEqual(other[1,1,2], layers["albedo"][1,1,2])
+
+        self.assertEqual(other[1,2,0], layers["albedo"][1,2,0])
+        self.assertEqual(other[1,2,1], layers["albedo"][1,2,1])
+        self.assertEqual(other[1,2,2], layers["albedo"][1,2,2])
+
+        self.assertEqual(other[2,0,0], layers["albedo"][2,0,0])
+        self.assertEqual(other[2,0,1], layers["albedo"][2,0,1])
+        self.assertEqual(other[2,0,2], layers["albedo"][2,0,2])
+
+        self.assertEqual(other[2,1,0], layers["albedo"][2,1,0])
+        self.assertEqual(other[2,1,1], layers["albedo"][2,1,1])
+        self.assertEqual(other[2,1,2], layers["albedo"][2,1,2])
+
+        self.assertEqual(other[2,2,0], layers["albedo"][2,2,0])
+        self.assertEqual(other[2,2,1], layers["albedo"][2,2,1])
+        self.assertEqual(other[2,2,2], layers["albedo"][2,2,2])
 
         os.remove("layered.exr")
 
