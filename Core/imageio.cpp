@@ -8,7 +8,7 @@
 #include <cassert>
 
 #ifdef _MSC_VER
-#pragma warning(disable: 5208)
+#pragma warning(disable: 4018)
 #endif
 
 #define TINYEXR_IMPLEMENTATION
@@ -16,7 +16,7 @@
 #include "External/tinyexr.h"
 
 #ifdef _MSC_VER
-#pragma warning(default: 5208)
+#pragma warning(default: 4018)
 #endif
 
 #define STB_IMAGE_IMPLEMENTATION
