@@ -31,17 +31,16 @@ class build_ext(build_ext_orig):
         # Configure CMake arguments
         config = 'Release'
         cmake_args = [
-            '-DPYLIB=' + str(extdir.parent.absolute()), # used by --install
+            '-DPYLIB=' + str(extdir.parent.absolute()), # destination for the shared library
             '-DCMAKE_BUILD_TYPE=' + config
         ]
         build_args = [ '--config', config ]
 
-        # Run CMake, then build and install (the latter copies the .dll / .so / .dylib file)
+        # Run CMake and build (automatically copies the .dll / .so / .dylib file)
         os.chdir(str(build_temp))
         self.spawn(['cmake', str(cwd)] + cmake_args)
         if not self.dry_run:
             self.spawn(['cmake', '--build', '.'] + build_args)
-            self.spawn(['cmake', '--install', '.'])
         os.chdir(str(cwd))
 
 with open("README.md", "r") as fh:

@@ -31,6 +31,11 @@ set_target_properties(SimpleImageIOCore
 # MSVC does not report the correct __cplusplus value unless this flag is set
 if(MSVC)
     target_compile_options(SimpleImageIOCore PUBLIC "/Zc:__cplusplus")
+    add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
+
+    set(MSVC_DISABLED_WARNING_LIST
+        "C5208" # unnamed class used in typedef name cannot declare members... (tinyexr.h)
+    )
 endif()
 
 find_package(OpenMP)
@@ -41,11 +46,9 @@ else()
 endif()
 
 if (DEFINED PYLIB)
-    install(TARGETS SimpleImageIOCore
-        DESTINATION ${PYLIB}
-    )
+    add_custom_command(TARGET SimpleImageIOCore POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:SimpleImageIOCore> ${PYLIB})
 else()
-    install(TARGETS SimpleImageIOCore
-        DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../Runtimes
-    )
+    add_custom_command(TARGET SimpleImageIOCore POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:SimpleImageIOCore> ${CMAKE_CURRENT_SOURCE_DIR}/../Runtimes/ )
 endif()
