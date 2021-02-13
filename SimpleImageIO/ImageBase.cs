@@ -170,6 +170,8 @@ namespace SimpleImageIO {
                 SimpleImageIOCore.CopyCachedLayer(id, name, layers[name].dataRaw);
             }
 
+            SimpleImageIOCore.DeleteCachedImage(id);
+
             return layers;
         }
 
