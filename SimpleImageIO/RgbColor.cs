@@ -23,7 +23,7 @@ namespace SimpleImageIO {
 
         public override string ToString() => $"({R}, {G}, {B})";
 
-        public static RgbColor operator *(RgbColor a, RgbColor b) => a * b;
+        public static RgbColor operator *(RgbColor a, RgbColor b) => a.data * b.data;
         public static RgbColor operator *(RgbColor a, float b) => a.data * b;
         public static RgbColor operator *(float a, RgbColor b) => a * b.data;
         public static RgbColor operator /(RgbColor a, float b) => a.data / b;
