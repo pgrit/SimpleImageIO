@@ -124,7 +124,14 @@ namespace SimpleImageIO.Tests {
             otherImage.SetPixel(1, 0, new(1, 0, 1));
             otherImage.SetPixel(1, 1, new(1, 1, 1));
 
-            ImageBase.WriteLayeredExr("layered.exr", ("default", image), ("normal", otherImage));
+            MonochromeImage thirdImage = new(2, 2);
+            thirdImage.SetPixel(0, 0, 1);
+            thirdImage.SetPixel(0, 1, 0.5f);
+            thirdImage.SetPixel(1, 0, 0.1f);
+            thirdImage.SetPixel(1, 1, 0.01f);
+
+            ImageBase.WriteLayeredExr("layered.exr",
+                ("normal", otherImage), ("depth", thirdImage), ("default", image));
             var layers = ImageBase.LoadLayersFromFile("layered.exr");
 
             RgbImage def = RgbImage.StealData(layers["default"]);
@@ -138,6 +145,12 @@ namespace SimpleImageIO.Tests {
             Assert.Equal(otherImage.GetPixel(0, 1), other.GetPixel(0, 1));
             Assert.Equal(otherImage.GetPixel(1, 0), other.GetPixel(1, 0));
             Assert.Equal(otherImage.GetPixel(1, 1), other.GetPixel(1, 1));
+
+            MonochromeImage yetAnother = MonochromeImage.StealData(layers["depth"]);
+            Assert.Equal(thirdImage.GetPixel(0, 0), yetAnother.GetPixel(0, 0));
+            Assert.Equal(thirdImage.GetPixel(0, 1), yetAnother.GetPixel(0, 1));
+            Assert.Equal(thirdImage.GetPixel(1, 0), yetAnother.GetPixel(1, 0));
+            Assert.Equal(thirdImage.GetPixel(1, 1), yetAnother.GetPixel(1, 1));
 
             File.Delete("layered.exr");
         }

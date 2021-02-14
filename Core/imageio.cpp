@@ -494,6 +494,8 @@ void WritePfmImage(const float* data, int rowStride, int width, int height, int 
 
 extern "C" {
 
+// Apparently, layers must be sorted alphabetically by their names!
+// Otherwise, OpenEXR loads them in incorrect order.
 SIIO_API void WriteLayeredExr(const float** datas, int* strides, int width, int height, const int* numChannels,
                               int numLayers, const char** names, const char* filename) {
     WriteImageToExr(datas, strides, width, height, numChannels, numLayers, names, filename);

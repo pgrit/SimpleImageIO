@@ -2,6 +2,7 @@ from ctypes import *
 import numpy as np
 from . import corelib
 import base64
+import collections
 
 _write_image = corelib.core.WriteImage
 _write_image.argtypes = [POINTER(c_float), c_int, c_int, c_int, c_int, c_char_p, c_int]
@@ -105,6 +106,8 @@ def write(filename: str, data, jpeg_quality = 80):
     corelib.invoke(_write_image, data, filename.encode('utf-8'), jpeg_quality)
 
 def write_layered_exr(filename: str, layers: dict):
+    names = sorted(layers.keys())
+
     # Gather the data in the desired layout for the C-API
     num_layers = len(layers)
     images = []
@@ -113,8 +116,9 @@ def write_layered_exr(filename: str, layers: dict):
     width = -1
     height = -1
     num_channels = []
-    names = []
-    for name, img in layers.items():
+    cstr_names = []
+    for name in names:
+        img = layers[name]
         buffer, (stride, w, h, c) = corelib.get_numpy_data(img)
         images.append(buffer.ctypes.data_as(POINTER(c_float)))
         strides.append(stride)
@@ -123,11 +127,12 @@ def write_layered_exr(filename: str, layers: dict):
         width = w
         height = h
         num_channels.append(c)
-        names.append(name.encode('utf-8'))
+        cstr_names.append(name.encode('utf-8'))
 
     _write_layered_exr((POINTER(c_float) * num_layers)(*images),
         (c_int * num_layers)(*strides), width, height,
-        (c_int * num_layers)(*num_channels), num_layers, (c_char_p * num_layers)(*names), filename.encode('utf-8'))
+        (c_int * num_layers)(*num_channels), num_layers, (c_char_p * num_layers)(*cstr_names),
+        filename.encode('utf-8'))
 
 def base64_png(img):
     numbytes = c_int()
