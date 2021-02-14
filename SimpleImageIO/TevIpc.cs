@@ -240,6 +240,7 @@ namespace SimpleImageIO {
 
             // How many rows to transmit at once. Set to be large enough, yet below tev's buffer size.
             int stride = 200000 / layers[0].image.Width;
+            stride = Math.Clamp(stride, 1, layers[0].image.Height);
 
             var updatePacket = new UpdateImagePacket {
                 ImageName = name,

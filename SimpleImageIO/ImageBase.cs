@@ -20,6 +20,10 @@ namespace SimpleImageIO {
             height = h;
             this.numChannels = numChannels;
             Alloc();
+
+            // Zero out the values to avoid undefined contents
+            Span<float> data = new(dataRaw.ToPointer(), width * height * numChannels);
+            data.Clear();
         }
 
         int GetIndex(int col, int row) => (row * width + col) * numChannels;

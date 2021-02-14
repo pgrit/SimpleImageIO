@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimpleImageIO.Tests", "Simp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleImageIO.Benchmark", "SimpleImageIO.Benchmark\SimpleImageIO.Benchmark.csproj", "{F58938A1-1695-4D7A-858C-A163F6E33FEA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleImageIO.Integration", "SimpleImageIO.Integration\SimpleImageIO.Integration.csproj", "{B355E580-F543-4B98-AF2F-A818DC836F2C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,6 +57,18 @@ Global
 		{F58938A1-1695-4D7A-858C-A163F6E33FEA}.Release|x64.Build.0 = Release|Any CPU
 		{F58938A1-1695-4D7A-858C-A163F6E33FEA}.Release|x86.ActiveCfg = Release|Any CPU
 		{F58938A1-1695-4D7A-858C-A163F6E33FEA}.Release|x86.Build.0 = Release|Any CPU
+		{B355E580-F543-4B98-AF2F-A818DC836F2C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B355E580-F543-4B98-AF2F-A818DC836F2C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B355E580-F543-4B98-AF2F-A818DC836F2C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B355E580-F543-4B98-AF2F-A818DC836F2C}.Debug|x64.Build.0 = Debug|Any CPU
+		{B355E580-F543-4B98-AF2F-A818DC836F2C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B355E580-F543-4B98-AF2F-A818DC836F2C}.Debug|x86.Build.0 = Debug|Any CPU
+		{B355E580-F543-4B98-AF2F-A818DC836F2C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B355E580-F543-4B98-AF2F-A818DC836F2C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B355E580-F543-4B98-AF2F-A818DC836F2C}.Release|x64.ActiveCfg = Release|Any CPU
+		{B355E580-F543-4B98-AF2F-A818DC836F2C}.Release|x64.Build.0 = Release|Any CPU
+		{B355E580-F543-4B98-AF2F-A818DC836F2C}.Release|x86.ActiveCfg = Release|Any CPU
+		{B355E580-F543-4B98-AF2F-A818DC836F2C}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
