@@ -46,6 +46,39 @@ class TestInputOutput(unittest.TestCase):
         self.assertEqual(px[1,2,2], 0.5)
         os.remove("image.exr")
 
+    def test_small_image_pfm(self):
+        sio.write("image.pfm", [
+            [[1.0,0.0,0.0], [0.0,1.0,0.0], [0.0,0.0,1.0]],
+            [[0.5,0.0,0.0], [0.0,0.5,0.0], [0.0,0.0,0.5]],
+            [[0.5,0.0,0.0], [0.0,0.5,0.0], [0.0,0.0,0.5]]
+        ])
+        px = sio.read("image.pfm")
+
+        self.assertEqual(px[0,0,0], 1.0)
+        self.assertEqual(px[0,0,1], 0.0)
+        self.assertEqual(px[0,0,2], 0.0)
+
+        self.assertEqual(px[0,1,0], 0.0)
+        self.assertEqual(px[0,1,1], 1.0)
+        self.assertEqual(px[0,1,2], 0.0)
+
+        self.assertEqual(px[0,2,0], 0.0)
+        self.assertEqual(px[0,2,1], 0.0)
+        self.assertEqual(px[0,2,2], 1.0)
+
+        self.assertEqual(px[1,0,0], 0.5)
+        self.assertEqual(px[1,0,1], 0.0)
+        self.assertEqual(px[1,0,2], 0.0)
+
+        self.assertEqual(px[1,1,0], 0.0)
+        self.assertEqual(px[1,1,1], 0.5)
+        self.assertEqual(px[1,1,2], 0.0)
+
+        self.assertEqual(px[1,2,0], 0.0)
+        self.assertEqual(px[1,2,1], 0.0)
+        self.assertEqual(px[1,2,2], 0.5)
+        os.remove("image.pfm")
+
     def test_alphapng(self):
         img = sio.read("ImageWithAlpha.png")
 

@@ -2,10 +2,14 @@
 
 #include <unordered_map>
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <vector>
 #include <mutex>
 #include <cassert>
+
+constexpr float testfloat = -0.0f;
+static const bool systemIsBigEndian = ((const char*)&testfloat)[0] != 0;
 
 #ifdef _MSC_VER
 #pragma warning(disable: 4018)
@@ -55,9 +59,14 @@ struct ExrImageData {
     EXRImage image;
 };
 
+struct PfmImageData {
+    std::vector<float> data;
+};
+
 static std::mutex cacheMutex;
 static std::unordered_map<int, ExrImageData> exrImages;
 static std::unordered_map<int, StbImageData> stbImages;
+static std::unordered_map<int, PfmImageData> pfmImages;
 static int nextIndex = 0;
 
 int CacheExrImage(const char* filename) {
@@ -389,6 +398,100 @@ void WriteImageWithStbImage(const float* data, int rowStride, int width, int hei
     }
 }
 
+int CachePfmImage(int* width, int* height, int* numChannels, const char* filename) {
+    std::ifstream in(filename, std::ios_base::binary);
+    if (!in) {
+        std::cerr << "ERROR: Could not read file: " << filename << std::endl;
+        return -1;
+    }
+
+    // Read the header (three lines of text)
+    std::string typeStr;
+    std::getline(in, typeStr);
+    std::string resStr;
+    std::getline(in, resStr);
+    std::string byteorderStr;
+    std::getline(in, byteorderStr);
+
+    // Parse the header
+    if (typeStr == "Pf") { // monochrome
+        *numChannels = 1;
+    } else if (typeStr == "PF") { // rgb
+        *numChannels = 3;
+    } else {
+        std::cerr << "ERROR: Could not read file: " << filename << ". Invalid type: " << typeStr << std::endl;
+        return -1;
+    }
+
+    std::istringstream str(resStr);
+    str >> *width >> *height;
+
+    if (*width <= 0 || *height <= 0) {
+        std::cerr << "ERROR: Invalid image dimensions in file: " << filename << ". Width is "
+                  << *width << ", and height is " << *height << std::endl;
+        return -1;
+    }
+
+    // Check if there is a difference in the endianness of the file and the system
+    str = std::istringstream(byteorderStr);
+    float byteorder;
+    str >> byteorder;
+    bool fileIsBigEndian = byteorder > 0;
+
+    // Read the file in reverse line order (our convention is top to bottom, pfm is bottom to top)
+    std::vector<float> buffer((*width) * (*height) * (*numChannels));
+    for (int row = (*height) - 1; row >= 0; --row) {
+        int offset = (*width) * (*numChannels) * row;
+        if (fileIsBigEndian && !systemIsBigEndian) {
+            // Read individual floats and reverse byte order
+            for (int i = 0; i < (*width) * (*numChannels); ++i) {
+                char fltbuf[4];
+                in.read(fltbuf, 4);
+                char fltswap[4];
+                fltswap[3] = fltbuf[0];
+                fltswap[2] = fltbuf[1];
+                fltswap[1] = fltbuf[2];
+                fltswap[0] = fltbuf[3];
+                buffer[offset + i] = *((float*)fltswap);
+            }
+        } else {
+            in.read((char*)(buffer.data() + offset), (*width) * (*numChannels) * 4);
+        }
+    }
+
+    cacheMutex.lock();
+    const int idx = nextIndex;
+    pfmImages.emplace(idx, std::move(PfmImageData{std::move(buffer)}));
+    nextIndex++;
+    cacheMutex.unlock();
+
+    return idx;
+}
+
+void WritePfmImage(const float* data, int rowStride, int width, int height, int numChannels, const char* filename) {
+    std::ofstream out(filename, std::ios_base::binary);
+
+    std::ostringstream str;
+    if (numChannels == 1)
+        str << "Pf\n";
+    else if (numChannels == 3)
+        str << "PF\n";
+    else {
+        std::cerr << "ERROR: .pfm format does not support " << numChannels << " channel images" << std::endl;
+        return;
+    }
+    str << width << " " << height << "\n";
+    str << (systemIsBigEndian ? "1.0" : "-1.0") << "\n";
+    auto header = str.str();
+
+    out << header;
+
+    for (int row = height - 1; row >= 0; --row) {
+        int offset = width * numChannels * row;
+        out.write((const char*)(data + offset), width * numChannels * 4);
+    }
+}
+
 extern "C" {
 
 SIIO_API void WriteLayeredExr(const float** datas, int* strides, int width, int height, const int* numChannels,
@@ -402,6 +505,8 @@ SIIO_API void WriteImage(const float* data, int rowStride, int width, int height
     if (fname.compare(fname.size() - 4, 4, ".exr") == 0) {
         // This is an .exr image, write it with tinyexr
         WriteImageToExr(&data, &rowStride, width, height, &numChannels, 1, nullptr, filename);
+    } else if (fname.compare(fname.size() - 4, 4, ".pfm") == 0) {
+        return WritePfmImage(data, rowStride, width, height, numChannels, filename);
     } else {
         // This is some other format, assume that stb_image can handle it
         WriteImageWithStbImage(data, rowStride, width, height, numChannels, filename, jpegQuality);
@@ -436,6 +541,8 @@ SIIO_API int CacheImage(int* width, int* height, int* numChannels, const char* f
         cacheMutex.unlock();
 
         return idx;
+    } else if (fname.compare(fname.size() - 4, 4, ".pfm") == 0) {
+        return CachePfmImage(width, height, numChannels, filename);
     } else {
         // This is some other format, assume that stb_image can handle it
         return CacheStbImage(width, height, numChannels, filename);
@@ -496,6 +603,10 @@ SIIO_API void CopyCachedImage(int id, float* out) {
     } else if (stbImages.find(id) != stbImages.end()) {
         cacheMutex.unlock();
         CopyCachedStbImage(id, out);
+    } else if (pfmImages.find(id) != pfmImages.end()) {
+        std::copy(pfmImages[id].data.begin(), pfmImages[id].data.end(), out);
+        pfmImages.erase(id);
+        cacheMutex.unlock();
     } else {
         cacheMutex.unlock();
         std::cerr << "ERROR: attempted to copy non-existing image id " << id << std::endl;

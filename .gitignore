@@ -21,7 +21,9 @@ Runtimes/*
 # Generated images
 PyTest/*.png
 PyTest/*.exr
+PyTest/*.pfm
 !PyTest/ImageWithAlpha.png
+!PyTest/memorial.pfm
 SimpleImageIO.Benchmark/*.png
 SimpleImageIO.Benchmark/*.jpg
 SimpleImageIO.Benchmark/*.exr

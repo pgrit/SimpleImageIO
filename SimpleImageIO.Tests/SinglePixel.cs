@@ -20,6 +20,22 @@ namespace SimpleImageIO.Tests {
         }
 
         [Fact]
+        public void WriteThenReadPfm() {
+            RgbImage image = new(1, 1);
+            image.SetPixel(0, 0, Vector3.UnitY);
+            image.WriteToFile("testpixel.pfm");
+
+            RgbImage loaded = new("testpixel.pfm");
+            var pixel = loaded.GetPixel(0, 0);
+
+            Assert.Equal(1, loaded.Width);
+            Assert.Equal(1, loaded.Height);
+            Assert.Equal(0.0f, pixel.R, 4);
+            Assert.Equal(1.0f, pixel.G, 4);
+            Assert.Equal(0.0f, pixel.B, 4);
+        }
+
+        [Fact]
         public void WriteThenReadPng() {
             RgbImage image = new(1, 1);
             image.SetPixel(0, 0, Vector3.UnitY);

@@ -66,3 +66,20 @@ print(f"b64 via file took {time.time() - start} seconds")
 start = time.time()
 sio.base64_png(img)
 print(f"b64 in memory took {time.time() - start} seconds")
+
+# read .pfm and export to .exr, then re-read for comparison
+start = time.time()
+img = sio.read("memorial.pfm")
+print(f"Reading .pfm took {time.time() - start} seconds")
+
+start = time.time()
+sio.write("memorial_test.pfm", img)
+print(f"Writing the .pfm took {time.time() - start} seconds")
+
+start = time.time()
+sio.write("memorial.exr", img)
+print(f"Writing the .pfm to .exr took {time.time() - start} seconds")
+
+start = time.time()
+sio.read("memorial.exr")
+print(f"Reading the .pfm equivalent .exr took {time.time() - start} seconds")
