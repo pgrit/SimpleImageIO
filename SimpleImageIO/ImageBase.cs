@@ -58,7 +58,10 @@ namespace SimpleImageIO {
         public void AtomicAddChannels(int col, int row, params float[] channels) {
             Debug.Assert(channels.Length == numChannels);
 
-            int idx = GetIndex(col, row);
+            int c = Math.Clamp(col, 0, Width - 1);
+            int r = Math.Clamp(row, 0, Height - 1);
+
+            int idx = GetIndex(c, r);
             Span<float> data = new(dataRaw.ToPointer(), width * height * numChannels);
 
             for (int chan = 0; chan < numChannels; ++chan)
