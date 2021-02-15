@@ -6,9 +6,11 @@
 # Simple Image IO
 
 A lightweight C# and Python wrapper to read and write RGB images from / to various file formats.
-Supports .exr via [tinyexr](https://github.com/syoyo/tinyexr) and a number of other formats (including .png, .jpg, .bmp) via [stb_image](https://github.com/nothings/stb/blob/master/stb_image.h) and [stb_image_write](https://github.com/nothings/stb/blob/master/stb_image_write.h).
+Supports .exr (with layers) via [tinyexr](https://github.com/syoyo/tinyexr) and a number of other formats (including .png, .jpg, and .bmp) via [stb_image](https://github.com/nothings/stb/blob/master/stb_image.h) and [stb_image_write](https://github.com/nothings/stb/blob/master/stb_image_write.h).
+We also implement our own importer and exporter for [PFM](http://www.pauldebevec.com/Research/HDR/PFM/).
 
-In addition, the package offers some basic image manipulation functionality, error metrics, and utilities for thread-safe atomic splatting of pixel values (the latter only in C#, Python performance for that kind of thing would be too poor anyway).
+In addition, the package offers some basic image manipulation functionality and error metrics.
+The C# wrapper further offers utilities for thread-safe atomic splatting of pixel values, and sending image data to the [tev](https://github.com/Tom94/tev) viewer via sockets.
 
 The [**Nuget package**](https://www.nuget.org/packages/SimpleImageIO/) contains prebuilt binaries of the C++ wrapper for x86-64 Windows, Ubuntu, and macOS ([.github/workflows/build.yml](.github/workflows/build.yml)).
 The [**Python package**](https://pypi.org/project/SimpleImageIO/) is set up to automatically download an adequate CMake version and compile the C++ code on any platform.
@@ -29,6 +31,28 @@ Reading an image from one of the supported formats is equally simple:
 ```C#
 RgbImage img = new("test.exr");
 Console.WriteLine(img.GetPixel(0, 0).Luminance);
+```
+
+The pixel coordinate (0,0) corresponds to the top left corner of the image. Coordinates outside the valid range are clamped automatically; no error is raised. The framework also offers a `MonochromeImage` with a single channel per pixel. Further, the base class `ImageBase` can be used directly for images with arbitrary channel count (`RgbImage` and `MonochromeImage` only add some convenience functions like directly returning an `RgbColor` object).
+
+As an added bonus, the C# wrapper can connect to the [tev](https://github.com/Tom94/tev) HDR viewer and directly display image data via sockets. The following example generates a monochrome image and sends it to tev:
+
+```C#
+TevIpc tevIpc = new(); // uses tev's default port on localhost
+
+// Create the image and initialize a tev sync
+MonochromeImage image = new(width: 20, height: 10);
+tevIpc.CreateImageSync("MyAwesomeImage", 20, 10, ("default", image));
+
+// Pretend we are a renderer and write some image data.
+image.SetPixel(0, 0, val: 1);
+image.SetPixel(10, 0, val: 2);
+image.SetPixel(0, 9, val: 5);
+image.SetPixel(10, 9, val: 10);
+
+// Tell the TevIpc class to update the image displayed by tev
+// (this currently retransmitts all pixel values)
+tevIpc.UpdateImage("MyAwesomeImage");
 ```
 
 ## Usage example (Python)
