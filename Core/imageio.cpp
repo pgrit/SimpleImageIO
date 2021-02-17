@@ -225,7 +225,7 @@ void WriteImageToExr(const float** layers, const int* rowStrides, int width, int
     InitEXRImage(&image);
     EXRHeader header;
     InitEXRHeader(&header);
-    header.compression_type = TINYEXR_COMPRESSIONTYPE_ZIP;
+    header.compression_type = TINYEXR_COMPRESSIONTYPE_PIZ;
 
     // Count the total number of channels
     int totalChannels = 0;
