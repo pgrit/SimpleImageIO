@@ -187,7 +187,11 @@ namespace SimpleImageIO {
         protected void Alloc()
         => dataRaw = Marshal.AllocHGlobal(sizeof(float) * numChannels * width * height);
 
-        protected void Free() => Marshal.FreeHGlobal(dataRaw);
+        protected void Free() {
+            if (dataRaw == IntPtr.Zero) return;
+            Marshal.FreeHGlobal(dataRaw);
+            dataRaw = IntPtr.Zero;
+        }
 
         ~ImageBase() => Free();
         public void Dispose() => Free();
