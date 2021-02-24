@@ -6,7 +6,8 @@ namespace SimpleImageIO.Integration {
             Console.WriteLine("Please make sure that tev is running and listening on 127.0.0.1:14158");
             ValidateTevIpc.SendMonochrome();
             ValidateTevIpc.SendRgb();
-            Console.WriteLine("You should now see a grayscale image and an RGB image in tev.");
+            ValidateTevIpc.SendRgb_WindowsSlashes();
+            Console.WriteLine("You should now see a grayscale image and two identical RGB images in tev.");
             Console.WriteLine("Are the images correct? [y/n]");
 
             int x = Console.Read();

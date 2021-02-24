@@ -162,6 +162,13 @@ namespace SimpleImageIO {
             }
         }
 
+        /// <summary>
+        /// Applies the same transformations on the file path that tev also does.
+        /// Without this, existing images cannot be modified or closed.
+        /// </summary>
+        string SanitizePath(string original)
+        => original.Replace(System.IO.Path.AltDirectorySeparatorChar, System.IO.Path.DirectorySeparatorChar);
+
         public void CreateImageSync(string name, int width, int height, params (string, ImageBase)[] layers) {
             if (client == null) return;
 
@@ -188,7 +195,7 @@ namespace SimpleImageIO {
             }
 
             var packet = new CreateImagePacket {
-                ImageName = name,
+                ImageName = SanitizePath(name),
                 GrabFocus = false,
                 Width = width,
                 Height = height,
@@ -206,7 +213,7 @@ namespace SimpleImageIO {
                 syncedImages.Remove(name);
 
             var packet = new CloseImagePacket {
-                ImageName = name
+                ImageName = SanitizePath(name)
             };
             var bytes = packet.IpcPacket;
             stream.Write(bytes, 0, bytes.Length);
@@ -217,7 +224,7 @@ namespace SimpleImageIO {
 
             var packet = new OpenImagePacket {
                 GrabFocus = false,
-                ImageName = filename
+                ImageName = SanitizePath(filename)
             };
             var bytes = packet.IpcPacket;
             stream.Write(bytes, 0, bytes.Length);
@@ -228,7 +235,7 @@ namespace SimpleImageIO {
 
             var packet = new ReloadImagePacket {
                 GrabFocus = false,
-                ImageName = filename
+                ImageName = SanitizePath(filename)
             };
             var bytes = packet.IpcPacket;
             stream.Write(bytes, 0, bytes.Length);
@@ -243,7 +250,7 @@ namespace SimpleImageIO {
             stride = Math.Clamp(stride, 1, layers[0].image.Height);
 
             var updatePacket = new UpdateImagePacket {
-                ImageName = name,
+                ImageName = SanitizePath(name),
                 GrabFocus = false,
                 Width = layers[0].image.Width,
                 Data = new float[layers[0].image.Width * stride]
