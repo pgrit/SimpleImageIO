@@ -47,9 +47,9 @@ namespace SimpleImageIO {
         public float GetPixel(int col, int row) => GetPixelChannel(col, row, 0);
 
         public void SetPixel(int col, int row, float val)
-        => SetPixelChannels(col, row, val);
+        => SetPixelChannel(col, row, 0, val);
 
         public void AtomicAdd(int col, int row, float val)
-        => AtomicAddChannels(col, row, val);
+        => AtomicAddChannel(col, row, 0, val);
     }
 }

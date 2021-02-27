@@ -1,6 +1,7 @@
 # IDE related
 .vs
 .vscode/settings.json
+.idea
 
 # OS related
 .DS_Store

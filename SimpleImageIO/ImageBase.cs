@@ -13,6 +13,8 @@ namespace SimpleImageIO {
         public int Height => height;
         public int NumChannels => numChannels;
 
+        public Span<float> RawData => new(dataRaw.ToPointer(), width * height * numChannels);
+
         protected ImageBase() {}
 
         public ImageBase(int w, int h, int numChannels) {
@@ -22,8 +24,7 @@ namespace SimpleImageIO {
             Alloc();
 
             // Zero out the values to avoid undefined contents
-            Span<float> data = new(dataRaw.ToPointer(), width * height * numChannels);
-            data.Clear();
+            RawData.Clear();
         }
 
         int GetIndex(int col, int row) => (row * width + col) * numChannels;
@@ -34,8 +35,7 @@ namespace SimpleImageIO {
             int c = Math.Clamp(col, 0, Width - 1);
             int r = Math.Clamp(row, 0, Height - 1);
 
-            Span<float> data = new(dataRaw.ToPointer(), width * height * numChannels);
-            return data[GetIndex(c, r) + chan];
+            return RawData[GetIndex(c, r) + chan];
         }
 
         public void SetPixelChannels(int col, int row, params float[] channels) {
@@ -44,10 +44,14 @@ namespace SimpleImageIO {
             int c = Math.Clamp(col, 0, Width - 1);
             int r = Math.Clamp(row, 0, Height - 1);
 
-            Span<float> data = new(dataRaw.ToPointer(), width * height * numChannels);
-
             for (int chan = 0; chan < numChannels; ++chan)
-                data[GetIndex(c, r) + chan] = channels[chan];
+                RawData[GetIndex(c, r) + chan] = channels[chan];
+        }
+
+        public void SetPixelChannel(int col, int row, int chan, float value) {
+            int c = Math.Clamp(col, 0, Width - 1);
+            int r = Math.Clamp(row, 0, Height - 1);
+            RawData[GetIndex(c, r) + chan] = value;
         }
 
         void AtomicAddFloat(ref float target, float value) {
@@ -59,35 +63,37 @@ namespace SimpleImageIO {
                 computedValue, initialValue));
         }
 
+        public void AtomicAddChannel(int col, int row, int chan, float value) {
+            int c = Math.Clamp(col, 0, Width - 1);
+            int r = Math.Clamp(row, 0, Height - 1);
+            int idx = GetIndex(c, r);
+            AtomicAddFloat(ref RawData[idx + chan], value);
+        }
+
         public void AtomicAddChannels(int col, int row, params float[] channels) {
             Debug.Assert(channels.Length == numChannels);
 
             int c = Math.Clamp(col, 0, Width - 1);
             int r = Math.Clamp(row, 0, Height - 1);
-
             int idx = GetIndex(c, r);
-            Span<float> data = new(dataRaw.ToPointer(), width * height * numChannels);
-
             for (int chan = 0; chan < numChannels; ++chan)
-                AtomicAddFloat(ref data[idx + chan], channels[chan]);
+                AtomicAddFloat(ref RawData[idx + chan], channels[chan]);
         }
 
         public void Scale(float s)
         => Parallel.For(0, Height, row => {
-            Span<float> data = new(dataRaw.ToPointer(), width * height * numChannels);
             for (int col = 0; col < Width; ++col) {
                 for (int chan = 0; chan < numChannels; ++chan)
-                    data[GetIndex(col, row) + chan] *= s;
+                    RawData[GetIndex(col, row) + chan] *= s;
             }
         });
 
         public float ComputeSum() {
             float result = 0;
-            Span<float> data = new(dataRaw.ToPointer(), width * height * numChannels);
             for (int row = 0; row < Height; ++row) {
                 for (int col = 0; col < Width; ++col) {
                     for (int chan = 0; chan < numChannels; ++chan)
-                        result += data[GetIndex(col, row) + chan];
+                        result += RawData[GetIndex(col, row) + chan];
                 }
             }
             return result;

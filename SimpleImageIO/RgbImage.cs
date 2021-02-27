@@ -55,10 +55,16 @@ namespace SimpleImageIO {
             GetPixelChannel(col, row, 2)
         );
 
-        public void SetPixel(int col, int row, RgbColor rgb)
-        => SetPixelChannels(col, row, rgb.R, rgb.G, rgb.B);
+        public void SetPixel(int col, int row, RgbColor rgb) {
+            SetPixelChannels(col, row, 0, rgb.R);
+            SetPixelChannels(col, row, 1, rgb.G);
+            SetPixelChannels(col, row, 2, rgb.B);
+        }
 
-        public void AtomicAdd(int col, int row, RgbColor rgb)
-        => AtomicAddChannels(col, row, rgb.R, rgb.G, rgb.B);
+        public void AtomicAdd(int col, int row, RgbColor rgb) {
+            AtomicAddChannel(col, row, 0, rgb.R);
+            AtomicAddChannel(col, row, 1, rgb.G);
+            AtomicAddChannel(col, row, 2, rgb.B);
+        }
     }
 }
