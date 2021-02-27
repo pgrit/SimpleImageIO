@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Net.Sockets;
 using System.Text;
 
@@ -37,7 +38,7 @@ namespace SimpleImageIO {
                 return bytes.ToArray();
             }
         }
-    };
+    }
 
     internal struct UpdateImagePacket {
         private const byte Type = 3;
@@ -148,16 +149,16 @@ namespace SimpleImageIO {
     }
 
     public class TevIpc {
-        TcpClient client;
-        NetworkStream stream;
-        Dictionary<string, (string name, ImageBase image)[]> syncedImages = new();
+        readonly TcpClient client;
+        readonly NetworkStream stream;
+        readonly Dictionary<string, (string name, ImageBase image)[]> syncedImages = new();
 
         public TevIpc(string ip = "127.0.0.1", int port = 14158) {
             try {
-                client = new TcpClient("127.0.0.1", 14158);
+                client = new TcpClient(ip, port);
                 stream = client.GetStream();
             } catch(Exception) {
-                System.Console.WriteLine("Warning: Could not connect to tev.");
+                Console.WriteLine("Warning: Could not connect to tev.");
                 client = null;
             }
         }
@@ -167,7 +168,7 @@ namespace SimpleImageIO {
         /// Without this, existing images cannot be modified or closed.
         /// </summary>
         string SanitizePath(string original)
-        => original.Replace(System.IO.Path.AltDirectorySeparatorChar, System.IO.Path.DirectorySeparatorChar);
+        => original.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
 
         public void CreateImageSync(string name, int width, int height, params (string, ImageBase)[] layers) {
             if (client == null) return;
