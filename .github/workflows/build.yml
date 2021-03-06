@@ -40,6 +40,7 @@ jobs:
         otool -l libOpenImageDenoise.1.dylib
         install_name_tool -add_rpath @loader_path/ libOpenImageDenoise.1.dylib
         otool -l libOpenImageDenoise.1.dylib
+        cp libOpenImageDenoise.1.dylib ../../Runtimes/
 
     - name: Test
       working-directory: ${{github.workspace}}
