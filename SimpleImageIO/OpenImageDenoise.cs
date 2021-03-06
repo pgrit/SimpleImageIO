@@ -47,6 +47,22 @@ namespace SimpleImageIO {
 
             Console.WriteLine($"looking for {mappedName}");
 
+            IntPtr handle;
+            if (NativeLibrary.TryLoad(mappedName, out handle)) {
+                Console.WriteLine("Default worked");
+                return handle;
+            }
+
+            if (NativeLibrary.TryLoad(mappedName, assembly, DllImportSearchPath.ApplicationDirectory, out handle)) {
+                Console.WriteLine("ApplicationDirectory worked");
+                return handle;
+            }
+
+            if (NativeLibrary.TryLoad(mappedName, assembly, DllImportSearchPath.AssemblyDirectory, out handle)) {
+                Console.WriteLine("AssemblyDirectory worked");
+                return handle;
+            }
+
             IntPtr res = NativeLibrary.Load(mappedName, assembly, dllImportSearchPath);
             Console.WriteLine(res);
             return res;
