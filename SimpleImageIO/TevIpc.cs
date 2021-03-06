@@ -174,6 +174,7 @@ namespace SimpleImageIO {
             if (client == null) return;
 
             Debug.Assert(!syncedImages.ContainsKey(name));
+            CloseImage(name);
             syncedImages[name] = layers;
 
             // Count channels and generate layer names

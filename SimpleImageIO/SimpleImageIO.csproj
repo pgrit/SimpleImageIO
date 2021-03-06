@@ -21,22 +21,52 @@
   </PropertyGroup>
 
   <!-- Each additional platform requires an entry here, to copy the corresponding native binaries -->
+  <!-- Windows -->
   <ItemGroup>
-    <Content CopyToOutputDirectory="Always"
+    <Content CopyToOutputDirectory="PreserveNewest"
       Include="../Runtimes/SimpleImageIOCore.dll"
       Pack="true"
       PackagePath="runtimes/win-x64/native/"
       Condition="Exists('../Runtimes/SimpleImageIOCore.dll')"/>
-    <Content CopyToOutputDirectory="Always"
+
+    <Content CopyToOutputDirectory="PreserveNewest"
+      Include="../External/OpenImageDenoise/OpenImageDenoise.dll"
+      Pack="true" PackagePath="runtimes/win-x64/native/"/>
+    <Content CopyToOutputDirectory="PreserveNewest"
+      Include="../External/OpenImageDenoise/tbb12.dll"
+      Pack="true" PackagePath="runtimes/win-x64/native/"/>
+  </ItemGroup>
+
+  <!-- Linux -->
+  <ItemGroup>
+    <Content CopyToOutputDirectory="PreserveNewest"
       Include="../Runtimes/libSimpleImageIOCore.so"
       Pack="true"
       PackagePath="runtimes/linux-x64/native/"
       Condition="Exists('../Runtimes/libSimpleImageIOCore.so')"/>
-    <Content CopyToOutputDirectory="Always"
+
+    <Content CopyToOutputDirectory="PreserveNewest"
+      Include="../External/OpenImageDenoise/libOpenImageDenoise.so"
+      Pack="true" PackagePath="runtimes/linux-x64/native/"/>
+    <Content CopyToOutputDirectory="PreserveNewest"
+      Include="../External/OpenImageDenoise/libtbb.so.12"
+      Pack="true" PackagePath="runtimes/linux-x64/native/"/>
+  </ItemGroup>
+
+  <!-- Mac OS X -->
+  <ItemGroup>
+    <Content CopyToOutputDirectory="PreserveNewest"
       Include="../Runtimes/libSimpleImageIOCore.dylib"
       Pack="true"
       PackagePath="runtimes/osx-x64/native/"
       Condition="Exists('../Runtimes/libSimpleImageIOCore.dylib')"/>
+
+    <Content CopyToOutputDirectory="PreserveNewest"
+      Include="../External/OpenImageDenoise/libOpenImageDenoise.dylib"
+      Pack="true" PackagePath="runtimes/osx-x64/native/"/>
+    <Content CopyToOutputDirectory="PreserveNewest"
+      Include="../External/OpenImageDenoise/libtbb.12.dylib"
+      Pack="true" PackagePath="runtimes/osx-x64/native/"/>
   </ItemGroup>
 
   <ItemGroup>

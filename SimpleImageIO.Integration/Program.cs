@@ -2,7 +2,7 @@
 
 namespace SimpleImageIO.Integration {
     class Program {
-        static int Main(string[] args) {
+        static int TestTev() {
             Console.WriteLine("Please make sure that tev is running and listening on 127.0.0.1:14158");
             ValidateTevIpc.SendMonochrome();
             ValidateTevIpc.SendRgb();
@@ -15,6 +15,14 @@ namespace SimpleImageIO.Integration {
                 return 0;
 
             return -1;
+        }
+
+        static int Main(string[] args) {
+            TestDenoise.TestPathTracer();
+            TestDenoise.TestBidir();
+            TestDenoise.TestVcm();
+            return 0;
+            // return TestTev();
         }
     }
 }

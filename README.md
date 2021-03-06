@@ -8,9 +8,9 @@
 A lightweight C# and Python wrapper to read and write RGB images from / to various file formats.
 Supports .exr (with layers) via [tinyexr](https://github.com/syoyo/tinyexr) and a number of other formats (including .png, .jpg, and .bmp) via [stb_image](https://github.com/nothings/stb/blob/master/stb_image.h) and [stb_image_write](https://github.com/nothings/stb/blob/master/stb_image_write.h).
 We also implement our own importer and exporter for [PFM](http://www.pauldebevec.com/Research/HDR/PFM/).
-
 In addition, the package offers some basic image manipulation functionality and error metrics.
-The C# wrapper further offers utilities for thread-safe atomic splatting of pixel values, and sending image data to the [tev](https://github.com/Tom94/tev) viewer via sockets.
+
+The C# wrapper further offers utilities for thread-safe atomic splatting of pixel values, and sending image data to the [tev](https://github.com/Tom94/tev) viewer via sockets. It also contains a very basic wrapper around [Intel Open Image Denoise](https://github.com/OpenImageDenoise/oidn).
 
 The [**Nuget package**](https://www.nuget.org/packages/SimpleImageIO/) contains prebuilt binaries of the C++ wrapper for x86-64 Windows, Ubuntu, and macOS ([.github/workflows/build.yml](.github/workflows/build.yml)).
 The [**Python package**](https://pypi.org/project/SimpleImageIO/) is set up to automatically download an adequate CMake version and compile the C++ code on any platform.
@@ -108,6 +108,8 @@ The [SimpleImageIO.csproj](SimpleImageIO/SimpleImageIO.csproj) file needs to cop
 Currently, the runtime identifiers (RID) and copy instructions are only set for the x86-64 versions of Windows, Linux, and macOS.
 To run the framework on other architectures, you will need to add them to the .csproj file.
 You can find the right RID for your platform here: [https://docs.microsoft.com/en-us/dotnet/core/rid-catalog](https://docs.microsoft.com/en-us/dotnet/core/rid-catalog).
+
+Note that, currently, Open Image Denoise is included in binary from. The `Denoiser` class can therefore not be used on platforms other than x86-64 Windows, Linux, or macOS. Attempting to use it on other platforms will cause a `DllNotFound` exception.
 
 Then, you should be able to follow the steps above and proceed as usual.
 

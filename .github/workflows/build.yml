@@ -36,7 +36,9 @@ jobs:
 
     - name: Test
       working-directory: ${{github.workspace}}
-      run: dotnet test
+      run: |
+        dotnet test
+        dotnet run -p SimpleImageIO.Integration
 
     - name: Upload Binaries
       uses: actions/upload-artifact@v2
