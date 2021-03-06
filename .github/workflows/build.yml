@@ -38,7 +38,7 @@ jobs:
       working-directory: ${{github.workspace}}
       run: |
         dotnet test
-        DYLD_LIBRARY_PATH=${{github.workspace}}/External/OpenImageDenoise DYLD_PRINT_LIBRARIES=YES dotnet run -p SimpleImageIO.Integration
+        dotnet run -p SimpleImageIO.Integration
 
     - name: Upload Binaries
       uses: actions/upload-artifact@v2
