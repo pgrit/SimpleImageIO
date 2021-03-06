@@ -38,7 +38,7 @@ jobs:
       working-directory: ${{github.workspace}}/External/OpenImageDenoise
       run: |
         otool -l libOpenImageDenoise.1.dylib
-        install_name_tool -add_rpath @load_path/ libOpenImageDenoise.1.dylib
+        install_name_tool -add_rpath @loader_path/ libOpenImageDenoise.1.dylib
         otool -l libOpenImageDenoise.1.dylib
 
     - name: Test
