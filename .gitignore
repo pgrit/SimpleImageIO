@@ -28,4 +28,4 @@ PyTest/*.pfm
 SimpleImageIO.Benchmark/*.png
 SimpleImageIO.Benchmark/*.jpg
 SimpleImageIO.Benchmark/*.exr
-SimpleImageIO.Integration/denoised*.exr
+/denoised*.exr
