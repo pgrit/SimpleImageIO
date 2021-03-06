@@ -102,6 +102,14 @@ dotnet test
 
 That's it. Simply add a reference to `SimpleImageIO/SimpleImageIO.csproj` to your project and you should be up and running.
 
+#### MacOS and Open Image Denoise
+
+The official Open Image Denoise binaries have the rpath set to `@executable_path/`. However, the `libtbb.12.dylib` file will be next to the `libOpenImageDenoise.1.dylib` and we do not know where that is relative to our executable. Therefore, we need to add `@loader_path/` to the rpath:
+
+```
+install_name_tool -add_rpath @loader_path/ libOpenImageDenoise.1.dylib
+```
+
 ### Building the C# wrapper on other platforms
 
 The [SimpleImageIO.csproj](SimpleImageIO/SimpleImageIO.csproj) file needs to copy the correct .dll / .so / .dylib file to the appropriate runtime folder.
