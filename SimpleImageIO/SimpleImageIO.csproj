@@ -62,7 +62,7 @@
       Condition="Exists('../Runtimes/libSimpleImageIOCore.dylib')"/>
 
     <Content CopyToOutputDirectory="PreserveNewest"
-      Include="../External/OpenImageDenoise/libOpenImageDenoise.dylib"
+      Include="../External/OpenImageDenoise/libOpenImageDenoise.1.dylib"
       Pack="true" PackagePath="runtimes/osx-x64/native/"/>
     <Content CopyToOutputDirectory="PreserveNewest"
       Include="../External/OpenImageDenoise/libtbb.12.dylib"

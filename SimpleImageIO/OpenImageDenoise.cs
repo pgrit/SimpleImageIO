@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using System.Runtime.InteropServices;
 
 namespace SimpleImageIO {
@@ -29,42 +30,60 @@ namespace SimpleImageIO {
     }
 
     internal static class OpenImageDenoise {
+        const string LibName = "OpenImageDenoise";
+
+        static OpenImageDenoise() {
+            NativeLibrary.SetDllImportResolver(typeof(OpenImageDenoise).Assembly, ImportResolver);
+        }
+
+        private static IntPtr ImportResolver(string libraryName, Assembly assembly,
+                                             DllImportSearchPath? dllImportSearchPath) {
+            string mappedName = libraryName;
+
+            // Linking on OS X only works correctly if the file contains the version number.
+            if (libraryName == LibName && RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
+                mappedName = "OpenImageDenoise.1.dylib";
+            }
+
+            return NativeLibrary.Load(mappedName, assembly, dllImportSearchPath);
+        }
+
         #region Device
 
-        [DllImport("OpenImageDenoise", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr oidnNewDevice(OIDNDeviceType type);
 
-        [DllImport("OpenImageDenoise", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
         public static extern void oidnReleaseDevice(IntPtr device);
 
-        [DllImport("OpenImageDenoise", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
         public static extern void oidnCommitDevice(IntPtr device);
 
-        [DllImport("OpenImageDenoise", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
         public static extern OIDNError oidnGetDeviceError(IntPtr device, [Out] out string outMessage);
 
         #endregion Device
 
         #region Filters
 
-        [DllImport("OpenImageDenoise", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr oidnNewFilter(IntPtr device, string type);
 
-        [DllImport("OpenImageDenoise", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
         public static extern void oidnSetSharedFilterImage(IntPtr filter, string name,
             IntPtr ptr, OIDNFormat format, UIntPtr width, UIntPtr height, UIntPtr byteOffset,
             UIntPtr bytePixelStride, UIntPtr byteRowStride);
 
-        [DllImport("OpenImageDenoise", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
         public static extern void oidnSetFilter1b(IntPtr filter, string name, bool value);
 
-        [DllImport("OpenImageDenoise", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
         public static extern void oidnCommitFilter(IntPtr filter);
 
-        [DllImport("OpenImageDenoise", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
         public static extern void oidnExecuteFilter(IntPtr filter);
 
-        [DllImport("OpenImageDenoise", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
         public static extern void oidnReleaseFilter(IntPtr filter);
 
         #endregion Filters
