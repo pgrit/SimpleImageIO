@@ -7,7 +7,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [macos-latest] #ubuntu-latest, windows-latest,
 
     steps:
     - uses: actions/checkout@v2
@@ -31,14 +31,14 @@ jobs:
         dotnet-version: '5.0.x'
 
     # fixes sporadic build fails on Windows (https://github.com/actions/setup-dotnet/issues/155)
-    - name: Clean
-      run: dotnet clean -c Release && dotnet nuget locals all --clear
+    # - name: Clean
+    #   run: dotnet clean -c Release && dotnet nuget locals all --clear
 
     - name: Test
       working-directory: ${{github.workspace}}
       run: |
         dotnet test
-        dotnet run -p SimpleImageIO.Integration
+        DYLD_PRINT_LIBRARIES=YES dotnet run -p SimpleImageIO.Integration
 
     - name: Upload Binaries
       uses: actions/upload-artifact@v2

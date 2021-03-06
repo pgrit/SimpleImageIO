@@ -42,7 +42,7 @@ namespace SimpleImageIO {
 
             // Linking on OS X only works correctly if the file contains the version number.
             if (libraryName == LibName && RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
-                mappedName = "libOpenImageDenoise.1.dylib";
+                mappedName = "libOpenImageDenoise.1";
             }
 
             Console.WriteLine($"looking for {mappedName}");
