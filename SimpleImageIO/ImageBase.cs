@@ -27,6 +27,21 @@ namespace SimpleImageIO {
             RawData.Clear();
         }
 
+        /// <summary>
+        /// Moves the raw data from one image to another. The source image is empty afterwards and should
+        /// no longer be used. If dest is a derived class, like <see cref="RgbImage" /> the user should make
+        /// sure that the number of channels in src is correct.
+        ///
+        /// This is a potentially unsafe operation, use only if you know what you are doing!
+        /// </summary>
+        public static void Move(ImageBase src, ImageBase dest) {
+            dest.dataRaw = src.dataRaw;
+            src.dataRaw = IntPtr.Zero;
+            dest.width = src.Width;
+            dest.height = src.Height;
+            dest.numChannels = src.NumChannels;
+        }
+
         int GetIndex(int col, int row) => (row * width + col) * numChannels;
 
         public float GetPixelChannel(int col, int row, int chan) {
