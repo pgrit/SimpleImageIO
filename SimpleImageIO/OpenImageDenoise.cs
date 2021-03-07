@@ -42,30 +42,10 @@ namespace SimpleImageIO {
 
             // Linking on OS X only works correctly if the file contains the version number.
             if (libraryName == LibName && RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
-                mappedName = "libOpenImageDenoise.1";
+                mappedName = "libOpenImageDenoise.1.dylib";
             }
 
-            Console.WriteLine($"looking for {mappedName}");
-
-            IntPtr handle;
-            if (NativeLibrary.TryLoad(mappedName, out handle)) {
-                Console.WriteLine("Default worked");
-                return handle;
-            }
-
-            if (NativeLibrary.TryLoad(mappedName, assembly, DllImportSearchPath.ApplicationDirectory, out handle)) {
-                Console.WriteLine("ApplicationDirectory worked");
-                return handle;
-            }
-
-            if (NativeLibrary.TryLoad(mappedName, assembly, DllImportSearchPath.AssemblyDirectory, out handle)) {
-                Console.WriteLine("AssemblyDirectory worked");
-                return handle;
-            }
-
-            IntPtr res = NativeLibrary.Load(mappedName, assembly, dllImportSearchPath);
-            Console.WriteLine(res);
-            return res;
+            return NativeLibrary.Load(mappedName, assembly, dllImportSearchPath);
         }
 
         #region Device
