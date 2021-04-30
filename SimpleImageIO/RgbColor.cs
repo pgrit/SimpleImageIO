@@ -12,7 +12,7 @@ namespace SimpleImageIO {
         public float G { get => data.Y; set => data.Y = value; }
         public float B { get => data.Z; set => data.Z = value; }
 
-        // public static implicit operator Vector3(RgbColor color) => color.data;
+        public static implicit operator Vector3(RgbColor color) => color.data;
         public static implicit operator RgbColor(Vector3 color) => new RgbColor { data = color };
 
         public static RgbColor Black = Vector3.Zero;
