@@ -8,19 +8,47 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace SimpleImageIO {
+    /// <summary>
+    /// Wraps an image with arbitrarily many channels that is stored in native memory
+    /// </summary>
     public unsafe class ImageBase : IDisposable {
-        public int Width => width;
-        public int Height => height;
-        public int NumChannels => numChannels;
+        /// <summary>
+        /// Width of the image in pixels
+        /// </summary>
+        public int Width { get; protected set; }
 
-        public Span<float> RawData => new(dataRaw.ToPointer(), width * height * numChannels);
+        /// <summary>
+        /// Height of the image in pixels
+        /// </summary>
+        public int Height { get; protected set; }
 
+        /// <summary>
+        /// Number of channels per pixel (e.g., 3 for RGB, 4 for RGBA, ...)
+        /// </summary>
+        public int NumChannels { get; protected set; }
+
+        /// <summary>
+        /// Pointer to the native memory containing the image data
+        /// </summary>
+        public IntPtr DataPointer;
+
+        /// <summary>
+        /// Provides direct access to the unmanaged memory. Layout is a row major array.
+        /// </summary>
+        public Span<float> RawData => new(DataPointer.ToPointer(), Width * Height * NumChannels);
+
+        /// <summary>
+        /// Creates a new empty image that is not yet managing any data
+        /// </summary>
         protected ImageBase() {}
 
+        /// <summary>
+        /// Creates an image buffer initialized to zero
+        /// </summary>
         public ImageBase(int w, int h, int numChannels) {
-            width = w;
-            height = h;
-            this.numChannels = numChannels;
+            Width = w;
+            Height = h;
+            this.NumChannels = numChannels;
             Alloc();
 
             // Zero out the values to avoid undefined contents
@@ -35,17 +63,25 @@ namespace SimpleImageIO {
         /// This is a potentially unsafe operation, use only if you know what you are doing!
         /// </summary>
         public static void Move(ImageBase src, ImageBase dest) {
-            dest.dataRaw = src.dataRaw;
-            src.dataRaw = IntPtr.Zero;
-            dest.width = src.Width;
-            dest.height = src.Height;
-            dest.numChannels = src.NumChannels;
+            dest.DataPointer = src.DataPointer;
+            src.DataPointer = IntPtr.Zero;
+            dest.Width = src.Width;
+            dest.Height = src.Height;
+            dest.NumChannels = src.NumChannels;
         }
 
-        int GetIndex(int col, int row) => (row * width + col) * numChannels;
+        int GetIndex(int col, int row) => (row * Width + col) * NumChannels;
 
+        
+        /// <summary>
+        /// Gets the value of a specific pixel's channel
+        /// </summary>
+        /// <param name="col">Horizontal pixel coordinate (0 is left)</param>
+        /// <param name="row">Vertical pixel coordinate (0 is top)</param>
+        /// <param name="chan">Channel index</param>
+        /// <returns>Pixel channel value</returns>
         public float GetPixelChannel(int col, int row, int chan) {
-            Debug.Assert(chan < numChannels);
+            Debug.Assert(chan < NumChannels);
 
             int c = Math.Clamp(col, 0, Width - 1);
             int r = Math.Clamp(row, 0, Height - 1);
@@ -53,24 +89,51 @@ namespace SimpleImageIO {
             return RawData[GetIndex(c, r) + chan];
         }
 
+        /// <summary>
+        /// Sets the value all channels in a pixel. Assumes that the number of parameters
+        /// matches the number of channels. Only asserted in debug mode.
+        /// 
+        /// This function can be slow if called often, due to the allocation of the parameter
+        /// array on the heap.
+        /// </summary>
+        /// <param name="col">Horizontal pixel coordinate (0 is left)</param>
+        /// <param name="row">Vertical pixel coordinate (0 is top)</param>
+        /// <param name="channels">
+        ///     Array with the values for each channel. Length needs to match
+        ///     the number of channels.
+        /// </param>
+        /// <returns>Pixel channel value</returns>
         public void SetPixelChannels(int col, int row, params float[] channels) {
-            Debug.Assert(channels.Length == numChannels);
+            Debug.Assert(channels.Length == NumChannels);
 
             int c = Math.Clamp(col, 0, Width - 1);
             int r = Math.Clamp(row, 0, Height - 1);
 
-            for (int chan = 0; chan < numChannels; ++chan)
+            for (int chan = 0; chan < NumChannels; ++chan)
                 RawData[GetIndex(c, r) + chan] = channels[chan];
         }
 
+        /// <summary>
+        /// Sets the value of an individual pixel's channel. Calling this multiple times can be faster
+        /// than using <see cref="SetPixelChannels(int, int, float[])"/>, but involves more code.
+        /// </summary>
+        /// <param name="col">Horizontal pixel coordinate (0 is left)</param>
+        /// <param name="row">Vertical pixel coordinate (0 is top)</param>
+        /// <param name="chan">Channel index</param>
+        /// <param name="value">New value of the channel</param>
         public void SetPixelChannel(int col, int row, int chan, float value) {
             int c = Math.Clamp(col, 0, Width - 1);
             int r = Math.Clamp(row, 0, Height - 1);
             RawData[GetIndex(c, r) + chan] = value;
         }
 
-        void AtomicAddFloat(ref float target, float value) {
+        static void AtomicAddFloat(ref float target, float value) {
             float initialValue, computedValue;
+
+            // Prevent infinite loop if a pixel value is NaN
+            if (!float.IsFinite(target))
+                return;
+
             do {
                 initialValue = target;
                 computedValue = initialValue + value;
@@ -78,6 +141,15 @@ namespace SimpleImageIO {
                 computedValue, initialValue));
         }
 
+        /// <summary>
+        /// Atomically increases the value of a pixel's channel by the given value.
+        /// Can be used in a multi-threading context where multiple threads add values to a
+        /// pixel, like a Monte Carlo renderer.
+        /// </summary>
+        /// <param name="col">Horizontal pixel coordinate (0 is left)</param>
+        /// <param name="row">Vertical pixel coordinate (0 is top)</param>
+        /// <param name="chan">Channel index</param>
+        /// <param name="value">Value to add to the channel</param>
         public void AtomicAddChannel(int col, int row, int chan, float value) {
             int c = Math.Clamp(col, 0, Width - 1);
             int r = Math.Clamp(row, 0, Height - 1);
@@ -85,29 +157,42 @@ namespace SimpleImageIO {
             AtomicAddFloat(ref RawData[idx + chan], value);
         }
 
+        /// <summary>
+        /// Same as <see cref="AtomicAddChannel(int, int, int, float)"/> but for multiple channels at
+        /// once. Only the individual channels are incremented atomically, not the whole pixel value.
+        /// Can be slower than incrementing each individual pixel, due to the allocation of the parameter
+        /// array on the heap.
+        /// </summary>
         public void AtomicAddChannels(int col, int row, params float[] channels) {
-            Debug.Assert(channels.Length == numChannels);
+            Debug.Assert(channels.Length == NumChannels);
 
             int c = Math.Clamp(col, 0, Width - 1);
             int r = Math.Clamp(row, 0, Height - 1);
             int idx = GetIndex(c, r);
-            for (int chan = 0; chan < numChannels; ++chan)
+            for (int chan = 0; chan < NumChannels; ++chan)
                 AtomicAddFloat(ref RawData[idx + chan], channels[chan]);
         }
 
+        /// <summary>
+        /// Scales all values of all channels in all pixels by multiplying them with a scalar
+        /// </summary>
+        /// <param name="s">Scalar to multiply on all values</param>
         public void Scale(float s)
         => Parallel.For(0, Height, row => {
             for (int col = 0; col < Width; ++col) {
-                for (int chan = 0; chan < numChannels; ++chan)
+                for (int chan = 0; chan < NumChannels; ++chan)
                     RawData[GetIndex(col, row) + chan] *= s;
             }
         });
 
+        /// <summary>
+        /// Computes the sum of all pixel and channel values
+        /// </summary>
         public float ComputeSum() {
             float result = 0;
             for (int row = 0; row < Height; ++row) {
                 for (int col = 0; col < Width; ++col) {
-                    for (int chan = 0; chan < numChannels; ++chan)
+                    for (int chan = 0; chan < NumChannels; ++chan)
                         result += RawData[GetIndex(col, row) + chan];
                 }
             }
@@ -120,11 +205,20 @@ namespace SimpleImageIO {
                 System.IO.Directory.CreateDirectory(dirname);
         }
 
+        /// <summary>
+        /// Writes the image into a file. Not all formats support all / arbitrary channel layouts.
+        /// </summary>
+        /// <param name="filename">Name of the file to write, extension must be one of the supported formats</param>
         public void WriteToFile(string filename) {
             EnsureDirectory(filename);
-            SimpleImageIOCore.WriteImage(dataRaw, numChannels * Width, Width, Height, numChannels, filename);
+            SimpleImageIOCore.WriteImage(DataPointer, NumChannels * Width, Width, Height, NumChannels, filename);
         }
 
+        /// <summary>
+        /// Writes a multi-layer .exr file where each layer is represented by a separate image with one or more channels
+        /// </summary>
+        /// <param name="filename">Name of the output .exr file, extension should be .exr</param>
+        /// <param name="layers">Pairs of layer names and layer images to write to the .exr. Must have equal resolutions.</param>
         public static void WriteLayeredExr(string filename, params (string, ImageBase)[] layers) {
             EnsureDirectory(filename);
 
@@ -133,27 +227,31 @@ namespace SimpleImageIO {
             // Assemble the raw data in a C-API compatible format
             List<IntPtr> dataPointers = new();
             List<int> strides = new();
-            List<int> numChannels = new();
+            List<int> NumChannels = new();
             List<string> names = new();
-            int width = layers[0].Item2.Width;
-            int height = layers[0].Item2.Height;
+            int Width = layers[0].Item2.Width;
+            int Height = layers[0].Item2.Height;
             foreach (var (name, img) in layers) {
-                dataPointers.Add(img.dataRaw);
-                strides.Add(img.numChannels * img.Width);
-                numChannels.Add(img.numChannels);
+                dataPointers.Add(img.DataPointer);
+                strides.Add(img.NumChannels * img.Width);
+                NumChannels.Add(img.NumChannels);
                 names.Add(name);
-                Debug.Assert(img.Width == width, "All layers must have the same resolution");
-                Debug.Assert(img.Height == height, "All layers must have the same resolution");
+                Debug.Assert(img.Width == Width, "All layers must have the same resolution");
+                Debug.Assert(img.Height == Height, "All layers must have the same resolution");
             }
 
-            SimpleImageIOCore.WriteLayeredExr(dataPointers.ToArray(), strides.ToArray(), width, height,
-                numChannels.ToArray(), dataPointers.Count, names.ToArray(), filename);
+            SimpleImageIOCore.WriteLayeredExr(dataPointers.ToArray(), strides.ToArray(), Width, Height,
+                NumChannels.ToArray(), dataPointers.Count, names.ToArray(), filename);
         }
 
+        /// <summary>
+        /// Converts the image data to a string containing the base64 encoded .png file.
+        /// Only supports 1, 3, or 4 channel images (monochrome, rgb, rgba)
+        /// </summary>
+        /// <returns>The base64 encoded .png as a string</returns>
         public string AsBase64Png() {
-            int numBytes;
-            IntPtr mem = SimpleImageIOCore.WritePngToMemory(dataRaw, numChannels * Width, Width, Height,
-                numChannels, out numBytes);
+            IntPtr mem = SimpleImageIOCore.WritePngToMemory(DataPointer, NumChannels * Width, Width, Height,
+                NumChannels, out int numBytes);
 
             byte[] bytes = new byte[numBytes];
             Marshal.Copy(mem, bytes, 0, numBytes);
@@ -162,27 +260,38 @@ namespace SimpleImageIO {
             return Convert.ToBase64String(bytes);
         }
 
+        /// <summary>
+        /// Loads an image from one of the supported formats into this object
+        /// </summary>
+        /// <param name="filename">Filename with supported extension</param>
         protected void LoadFromFile(string filename) {
             if (!File.Exists(filename))
                 throw new FileNotFoundException("Image file does not exist.", filename);
 
             // Read the image from the file, it is cached in native memory
-            int id = SimpleImageIOCore.CacheImage(out width, out height, out numChannels, filename);
-            if (id < 0 || width <= 0 || height <= 0)
+            int id = SimpleImageIOCore.CacheImage(out int w, out int h, out int n, filename);
+            Width = w;
+            Height = h;
+            NumChannels = n;
+            if (id < 0 || Width <= 0 || Height <= 0)
                 throw new IOException($"ERROR: Could not load image file '{filename}'");
 
             // Copy to managed memory array
             Alloc();
-            SimpleImageIOCore.CopyCachedImage(id, dataRaw);
+            SimpleImageIOCore.CopyCachedImage(id, DataPointer);
         }
 
+        /// <summary>
+        /// Loads a multi-layer .exr file and separates the layers into individual images
+        /// </summary>
+        /// <param name="filename">Name of an existing .exr image with one or more layers</param>
+        /// <returns>A dictionary where layer names are the keys, and the layer images are the values</returns>
         public static Dictionary<string, ImageBase> LoadLayersFromFile(string filename) {
             if (!File.Exists(filename))
                 throw new FileNotFoundException("Image file does not exist.", filename);
 
             // Read the image from the file, it is cached in native memory
-            int width, height;
-            int id = SimpleImageIOCore.CacheImage(out width, out height, out _, filename);
+            int id = SimpleImageIOCore.CacheImage(out int width, out int height, out _, filename);
             if (id < 0 || width <= 0 || height <= 0)
                 throw new IOException($"ERROR: Could not load image file '{filename}'");
 
@@ -197,7 +306,7 @@ namespace SimpleImageIO {
 
                 int numChans = SimpleImageIOCore.GetExrLayerChannelCount(id, name);
                 layers[name] = new(width, height, numChans);
-                SimpleImageIOCore.CopyCachedLayer(id, name, layers[name].dataRaw);
+                SimpleImageIOCore.CopyCachedLayer(id, name, layers[name].DataPointer);
             }
 
             SimpleImageIOCore.DeleteCachedImage(id);
@@ -205,61 +314,100 @@ namespace SimpleImageIO {
             return layers;
         }
 
+        /// <summary>
+        /// Allocates native memory for the image representation
+        /// </summary>
         protected void Alloc()
-        => dataRaw = Marshal.AllocHGlobal(sizeof(float) * numChannels * width * height);
+        => DataPointer = Marshal.AllocHGlobal(sizeof(float) * NumChannels * Width * Height);
 
+        /// <summary>
+        /// Frees the native memory
+        /// </summary>
         protected void Free() {
-            if (dataRaw == IntPtr.Zero) return;
-            Marshal.FreeHGlobal(dataRaw);
-            dataRaw = IntPtr.Zero;
+            if (DataPointer == IntPtr.Zero) return;
+            Marshal.FreeHGlobal(DataPointer);
+            DataPointer = IntPtr.Zero;
         }
 
+        /// <summary>
+        /// Frees the native memory
+        /// </summary>
         ~ImageBase() => Free();
-        public void Dispose() => Free();
 
+        /// <summary>
+        /// Frees the native memory
+        /// </summary>
+        public void Dispose() {
+            Free();
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Zooms into the image with nearest neighbor interpolation. Useful to ensure that individual pixels
+        /// remain visible for small images, independent of the viewer.
+        /// The current contents of this object are overwritten with the result of the operation
+        /// </summary>
+        /// <param name="other">The image to zoom, will not be modified</param>
+        /// <param name="scale">The scaling factor</param>
         protected void Zoom(ImageBase other, int scale) {
             Debug.Assert(scale > 0);
 
-            if (dataRaw != IntPtr.Zero) Free();
+            if (DataPointer != IntPtr.Zero) Free();
 
-            width = other.width * scale;
-            height = other.height * scale;
-            numChannels = other.numChannels;
+            Width = other.Width * scale;
+            Height = other.Height * scale;
+            NumChannels = other.NumChannels;
             Alloc();
 
-            SimpleImageIOCore.ZoomWithNearestInterp(other.dataRaw, numChannels * other.width, dataRaw,
-                numChannels * width, other.width, other.height, numChannels, scale);
+            SimpleImageIOCore.ZoomWithNearestInterp(other.DataPointer, NumChannels * other.Width, DataPointer,
+                NumChannels * Width, other.Width, other.Height, NumChannels, scale);
         }
 
+        /// <summary>
+        /// Computes the mean square error of two images
+        /// </summary>
+        /// <param name="image">The first image</param>
+        /// <param name="reference">The second image</param>
         public static float MSE(ImageBase image, ImageBase reference) {
             Debug.Assert(image.Width == reference.Width);
             Debug.Assert(image.Height == reference.Height);
-            Debug.Assert(image.numChannels == reference.numChannels);
-            return SimpleImageIOCore.ComputeMSE(image.dataRaw, image.numChannels * image.Width, reference.dataRaw,
-                image.numChannels * reference.Width, image.Width, image.Height, image.numChannels);
+            Debug.Assert(image.NumChannels == reference.NumChannels);
+            return SimpleImageIOCore.ComputeMSE(image.DataPointer, image.NumChannels * image.Width, reference.DataPointer,
+                image.NumChannels * reference.Width, image.Width, image.Height, image.NumChannels);
         }
 
+        /// <summary>
+        /// Computes the relative mean square error of two images
+        /// </summary>
+        /// <param name="image">The first image</param>
+        /// <param name="reference">The second image</param>
+        /// <param name="epsilon">Small offset added to the squared mean to avoid division by zero</param>
+        /// <returns>Mean of: Square error of each pixel, divided by the squared mean</returns>
         public static float RelMSE(ImageBase image, ImageBase reference, float epsilon = 0.001f) {
             Debug.Assert(image.Width == reference.Width);
             Debug.Assert(image.Height == reference.Height);
-            Debug.Assert(image.numChannels == reference.numChannels);
-            return SimpleImageIOCore.ComputeRelMSE(image.dataRaw, image.numChannels * image.Width,
-                reference.dataRaw, image.numChannels * reference.Width, image.Width, image.Height,
-                image.numChannels, epsilon);
+            Debug.Assert(image.NumChannels == reference.NumChannels);
+            return SimpleImageIOCore.ComputeRelMSE(image.DataPointer, image.NumChannels * image.Width,
+                reference.DataPointer, image.NumChannels * reference.Width, image.Width, image.Height,
+                image.NumChannels, epsilon);
         }
 
+        /// <summary>
+        /// Computes the relative mean square error of two images. Ignores a small percentage of the
+        /// brightest pixels. The result is less obscured by outliers this way.
+        /// </summary>
+        /// <param name="image">The first image</param>
+        /// <param name="reference">The second image</param>
+        /// <param name="epsilon">Small offset added to the squared mean to avoid division by zero</param>
+        /// <param name="percentage">Percentage of pixels to ignore</param>
         public static float RelMSE_OutlierRejection(ImageBase image, ImageBase reference,
                                                     float epsilon = 0.001f, float percentage = 0.1f) {
             Debug.Assert(image.Width == reference.Width);
             Debug.Assert(image.Height == reference.Height);
-            Debug.Assert(image.numChannels == reference.numChannels);
-            return SimpleImageIOCore.ComputeRelMSEOutlierReject(image.dataRaw, image.numChannels * image.Width,
-                reference.dataRaw, image.numChannels * reference.Width, image.Width, image.Height,
-                image.numChannels, epsilon, percentage);
+            Debug.Assert(image.NumChannels == reference.NumChannels);
+            return SimpleImageIOCore.ComputeRelMSEOutlierReject(image.DataPointer, image.NumChannels * image.Width,
+                reference.DataPointer, image.NumChannels * reference.Width, image.Width, image.Height,
+                image.NumChannels, epsilon, percentage);
         }
-
-        public IntPtr dataRaw;
-        protected int width, height;
-        protected int numChannels;
     }
 }

@@ -148,11 +148,19 @@ namespace SimpleImageIO {
         }
     }
 
+    /// <summary>
+    /// Provides inter-process communication with the tev (https://github.com/Tom94/tev) image viewer
+    /// </summary>
     public class TevIpc {
         readonly TcpClient client;
         readonly NetworkStream stream;
         readonly Dictionary<string, (string name, ImageBase image)[]> syncedImages = new();
 
+        /// <summary>
+        /// Initializes a new TCP connection to tev
+        /// </summary>
+        /// <param name="ip">The ip where tev is running, defaults to localhost</param>
+        /// <param name="port">The port that tev is listening to (defaults to tev's default)</param>
         public TevIpc(string ip = "127.0.0.1", int port = 14158) {
             try {
                 client = new TcpClient(ip, port);
@@ -167,9 +175,17 @@ namespace SimpleImageIO {
         /// Applies the same transformations on the file path that tev also does.
         /// Without this, existing images cannot be modified or closed.
         /// </summary>
-        string SanitizePath(string original)
+        static string SanitizePath(string original)
         => original.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
 
+        /// <summary>
+        /// Prepares a multi-layer image so it can be displayed and updated in tev.
+        /// The image objects passed to the layers are stored for later updates.
+        /// </summary>
+        /// <param name="name">The unique name of the image. Will also be used as the filename by tev.</param>
+        /// <param name="width">Width in pixels</param>
+        /// <param name="height">Height in pixels</param>
+        /// <param name="layers">Pairs of names and images, one entry for each layer</param>
         public void CreateImageSync(string name, int width, int height, params (string, ImageBase)[] layers) {
             if (client == null) return;
 
@@ -208,6 +224,12 @@ namespace SimpleImageIO {
             stream.Write(bytes, 0, bytes.Length);
         }
 
+        /// <summary>
+        /// Closes an image that is currently open in tev
+        /// </summary>
+        /// <param name="name">
+        ///     The unique name. Either set by <see cref="CreateImageSync"/> or the filename of an opened file
+        /// </param>
         public void CloseImage(string name) {
             if (client == null) return;
 
@@ -221,6 +243,13 @@ namespace SimpleImageIO {
             stream.Write(bytes, 0, bytes.Length);
         }
 
+        /// <summary>
+        /// Opens an image from the file system in tev. 
+        /// </summary>
+        /// <param name="filename">
+        ///     The path to the image that should be opened. This must be on the machine that tev is running
+        ///     on, if tev is not running on the same machine. The image is not loaded by us, only by tev.
+        /// </param>
         public void OpenImage(string filename) {
             if (client == null) return;
 
@@ -232,6 +261,13 @@ namespace SimpleImageIO {
             stream.Write(bytes, 0, bytes.Length);
         }
 
+        /// <summary>
+        /// Instructs tev to refresh an open image from the file system
+        /// </summary>
+        /// <param name="filename">
+        ///     The file path to the previously opened image. Must match an existing / previously passed path 
+        ///     exactly, otherwise tev might have issues finding the image.
+        /// </param>
         public void ReloadImage(string filename) {
             if (client == null) return;
 
@@ -243,6 +279,12 @@ namespace SimpleImageIO {
             stream.Write(bytes, 0, bytes.Length);
         }
 
+        /// <summary>
+        /// Updates the image content of an existing synchronized image added by <see cref="CreateImageSync"/>.
+        /// All current image data in all layer images is sent to tev, as we currently don't support
+        /// tracking changes in <see cref="ImageBase"/>.
+        /// </summary>
+        /// <param name="name">The exact same unique name that was used to create the image synchronization</param>
         public void UpdateImage(string name) {
             if (client == null) return;
             var layers = syncedImages[name];
