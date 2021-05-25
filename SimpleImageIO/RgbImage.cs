@@ -32,6 +32,12 @@ namespace SimpleImageIO {
             return result;
         }
 
+        /// <returns>A deep copy of this object, that is an RgbImage</returns>
+        public override ImageBase Copy() {
+            ImageBase cpyRaw = base.Copy();
+            return RgbImage.StealData(cpyRaw);
+        }
+
         /// <summary>
         /// Loads an RGB image from a file. RGBA is automatically converted (by dropping alpha).
         /// </summary>
@@ -41,7 +47,7 @@ namespace SimpleImageIO {
 
             if (NumChannels == 4) {
                 // drop the alpha channel (assume that we have ordering RGBA)
-                using RgbImage rgb = new(Width, Height); 
+                using RgbImage rgb = new(Width, Height);
                 for (int row = 0; row < Height; ++row) {
                     for (int col = 0; col < Width; ++col) {
                         rgb.SetPixel(col, row, GetPixel(col, row));

@@ -72,7 +72,6 @@ namespace SimpleImageIO {
 
         int GetIndex(int col, int row) => (row * Width + col) * NumChannels;
 
-        
         /// <summary>
         /// Gets the value of a specific pixel's channel
         /// </summary>
@@ -92,7 +91,7 @@ namespace SimpleImageIO {
         /// <summary>
         /// Sets the value all channels in a pixel. Assumes that the number of parameters
         /// matches the number of channels. Only asserted in debug mode.
-        /// 
+        ///
         /// This function can be slow if called often, due to the allocation of the parameter
         /// array on the heap.
         /// </summary>
@@ -312,6 +311,30 @@ namespace SimpleImageIO {
             SimpleImageIOCore.DeleteCachedImage(id);
 
             return layers;
+        }
+
+        /// <summary>
+        /// Flips the image horizontally, i.e., the first column becomes the last.
+        /// The image is modified in-place, no new image is allocated.
+        /// </summary>
+        public void FlipHorizontal() {
+            Parallel.For(0, Height, row => {
+                for (int col = 0; col < Width / 2; ++col) {
+                    for (int chan = 0; chan < NumChannels; ++chan) {
+                        int idxLeft = GetIndex(col, row) + chan;
+                        int idxRight = GetIndex(Width - 1 - col, row) + chan;
+                        (RawData[idxLeft], RawData[idxRight]) = (RawData[idxRight], RawData[idxLeft]);
+                    }
+                }
+            });
+        }
+
+        /// <returns>A deep copy of the image object</returns>
+        public virtual ImageBase Copy() {
+            if (DataPointer == IntPtr.Zero) return null;
+            ImageBase other = new(Width, Height, NumChannels);
+            RawData.CopyTo(other.RawData);
+            return other;
         }
 
         /// <summary>

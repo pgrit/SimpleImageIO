@@ -74,5 +74,21 @@ namespace SimpleImageIO.Tests {
                 }
             }
         }
+
+        [Fact]
+        public void Flip_Horizontal_FourPixels() {
+            RgbImage image = new(2, 2);
+            image.SetPixel(0, 0, new(1, 0, 0));
+            image.SetPixel(0, 1, new(1, 1, 0));
+            image.SetPixel(1, 0, new(0, 2, 0));
+            image.SetPixel(1, 1, new(0.1f, 1, 1));
+
+            image.FlipHorizontal();
+
+            Assert.Equal(new(0, 2, 0), image.GetPixel(0, 0));
+            Assert.Equal(new(0.1f, 1, 1), image.GetPixel(0, 1));
+            Assert.Equal(new(1, 0, 0), image.GetPixel(1, 0));
+            Assert.Equal(new(1, 1, 0), image.GetPixel(1, 1));
+        }
     }
 }

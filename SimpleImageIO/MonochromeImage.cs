@@ -13,7 +13,7 @@ namespace SimpleImageIO {
             /// <summary>
             /// All color channels are simply averaged
             /// </summary>
-            Average, 
+            Average,
 
             /// <summary>
             /// The luminance should be computed
@@ -44,6 +44,12 @@ namespace SimpleImageIO {
             result.NumChannels = 1;
 
             return result;
+        }
+
+        /// <returns>A deep copy of this object, that is a MonochromeImage</returns>
+        public override ImageBase Copy() {
+            ImageBase cpyRaw = base.Copy();
+            return MonochromeImage.StealData(cpyRaw);
         }
 
         // TODO this needs to be supported by the C++ library
