@@ -29,6 +29,15 @@ namespace SimpleImageIO {
         public MonochromeImage(int w, int h) : base(w, h, 1) {}
 
         /// <summary>
+        /// Loads a monochrome image from a file
+        /// </summary>
+        /// <param name="filename">Path to an existing image file with supported format</param>
+        public MonochromeImage(string filename) {
+            LoadFromFile(filename);
+            Debug.Assert(NumChannels == 1);
+        }
+
+        /// <summary>
         /// Moves the data of another image into a new MonochromeImage instance.
         /// The other image is empty after this operation.
         /// </summary>
@@ -51,12 +60,6 @@ namespace SimpleImageIO {
             ImageBase cpyRaw = base.Copy();
             return MonochromeImage.StealData(cpyRaw);
         }
-
-        // TODO this needs to be supported by the C++ library
-        // public MonochromeImage(string filename) {
-        //     LoadFromFile(filename);
-        //     Debug.Assert(numChannels == 1);
-        // }
 
         /// <summary>
         /// Creates a monochrome image from an rgb image by performing the specified conversion

@@ -20,6 +20,34 @@ namespace SimpleImageIO.Tests {
         }
 
         [Fact]
+        public void WriteThenReadExr_Monochrome() {
+            MonochromeImage image = new(1, 1);
+            image.SetPixel(0, 0, 1);
+            image.WriteToFile("testpixelmono.exr");
+
+            MonochromeImage loaded = new("testpixelmono.exr");
+            var pixel = loaded.GetPixel(0, 0);
+
+            Assert.Equal(1, loaded.Width);
+            Assert.Equal(1, loaded.Height);
+            Assert.Equal(1.0f, pixel, 4);
+        }
+
+        [Fact]
+        public void WriteThenReadPng_Monochrome() {
+            MonochromeImage image = new(1, 1);
+            image.SetPixel(0, 0, 1);
+            image.WriteToFile("testpixelmono.png");
+
+            MonochromeImage loaded = new("testpixelmono.png");
+            var pixel = loaded.GetPixel(0, 0);
+
+            Assert.Equal(1, loaded.Width);
+            Assert.Equal(1, loaded.Height);
+            Assert.Equal(1.0f, pixel, 4);
+        }
+
+        [Fact]
         public void WriteThenReadPfm() {
             RgbImage image = new(1, 1);
             image.SetPixel(0, 0, Vector3.UnitY);
