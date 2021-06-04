@@ -34,6 +34,22 @@ namespace SimpleImageIO {
         /// <param name="filename">Path to an existing image file with supported format</param>
         public MonochromeImage(string filename) {
             LoadFromFile(filename);
+
+            if (NumChannels > 1) {
+                // Drop all but the first channel. This assumes the image was written by an application that
+                // forces RGB(A) output and simply duplicated the channel values (like tev).
+                using MonochromeImage buffer = new(Width, Height);
+                for (int row = 0; row < Height; ++row) {
+                    for (int col = 0; col < Width; ++col) {
+                        buffer.SetPixel(col, row, GetPixelChannel(col, row, 0));
+                    }
+                }
+
+                // swap the buffers and channel counts
+                (buffer.DataPointer, DataPointer) = (DataPointer, buffer.DataPointer);
+                (buffer.NumChannels, NumChannels) = (NumChannels, buffer.NumChannels);
+            }
+
             Debug.Assert(NumChannels == 1);
         }
 
