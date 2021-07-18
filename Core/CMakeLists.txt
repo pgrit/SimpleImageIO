@@ -19,6 +19,8 @@ target_sources(SimpleImageIOCore
         "External/tinyexr.h"
         "External/stb_image.h"
         "External/stb_image_write.h"
+        "External/miniz.h"
+        "External/miniz.c"
 )
 
 set_target_properties(SimpleImageIOCore

@@ -17,6 +17,8 @@ static const bool systemIsBigEndian = ((const char*)&testfloat)[0] != 0;
 
 #define TINYEXR_IMPLEMENTATION
 #define TINYEXR_USE_THREAD (1)
+#define TINYEXR_USE_MINIZ (0)
+#include "External/miniz.h"
 #include "External/tinyexr.h"
 
 #ifdef _MSC_VER
@@ -225,7 +227,11 @@ void WriteImageToExr(const float** layers, const int* rowStrides, int width, int
     InitEXRImage(&image);
     EXRHeader header;
     InitEXRHeader(&header);
-    header.compression_type = TINYEXR_COMPRESSIONTYPE_PIZ;
+    header.compression_type =
+        // TODO this is a workaround for a tinyexr export bug (see "RedDotsFailure.cs" unit test)
+        //      PIZ compression produces weird, regular, red dots in some images
+        TINYEXR_COMPRESSIONTYPE_ZIP;
+        //TINYEXR_COMPRESSIONTYPE_PIZ;
 
     // Count the total number of channels
     int totalChannels = 0;
