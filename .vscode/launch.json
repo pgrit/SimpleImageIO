@@ -33,7 +33,7 @@
             // If you have changed target frameworks, make sure to update the program path.
             "program": "${workspaceFolder}/SimpleImageIO.Integration/bin/Debug/net5.0/SimpleImageIO.Integration.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/SimpleImageIO.Integration",
+            "cwd": "${workspaceFolder}",
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
             "console": "internalConsole",
             "stopAtEntry": false

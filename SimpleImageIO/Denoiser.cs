@@ -54,6 +54,8 @@ namespace SimpleImageIO {
 
             OpenImageDenoise.oidnExecuteFilter(filter);
 
+            OpenImageDenoise.oidnReleaseFilter(filter);
+
             OIDNError errorCode = OpenImageDenoise.oidnGetDeviceError(device, out string errorMessage);
             if (errorCode != OIDNError.OIDN_ERROR_NONE)
                 throw new Exception($"OpenImageDenoise failed ({errorCode}): {errorMessage}");
