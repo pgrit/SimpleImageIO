@@ -57,7 +57,8 @@ tevIpc.UpdateImage("MyAwesomeImage");
 
 ## Usage example (Python)
 
-The following creates a one pixel image, writes it to various file formats, reads one of them back in, and prints the red color channel of the pixel:
+The following creates a one pixel image, writes it to various file formats, reads one of them back in, and prints the red color channel of the pixel.
+The result is then sent to the [tev](https://github.com/Tom94/tev) HDR viewer via sockets (modified version of https://gist.github.com/tomasiser/5e3bacd72df30f7efc3037cb95a039d3).
 
 ```Python
 import simpleimageio as sio
@@ -66,10 +67,14 @@ sio.write("test.png", [[[0.1, 0.4, 0.9]]])
 sio.write("test.jpg", [[[0.1, 0.4, 0.9]]])
 img = sio.read("test.exr")
 print(img[0,0,0])
+
+with sio.TevIpc() as tev:
+    tev.display_image("image", img)
+    tev.display_layered_image("layers", { "stuff": img, "morestuff": img })
 ```
 
 In Python, an image is a 3D row-major array, where `[0,0,0]` is the red color channel of the top left corner.
-The convention is compatible with most other libraries that make use of numpy arrays for image represenation, like matplotlib.
+The convention is compatible with most other libraries that make use of numpy arrays for image representation, like matplotlib.
 
 ## Building from source
 
