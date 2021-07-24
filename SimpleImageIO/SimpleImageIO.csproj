@@ -3,7 +3,7 @@
     <Title>Simple Image IO</Title>
     <Description>A very simple C# wrapper to read and write various HDR and LDR image file formats.</Description>
     <PackageId>SimpleImageIO</PackageId>
-    <Version>0.7.5</Version>
+    <Version>0.8.0</Version>
     <Copyright>(c) Pascal Grittmann</Copyright>
     <RepositoryUrl>https://github.com/pgrit/SimpleImageIO</RepositoryUrl>
 
