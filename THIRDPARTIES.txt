@@ -1,9 +1,14 @@
 This package uses TinyEXR, which in turn contains some OpenEXR code. Further, it
 contains the binaries of Intel OpenImageDenoise, which in turn uses Intel oneTBB
 and their respective dependencies.
-The license information of these third party codes can be found below.
+The license information of these third party codes can be found below and in the
+respective source code files.
 
-The Python version of the tev IPC is adapted from the excellent gist by Tomáš Iser (https://cgg.mff.cuni.cz/~tomas/):
+TIFF loading and writing uses TinyDNGLoader and TinyDNGWriter Copyright (c) 2016
+- Present, Syoyo Fujita and many contributors, MIT license.
+
+The Python version of the tev IPC is adapted from the excellent gist by Tomáš Iser
+(https://cgg.mff.cuni.cz/~tomas/):
 https://gist.github.com/tomasiser/5e3bacd72df30f7efc3037cb95a039d3
 
 ==============================================================================
