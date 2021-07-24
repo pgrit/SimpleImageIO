@@ -25,11 +25,20 @@ static const bool systemIsBigEndian = ((const char*)&testfloat)[0] != 0;
 #pragma warning(default: 4018)
 #endif
 
-#define STB_IMAGE_IMPLEMENTATION
+// #define STB_IMAGE_IMPLEMENTATION (included by tiny_dng_loader below)
 #include "External/stb_image.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "External/stb_image_write.h"
+
+#define TINY_DNG_LOADER_IMPLEMENTATION
+#define TINY_DNG_LOADER_ENABLE_ZIP
+#define TINY_DNG_NO_EXCEPTION
+#define TINY_DNG_LOADER_USE_THREAD
+#define STB_IMAGE_IMPLEMENTATION
+#include "External/tiny_dng_loader.h"
+#define TINY_DNG_WRITER_IMPLEMENTATION
+#include "External/tiny_dng_writer.h"
 
 struct StbImageData {
     float* data;
@@ -65,10 +74,15 @@ struct PfmImageData {
     std::vector<float> data;
 };
 
+struct TiffImageData {
+    std::vector<float> data;
+};
+
 static std::mutex cacheMutex;
 static std::unordered_map<int, ExrImageData> exrImages;
 static std::unordered_map<int, StbImageData> stbImages;
 static std::unordered_map<int, PfmImageData> pfmImages;
+static std::unordered_map<int, TiffImageData> tiffImages;
 static int nextIndex = 0;
 
 int CacheExrImage(const char* filename) {
@@ -332,8 +346,110 @@ void WriteImageToExr(const float** layers, const int* rowStrides, int width, int
     }
 }
 
+int CacheTiffImage(int* width, int* height, int* numChannels, const char* filename) {
+    std::vector<tinydng::DNGImage> images;
+    std::vector<tinydng::FieldInfo> custom_field_list;
+    std::string warn, err;
+    bool ret = tinydng::LoadDNG(filename, custom_field_list, &images, &warn, &err);
+
+    if (!warn.empty()) {
+        std::cout << "WARN: " << warn << std::endl;
+    }
+
+    if (!err.empty()) {
+        std::cout << err << std::endl;
+    }
+
+    if (ret == false) {
+        std::cout << "ERROR: failed to load DNG" << std::endl;
+        return -1;
+    }
+
+    assert(images.size() > 0);
+
+    if (images.size() > 1) {
+        std::cout << "WARN: .tiff file contains more than one image, using the first." << std::endl;
+    }
+
+    *width = images[0].width;
+    *height = images[0].height;
+    *numChannels = images[0].samples_per_pixel;
+    std::vector<float> output((*width) * (*height) * (*numChannels), 0.0f);
+
+    if (images[0].sample_format == tinydng::SAMPLEFORMAT_IEEEFP && images[0].bits_per_sample == 32) {
+        float* first = (float*)images[0].data.data();
+        std::copy(first, first + (*width) * (*height) * (*numChannels), output.begin());
+    } else if (images[0].sample_format == tinydng::SAMPLEFORMAT_UINT) {
+        // Convert LDR image to 32 bit floating point HDR (adapted from stb_image)
+        int numChannels = images[0].samples_per_pixel;
+        uint8_t* data = images[0].data.data();
+        int stride = images[0].bits_per_sample / 8;
+        float maxval = static_cast<float>((1 << images[0].bits_per_sample) - 1);
+
+        int numNonAlpha = (numChannels & 1) ? numChannels : (numChannels - 1);
+        for (int i = 0; i < (*width) * (*height); ++i) {
+            for (int k = 0; k < numNonAlpha; ++k) { // map the non-alpha components with gamma correction
+                output[i * numChannels + k] = pow(data[(i * numChannels + k) * stride] / maxval, 2.2f);
+            }
+            if (numNonAlpha < numChannels) { // map alpha linearly to range [0,1]
+                output[i * numChannels + numNonAlpha] = data[(i * numChannels + numNonAlpha) * stride] / maxval;
+            }
+        }
+    } else {
+        std::cerr << "ERROR: unsupported sample format or bit count. We currently only support 32 bit float "
+                  << "and 8 bit unsigned integer values. (" << images[0].sample_format << " @ "
+                  << images[0].bits_per_sample << " bits)" << std::endl;
+        return -1;
+    }
+
+    cacheMutex.lock();
+    const int idx = nextIndex;
+    tiffImages[idx] = TiffImageData { std::move(output) };
+    nextIndex++;
+    cacheMutex.unlock();
+
+    return idx;
+}
+
+void WriteTiffImage(const float* data, int rowStride, int width, int height, int numChannels, const char* filename) {
+    tinydngwriter::DNGImage image;
+    image.SetBigEndian(systemIsBigEndian);
+
+    image.SetSubfileType(false, false, false);
+    image.SetImageWidth(width);
+    image.SetImageLength(height);
+    image.SetRowsPerStrip(height);
+    image.SetSamplesPerPixel(numChannels);
+    std::vector<uint16_t> bps(numChannels, 32);
+    image.SetBitsPerSample(numChannels, bps.data());
+    image.SetPlanarConfig(tinydngwriter::PLANARCONFIG_CONTIG);
+    image.SetCompression(tinydngwriter::COMPRESSION_NONE);
+    image.SetPhotometric(tinydngwriter::PHOTOMETRIC_RGB);
+    std::vector<unsigned short> sampleformat(numChannels, tinydngwriter::SAMPLEFORMAT_IEEEFP);
+    image.SetSampleFormat(numChannels, sampleformat.data());
+    image.SetXResolution(1.0);
+    image.SetYResolution(1.0);
+    image.SetResolutionUnit(tinydngwriter::RESUNIT_NONE);
+
+    image.SetImageData((const uint8_t*)data, width * height * numChannels * sizeof(float));
+
+    tinydngwriter::DNGWriter writer(systemIsBigEndian);
+    if (!writer.AddImage(&image)) {
+        std::cerr << "Error in DNGWriter::AddImage()" << std::endl;
+    }
+
+    std::string err;
+    writer.WriteToFile(filename, &err);
+
+    if (!err.empty()) {
+        std::cerr << err;
+    }
+}
+
 int CacheStbImage(int* width, int* height, int* numChannels, const char* filename) {
     float *data = stbi_loadf(filename, width, height, numChannels, 0);
+
+    if (!data) return -1;
 
     cacheMutex.lock();
     const int idx = nextIndex;
@@ -515,6 +631,9 @@ SIIO_API void WriteImage(const float* data, int rowStride, int width, int height
         WriteImageToExr(&data, &rowStride, width, height, &numChannels, 1, nullptr, filename);
     } else if (fname.compare(fname.size() - 4, 4, ".pfm") == 0) {
         return WritePfmImage(data, rowStride, width, height, numChannels, filename);
+    } else if (fname.compare(fname.size() - 4, 4, ".tif") == 0
+            || fname.compare(fname.size() - 5, 5, ".tiff") == 0) {
+        return WriteTiffImage(data, rowStride, width, height, numChannels, filename);
     } else {
         // This is some other format, assume that stb_image can handle it
         WriteImageWithStbImage(data, rowStride, width, height, numChannels, filename, jpegQuality);
@@ -539,6 +658,7 @@ SIIO_API int CacheImage(int* width, int* height, int* numChannels, const char* f
     if (fname.compare(fname.size() - 4, 4, ".exr") == 0) {
         // This is an .exr image, load it with tinyexr
         int idx = CacheExrImage(filename);
+        if (idx < 0) return idx;
 
         cacheMutex.lock();
         auto& img = exrImages[idx];
@@ -551,6 +671,9 @@ SIIO_API int CacheImage(int* width, int* height, int* numChannels, const char* f
         return idx;
     } else if (fname.compare(fname.size() - 4, 4, ".pfm") == 0) {
         return CachePfmImage(width, height, numChannels, filename);
+    } else if (fname.compare(fname.size() - 4, 4, ".tif") == 0
+            || fname.compare(fname.size() - 5, 5, ".tiff") == 0) {
+        return CacheTiffImage(width, height, numChannels, filename);
     } else {
         // This is some other format, assume that stb_image can handle it
         return CacheStbImage(width, height, numChannels, filename);
@@ -596,6 +719,9 @@ SIIO_API void DeleteCachedImage(int id) {
     } else if (stbImages.find(id) != stbImages.end()) {
         stbImages.erase(id);
         cacheMutex.unlock();
+    } else if (tiffImages.find(id) != tiffImages.end()) {
+        tiffImages.erase(id);
+        cacheMutex.unlock();
     } else {
         cacheMutex.unlock();
         std::cerr << "ERROR: attempted to delete non-existing image id " << id << std::endl;
@@ -614,6 +740,10 @@ SIIO_API void CopyCachedImage(int id, float* out) {
     } else if (pfmImages.find(id) != pfmImages.end()) {
         std::copy(pfmImages[id].data.begin(), pfmImages[id].data.end(), out);
         pfmImages.erase(id);
+        cacheMutex.unlock();
+    } else if (tiffImages.find(id) != tiffImages.end()) {
+        std::copy(tiffImages[id].data.begin(), tiffImages[id].data.end(), out);
+        tiffImages.erase(id);
         cacheMutex.unlock();
     } else {
         cacheMutex.unlock();

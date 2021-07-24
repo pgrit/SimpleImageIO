@@ -7,13 +7,16 @@
 
 A lightweight C# and Python wrapper to read and write RGB images from / to various file formats.
 Supports .exr (with layers) via [tinyexr](https://github.com/syoyo/tinyexr) and a number of other formats (including .png, .jpg, and .bmp) via [stb_image](https://github.com/nothings/stb/blob/master/stb_image.h) and [stb_image_write](https://github.com/nothings/stb/blob/master/stb_image_write.h).
+A subset of TIFF can be read and written via [tinydngloader](https://github.com/syoyo/tinydngloader).
 We also implement our own importer and exporter for [PFM](http://www.pauldebevec.com/Research/HDR/PFM/).
-In addition, the package offers some basic image manipulation functionality and error metrics.
+In addition, the package offers some basic image manipulation functionality, error metrics, and tone mapping.
 
 The C# wrapper further offers utilities for thread-safe atomic splatting of pixel values, and sending image data to the [tev](https://github.com/Tom94/tev) viewer via sockets. It also contains a very basic wrapper around [Intel Open Image Denoise](https://github.com/OpenImageDenoise/oidn).
 
 The [**Nuget package**](https://www.nuget.org/packages/SimpleImageIO/) contains prebuilt binaries of the C++ wrapper for x86-64 Windows, Ubuntu, and macOS ([.github/workflows/build.yml](.github/workflows/build.yml)).
 The [**Python package**](https://pypi.org/project/SimpleImageIO/) is set up to automatically download an adequate CMake version and compile the C++ code on any platform.
+
+Except for the optional Intel Open Image Denoise, all dependencies are header-only and unintrusive, so this library should work pretty much anywhere without any hassle.
 
 ## Usage example (C#)
 

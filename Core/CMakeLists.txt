@@ -19,6 +19,8 @@ target_sources(SimpleImageIOCore
         "tonemapping.cpp"
 
         "External/tinyexr.h"
+        "External/tiny_dng_loader.h"
+        "External/tiny_dng_writer.h"
         "External/stb_image.h"
         "External/stb_image_write.h"
         "External/miniz.h"

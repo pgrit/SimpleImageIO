@@ -18,16 +18,14 @@ namespace SimpleImageIO.Integration {
         }
 
         static int Main(string[] args) {
-            // TestDenoise.TestPathTracer();
-            // TestDenoise.TestBidir();
-            // TestDenoise.TestVcm();
+            TestDenoise.TestPathTracer();
+            TestDenoise.TestBidir();
+            TestDenoise.TestVcm();
 
             TestTonemap.Reinhard();
             TestTonemap.ACES();
 
-            // return TestTev();
-
-            return 0;
+            return TestTev();
         }
     }
 }
