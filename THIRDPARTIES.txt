@@ -3,6 +3,9 @@ contains the binaries of Intel OpenImageDenoise, which in turn uses Intel oneTBB
 and their respective dependencies.
 The license information of these third party codes can be found below.
 
+The Python version of the tev IPC is adapted from the excellent gist by Tomáš Iser (https://cgg.mff.cuni.cz/~tomas/):
+https://gist.github.com/tomasiser/5e3bacd72df30f7efc3037cb95a039d3
+
 ==============================================================================
 TinyEXR / OpenEXR license
 ==============================================================================
