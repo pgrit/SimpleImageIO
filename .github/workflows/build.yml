@@ -31,7 +31,6 @@ jobs:
       working-directory: ${{github.workspace}}
       run: |
         dotnet test
-        dotnet run -p SimpleImageIO.Integration
 
     - name: Upload Binaries
       uses: actions/upload-artifact@v2
@@ -70,7 +69,6 @@ jobs:
       working-directory: ${{github.workspace}}
       run: |
         dotnet test
-        dotnet run -p SimpleImageIO.Integration
 
     - name: Upload Binaries
       uses: actions/upload-artifact@v2
@@ -112,7 +110,6 @@ jobs:
       working-directory: ${{github.workspace}}
       run: |
         dotnet test
-        dotnet run -p SimpleImageIO.Integration
 
     - name: Upload Binaries
       uses: actions/upload-artifact@v2
