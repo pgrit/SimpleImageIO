@@ -26,6 +26,18 @@ inline void ForAllPixels(int width, int height, int numChannels, int rowStrideIn
 }
 
 template<typename Fn>
+inline void ForAllPixelsVector(int width, int height, int numChannels, int rowStrideIn, int rowStrideOut, Fn fn) {
+    #pragma omp parallel for
+    for (int row = 0; row < height; ++row) {
+        for (int col = 0; col < width; ++col) {
+            int idxIn = rowStrideIn * row + col * numChannels;
+            int idxOut = rowStrideOut * row + col * numChannels;
+            fn(idxIn, idxOut, col, row);
+        }
+    }
+}
+
+template<typename Fn>
 inline float Accumulate(int width, int height, int numChannels, int rowStrideIn, int rowStrideOut, Fn fn) {
     float result = 0;
     #pragma omp parallel for reduction(+ : result)

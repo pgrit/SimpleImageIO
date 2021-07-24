@@ -11,10 +11,12 @@ target_sources(SimpleImageIOCore
 
     PRIVATE
         "image.h"
+        "vec3.h"
 
         "error_metrics.cpp"
         "imageio.cpp"
         "manipulation.cpp"
+        "tonemapping.cpp"
 
         "External/tinyexr.h"
         "External/stb_image.h"

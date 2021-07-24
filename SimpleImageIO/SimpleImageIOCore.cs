@@ -3,7 +3,7 @@ using System.Text;
 using System.Runtime.InteropServices;
 
 namespace SimpleImageIO {
-    static internal class SimpleImageIOCore {
+    static internal partial class SimpleImageIOCore {
         #region ReadingImages
 
         [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
