@@ -173,6 +173,18 @@ namespace SimpleImageIO {
         }
 
         /// <summary>
+        /// Sets all pixels in the image equal to the given value(s)
+        /// </summary>
+        /// <param name="channels">The color channel values</param>
+        public void Fill(params float[] channels)
+        => Parallel.For(0, Height, row => {
+            for (int col = 0; col < Width; ++col) {
+                for (int chan = 0; chan < NumChannels; ++chan)
+                    RawData[GetIndex(col, row) + chan] = channels[chan];
+            }
+        });
+
+        /// <summary>
         /// Scales all values of all channels in all pixels by multiplying them with a scalar
         /// </summary>
         /// <param name="s">Scalar to multiply on all values</param>

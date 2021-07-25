@@ -90,5 +90,16 @@ namespace SimpleImageIO.Tests {
             Assert.Equal(new(1, 0, 0), image.GetPixel(1, 0));
             Assert.Equal(new(1, 1, 0), image.GetPixel(1, 1));
         }
+
+        [Fact]
+        public void FillBlue() {
+            RgbImage image = new(2, 2);
+            image.Fill(0, 0, 1);
+            for (int col = 0; col < image.Width; col++) {
+                for (int row = 0; row < image.Height; row++) {
+                    Assert.Equal(new(0, 0, 1), image.GetPixel(col, row));
+                }
+            }
+        }
     }
 }
