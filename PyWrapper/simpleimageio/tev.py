@@ -5,7 +5,6 @@
 from . import corelib
 import socket
 import struct
-import numpy as np
 
 class TevIpc:
     def __init__(self, hostname = "localhost", port = 14158):
@@ -54,6 +53,7 @@ class TevIpc:
             channel_names = ["R", "G", "B"]
         elif num_channels == 4:
             channel_names = ["R", "G", "B", "A"]
+        self.close_image(name)
         self.create_image(name, width, height, channel_names, grab_focus)
         self.update_image(name, image)
 
@@ -67,6 +67,7 @@ class TevIpc:
                 channel_names.extend([f"{layer_name}.R", f"{layer_name}.G", f"{layer_name}.B"])
             elif num_channels == 4:
                 channel_names.extend([f"{layer_name}.R", f"{layer_name}.G", f"{layer_name}.B", f"{layer_name}.A"])
+        self.close_image(name)
         self.create_image(name, width, height, channel_names, grab_focus)
         self.update_layered_image(name, layers)
 
