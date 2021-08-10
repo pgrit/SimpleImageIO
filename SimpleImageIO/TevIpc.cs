@@ -151,7 +151,7 @@ namespace SimpleImageIO {
     /// <summary>
     /// Provides inter-process communication with the tev (https://github.com/Tom94/tev) image viewer
     /// </summary>
-    public class TevIpc {
+    public class TevIpc : IDisposable {
         readonly TcpClient client;
         readonly NetworkStream stream;
         readonly Dictionary<string, (string name, ImageBase image)[]> syncedImages = new();
@@ -244,7 +244,7 @@ namespace SimpleImageIO {
         }
 
         /// <summary>
-        /// Opens an image from the file system in tev. 
+        /// Opens an image from the file system in tev.
         /// </summary>
         /// <param name="filename">
         ///     The path to the image that should be opened. This must be on the machine that tev is running
@@ -265,7 +265,7 @@ namespace SimpleImageIO {
         /// Instructs tev to refresh an open image from the file system
         /// </summary>
         /// <param name="filename">
-        ///     The file path to the previously opened image. Must match an existing / previously passed path 
+        ///     The file path to the previously opened image. Must match an existing / previously passed path
         ///     exactly, otherwise tev might have issues finding the image.
         /// </param>
         public void ReloadImage(string filename) {
@@ -334,6 +334,14 @@ namespace SimpleImageIO {
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Releases all resources used by the TCP client and network stream
+        /// </summary>
+        public void Dispose() {
+            stream.Dispose();
+            client.Dispose();
         }
     }
 }

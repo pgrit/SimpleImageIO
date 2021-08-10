@@ -4,7 +4,7 @@ namespace SimpleImageIO.Integration {
             RgbImage input = new("PyTest/memorial.pfm");
             RgbImage result = RgbImage.StealData(Tonemap.Reinhard(input, 4));
 
-            TevIpc tev = new();
+            using TevIpc tev = new();
             tev.CreateImageSync("tonemappedReinhard.exr", result.Width, result.Height, ("default", result));
             tev.UpdateImage("tonemappedReinhard.exr");
 
@@ -15,7 +15,7 @@ namespace SimpleImageIO.Integration {
             RgbImage input = new("PyTest/memorial.pfm");
             RgbImage result = RgbImage.StealData(Tonemap.ACES(input));
 
-            TevIpc tev = new();
+            using TevIpc tev = new();
             tev.CreateImageSync("tonemappedACES.exr", result.Width, result.Height, ("default", result));
             tev.UpdateImage("tonemappedACES.exr");
 

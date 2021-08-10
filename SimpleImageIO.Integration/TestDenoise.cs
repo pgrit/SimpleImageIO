@@ -9,7 +9,7 @@ namespace SimpleImageIO.Integration {
             Denoiser denoiser = new();
             RgbImage denoised = denoiser.Denoise(color, albedo, normal);
 
-            TevIpc tev = new();
+            using TevIpc tev = new();
             tev.CreateImageSync("denoisedPath", denoised.Width, denoised.Height, ("default", denoised));
             tev.UpdateImage("denoisedPath");
 
@@ -23,7 +23,7 @@ namespace SimpleImageIO.Integration {
             Denoiser denoiser = new();
             RgbImage denoised = denoiser.Denoise(color);
 
-            TevIpc tev = new();
+            using TevIpc tev = new();
             tev.CreateImageSync("denoisedBidir", denoised.Width, denoised.Height, ("default", denoised));
             tev.UpdateImage("denoisedBidir");
 
@@ -37,7 +37,7 @@ namespace SimpleImageIO.Integration {
             Denoiser denoiser = new();
             RgbImage denoised = denoiser.Denoise(color);
 
-            TevIpc tev = new();
+            using TevIpc tev = new();
             tev.CreateImageSync("denoisedVcm", denoised.Width, denoised.Height, ("default", denoised));
             tev.UpdateImage("denoisedVcm");
 
