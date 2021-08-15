@@ -47,7 +47,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
-    name='SimpleImageIO',
+    name='simpleimageio',
     version='0.8.2',
     author='Pascal Grittmann',
     url='https://github.com/pgrit/SimpleImageIO',
