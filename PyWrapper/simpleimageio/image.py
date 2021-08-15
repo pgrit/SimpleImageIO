@@ -136,7 +136,7 @@ def write_layered_exr(filename: str, layers: dict):
 
 def base64_png(img):
     numbytes = c_int()
-    mem = corelib.invoke(_write_to_mem, img, ".png", 0, byref(numbytes))
+    mem = corelib.invoke(_write_to_mem, img, ".png".encode('utf-8'), 0, byref(numbytes))
     b64 = base64.b64encode(bytearray(mem[:numbytes.value]))
     _free_mem(mem)
     return b64
