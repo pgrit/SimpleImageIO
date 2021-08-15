@@ -140,3 +140,10 @@ def base64_png(img):
     b64 = base64.b64encode(bytearray(mem[:numbytes.value]))
     _free_mem(mem)
     return b64
+
+def base64_jpg(img, quality = 80):
+    numbytes = c_int()
+    mem = corelib.invoke(_write_to_mem, img, ".jpg".encode('utf-8'), quality, byref(numbytes))
+    b64 = base64.b64encode(bytearray(mem[:numbytes.value]))
+    _free_mem(mem)
+    return b64
