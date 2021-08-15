@@ -15,7 +15,7 @@ namespace SimpleImageIO.Tests {
                 for (int col = 0; col < 10; ++col)
                     image.SetPixel(col, row, new(row/15.0f));
 
-            image.WriteToFile("testimage." + extension);
+            image.WriteToFile("testimage." + extension, 100);
 
             RgbImage loaded = new("testimage." + extension);
 
@@ -31,6 +31,25 @@ namespace SimpleImageIO.Tests {
             Assert.Equal(14.0f / 15.0f, pixel.R, 2);
             Assert.Equal(14.0f / 15.0f, pixel.G, 2);
             Assert.Equal(14.0f / 15.0f, pixel.B, 2);
+        }
+
+        [Theory]
+        [InlineData(".hdr")]
+        [InlineData(".png")]
+        [InlineData(".jpg")]
+        [InlineData(".bmp")]
+        [InlineData(".exr")]
+        public void WriteToMemory_ShouldBeSame(string extension) {
+            RgbImage image = new(10, 15);
+            for (int row = 0; row < 15; ++row)
+                for (int col = 0; col < 10; ++col)
+                    image.SetPixel(col, row, new(row/15.0f));
+
+            image.WriteToFile("written-direct" + extension);
+            byte[] generated = image.WriteToMemory(extension);
+            byte[] read = System.IO.File.ReadAllBytes("written-direct" + extension);
+
+            Assert.Equal(read, generated);
         }
     }
 }

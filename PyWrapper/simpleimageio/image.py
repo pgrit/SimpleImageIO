@@ -21,9 +21,9 @@ _copy_cached_img = corelib.core.CopyCachedImage
 _copy_cached_img.argtypes = [c_int, POINTER(c_float)]
 _copy_cached_img.restype = None
 
-_write_png_to_mem = corelib.core.WritePngToMemory
-_write_png_to_mem.argtypes = [POINTER(c_float), c_int, c_int, c_int, c_int, POINTER(c_int)]
-_write_png_to_mem.restype = POINTER(c_ubyte)
+_write_to_mem = corelib.core.WriteToMemory
+_write_to_mem.argtypes = [POINTER(c_float), c_int, c_int, c_int, c_int, c_char_p, c_int, POINTER(c_int)]
+_write_to_mem.restype = POINTER(c_ubyte)
 
 _free_mem = corelib.core.FreeMemory
 _free_mem.argtypes = [POINTER(c_ubyte)]
@@ -136,7 +136,7 @@ def write_layered_exr(filename: str, layers: dict):
 
 def base64_png(img):
     numbytes = c_int()
-    mem = corelib.invoke(_write_png_to_mem, img, byref(numbytes))
+    mem = corelib.invoke(_write_to_mem, img, ".png", 0, byref(numbytes))
     b64 = base64.b64encode(bytearray(mem[:numbytes.value]))
     _free_mem(mem)
     return b64

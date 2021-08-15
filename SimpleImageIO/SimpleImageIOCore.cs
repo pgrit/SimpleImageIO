@@ -36,15 +36,16 @@ namespace SimpleImageIO {
 
         [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
         public static extern void WriteImage(IntPtr data, int rowStride, int width, int height, int numChannels,
-                                             string filename);
+                                             string filename, int jpegQuality);
 
         [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
         public static extern void WriteLayeredExr(IntPtr[] datas, int[] strides, int width, int height,
                                                   int[] numChannels, int numLayers, string[] names, string filename);
 
         [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr WritePngToMemory(IntPtr data, int rowStride, int width, int height,
-                                                     int numChannels, out int len);
+        public static extern IntPtr WriteToMemory(IntPtr data, int rowStride, int width, int height,
+                                                  int numChannels, string extension, int jpegQuality,
+                                                  out int len);
 
         [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
         public static extern void FreeMemory(IntPtr mem);

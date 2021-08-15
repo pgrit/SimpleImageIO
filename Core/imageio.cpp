@@ -1,6 +1,7 @@
 #include "image.h"
 
 #include <unordered_map>
+#include <unordered_set>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -84,6 +85,8 @@ static std::unordered_map<int, StbImageData> stbImages;
 static std::unordered_map<int, PfmImageData> pfmImages;
 static std::unordered_map<int, TiffImageData> tiffImages;
 static int nextIndex = 0;
+
+static std::unordered_set<void*> allocedMemory;
 
 int CacheExrImage(const char* filename) {
     ExrImageData result;
@@ -236,7 +239,8 @@ void CopyCachedExrLayer(int id, std::string layerName, float* out) {
 }
 
 void WriteImageToExr(const float** layers, const int* rowStrides, int width, int height, const int* numChannels,
-                     int numLayers, const char** layerNames, const char* filename) {
+                     int numLayers, const char** layerNames, const char* filename, unsigned char** memoryOut,
+                     size_t* numBytes) {
     EXRImage image;
     InitEXRImage(&image);
     EXRHeader header;
@@ -335,7 +339,14 @@ void WriteImageToExr(const float** layers, const int* rowStrides, int width, int
 
     // Save the file
     const char* errorMsg = nullptr;
-    const int retCode = SaveEXRImageToFile(&image, &header, filename, &errorMsg);
+    int retCode;
+    if (filename != nullptr)
+        retCode = SaveEXRImageToFile(&image, &header, filename, &errorMsg);
+    else {
+        *numBytes = SaveEXRImageToMemory(&image, &header, memoryOut, &errorMsg);
+        retCode = *numBytes == 0 ? 1 : 0;
+    }
+
     if (retCode != TINYEXR_SUCCESS) {
         std::cerr << "TinyEXR error (" << retCode << "): " << errorMsg << std::endl;
         FreeEXRErrorMessage(errorMsg);
@@ -616,7 +627,7 @@ extern "C" {
 // Otherwise, OpenEXR loads them in incorrect order.
 SIIO_API void WriteLayeredExr(const float** datas, int* strides, int width, int height, const int* numChannels,
                               int numLayers, const char** names, const char* filename) {
-    WriteImageToExr(datas, strides, width, height, numChannels, numLayers, names, filename);
+    WriteImageToExr(datas, strides, width, height, numChannels, numLayers, names, filename, nullptr, nullptr);
 }
 
 SIIO_API void WriteImage(const float* data, int rowStride, int width, int height, int numChannels,
@@ -624,7 +635,7 @@ SIIO_API void WriteImage(const float* data, int rowStride, int width, int height
     auto fname = std::string(filename);
     if (fname.compare(fname.size() - 4, 4, ".exr") == 0) {
         // This is an .exr image, write it with tinyexr
-        WriteImageToExr(&data, &rowStride, width, height, &numChannels, 1, nullptr, filename);
+        WriteImageToExr(&data, &rowStride, width, height, &numChannels, 1, nullptr, filename, nullptr, nullptr);
     } else if (fname.compare(fname.size() - 4, 4, ".pfm") == 0) {
         return WritePfmImage(data, rowStride, width, height, numChannels, filename);
     } else if (fname.compare(fname.size() - 4, 4, ".tif") == 0
@@ -636,17 +647,71 @@ SIIO_API void WriteImage(const float* data, int rowStride, int width, int height
     }
 }
 
-SIIO_API unsigned char* WritePngToMemory(float* data, int rowStride, int width, int height,
-                                         int numChannels, int* len) {
+using OutBuffer = std::vector<unsigned char>;
+
+void StbWriteFunc(void* context, void* data, int size) {
+    OutBuffer* outBuffer = (OutBuffer*)context;
+    size_t oldCount = outBuffer->size();
+    outBuffer->resize(oldCount + size);
+    const unsigned char* d = (unsigned char*) data;
+    std::copy(d, d + size, outBuffer->begin() + oldCount);
+}
+
+SIIO_API unsigned char* WriteToMemory(const float* data, int rowStride, int width, int height,
+                                      int numChannels, const char* extension, int jpegQuality,
+                                      int* numBytes) {
+    if (!strncmp(extension, ".exr", 4)) {
+        unsigned char* result;
+        size_t num;
+        WriteImageToExr(&data, &rowStride, width, height, &numChannels, 1, nullptr, nullptr, &result, &num);
+        *numBytes = (int) num;
+
+        cacheMutex.lock();
+        allocedMemory.insert(result);
+        cacheMutex.unlock();
+        return result;
+    }
+
+    // write hdr via stb_image_write
+    OutBuffer outBuffer;
+    if (!strncmp(extension, ".hdr", 4)) {
+        stbi_write_hdr_to_func(StbWriteFunc, &outBuffer, width, height, numChannels, data);
+    }
+
+    // LDR formats handled by stb_image_write need a buffer of byte values
     std::vector<uint8_t> buffer(width * height * numChannels);
     ConvertToStbByteImage(data, rowStride, buffer.data(), width, height, numChannels);
 
-    return stbi_write_png_to_mem((const unsigned char *) buffer.data(), width * numChannels,
-        width, height, numChannels, len);
+    if (!strncmp(extension, ".jpg", 4)) {
+        stbi_write_jpg_to_func(StbWriteFunc, &outBuffer, width, height, numChannels, buffer.data(), jpegQuality);
+    } else if (!strncmp(extension, ".bmp", 4)) {
+        stbi_write_bmp_to_func(StbWriteFunc, &outBuffer, width, height, numChannels, buffer.data());
+    } else if (!strncmp(extension, ".tga", 4)) {
+        stbi_write_tga_to_func(StbWriteFunc, &outBuffer, width, height, numChannels, buffer.data());
+    } else if (!strncmp(extension, ".png", 4)) {
+        stbi_write_png_to_func(StbWriteFunc, &outBuffer, width, height, numChannels, buffer.data(), width * numChannels);
+    } else if (outBuffer.empty()) {
+        // Writing TIFF to memory is not supported by tiny_dng_writer. Writing .pfm to memory
+        // is not implemented as it doesn't make much sense, being a pure binary dump.
+        std::cout << "Writing " << extension << " to memory is not supported" << std::endl;
+        return nullptr;
+    }
+
+    unsigned char* result = new unsigned char[outBuffer.size()];
+    std::copy(outBuffer.begin(), outBuffer.end(), result);
+    *numBytes = (int)outBuffer.size();
+    return result;
 }
 
 SIIO_API void FreeMemory(unsigned char* mem) {
-    STBIW_FREE(mem);
+    cacheMutex.lock();
+    if (allocedMemory.find(mem) != allocedMemory.end()) {
+        free(mem);
+        allocedMemory.erase(mem);
+    } else {
+        delete[] mem;
+    }
+    cacheMutex.unlock();
 }
 
 SIIO_API int CacheImage(int* width, int* height, int* numChannels, const char* filename) {

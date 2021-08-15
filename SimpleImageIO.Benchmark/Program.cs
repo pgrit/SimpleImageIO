@@ -26,7 +26,7 @@ namespace SimpleImageIO.Benchmark {
             Console.WriteLine($"Reading .exr took {stopwatch.ElapsedMilliseconds} ms");
 
             stopwatch.Restart();
-            string b64 = img.AsBase64Png();
+            string b64 = Convert.ToBase64String(img.WriteToMemory(".png"));
             Console.WriteLine($"To base64 in memory took {stopwatch.ElapsedMilliseconds} ms");
         }
 

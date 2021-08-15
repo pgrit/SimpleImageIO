@@ -220,9 +220,14 @@ namespace SimpleImageIO {
         /// Writes the image into a file. Not all formats support all / arbitrary channel layouts.
         /// </summary>
         /// <param name="filename">Name of the file to write, extension must be one of the supported formats</param>
-        public void WriteToFile(string filename) {
+        /// <param name="jpegQuality">
+        /// If the format is ".jpeg", this number between 0 and 100 determines the compression
+        /// quality. Otherwise, it is ignored.
+        /// </param>
+        public void WriteToFile(string filename, int jpegQuality = 80) {
             EnsureDirectory(filename);
-            SimpleImageIOCore.WriteImage(DataPointer, NumChannels * Width, Width, Height, NumChannels, filename);
+            SimpleImageIOCore.WriteImage(DataPointer, NumChannels * Width, Width, Height, NumChannels,
+                filename, jpegQuality);
         }
 
         /// <summary>
@@ -256,18 +261,34 @@ namespace SimpleImageIO {
         }
 
         /// <summary>
-        /// Converts the image data to a string containing the base64 encoded .png file.
-        /// Only supports 1, 3, or 4 channel images (monochrome, rgb, rgba)
+        /// Encodes the file and writes its data to a memory buffer
         /// </summary>
-        /// <returns>The base64 encoded .png as a string</returns>
-        public string AsBase64Png() {
-            IntPtr mem = SimpleImageIOCore.WritePngToMemory(DataPointer, NumChannels * Width, Width, Height,
-                NumChannels, out int numBytes);
+        /// <param name="extension">
+        /// The file name extension of the desired format, e.g., ".exr" or ".png".
+        /// </param>
+        /// <param name="jpegQuality">
+        /// If the format is ".jpeg", this number between 0 and 100 determines the compression
+        /// quality. Otherwise, it is ignored.
+        /// </param>
+        /// <returns>The memory contents of the image file</returns>
+        public byte[] WriteToMemory(string extension, int jpegQuality = 80) {
+            IntPtr mem = SimpleImageIOCore.WriteToMemory(DataPointer, NumChannels * Width, Width, Height,
+                NumChannels, extension, jpegQuality, out int numBytes);
 
             byte[] bytes = new byte[numBytes];
             Marshal.Copy(mem, bytes, 0, numBytes);
             SimpleImageIOCore.FreeMemory(mem);
 
+            return bytes;
+        }
+
+        /// <summary>
+        /// Converts the image data to a string containing the base64 encoded .png file.
+        /// Only supports 1, 3, or 4 channel images (monochrome, rgb, rgba)
+        /// </summary>
+        /// <returns>The base64 encoded .png as a string</returns>
+        public string AsBase64Png(string extension = ".png") {
+            var bytes = WriteToMemory(extension);
             return Convert.ToBase64String(bytes);
         }
 
