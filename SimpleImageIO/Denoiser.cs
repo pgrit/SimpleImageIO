@@ -4,8 +4,9 @@ namespace SimpleImageIO {
     /// <summary>
     /// Denoiser for images rendered with Monte Carlo. Powered by Intel Open Image Denoise.
     /// </summary>
-    public class Denoiser {
+    public class Denoiser : IDisposable {
         readonly IntPtr device;
+        private bool disposed;
 
         /// <summary>
         /// Initializes the denoiser with the default device
@@ -16,10 +17,10 @@ namespace SimpleImageIO {
         }
 
         /// <summary>
-        /// Frees the unmanaged resources
+        /// Releases the OIDN device
         /// </summary>
         ~Denoiser() {
-            OpenImageDenoise.oidnReleaseDevice(device);
+            if (!disposed) OpenImageDenoise.oidnReleaseDevice(device);
         }
 
         static void SetFilterImage(IntPtr filter, ImageBase image, string name) {
@@ -61,6 +62,15 @@ namespace SimpleImageIO {
                 throw new Exception($"OpenImageDenoise failed ({errorCode}): {errorMessage}");
 
             return output;
+        }
+
+        /// <summary>
+        /// Releases the OIDN device
+        /// </summary>
+        public void Dispose() {
+            if (!disposed) OpenImageDenoise.oidnReleaseDevice(device);
+            disposed = true;
+            GC.SuppressFinalize(this);
         }
     }
 }
