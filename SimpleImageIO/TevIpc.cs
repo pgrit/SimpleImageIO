@@ -162,13 +162,8 @@ namespace SimpleImageIO {
         /// <param name="ip">The ip where tev is running, defaults to localhost</param>
         /// <param name="port">The port that tev is listening to (defaults to tev's default)</param>
         public TevIpc(string ip = "127.0.0.1", int port = 14158) {
-            try {
-                client = new TcpClient(ip, port);
-                stream = client.GetStream();
-            } catch(Exception) {
-                Console.WriteLine("Warning: Could not connect to tev.");
-                client = null;
-            }
+            client = new TcpClient(ip, port);
+            stream = client.GetStream();
         }
 
         /// <summary>
@@ -187,8 +182,6 @@ namespace SimpleImageIO {
         /// <param name="height">Height in pixels</param>
         /// <param name="layers">Pairs of names and images, one entry for each layer</param>
         public void CreateImageSync(string name, int width, int height, params (string, ImageBase)[] layers) {
-            if (client == null) return;
-
             Debug.Assert(!syncedImages.ContainsKey(name));
             CloseImage(name);
             syncedImages[name] = layers;
@@ -231,8 +224,6 @@ namespace SimpleImageIO {
         ///     The unique name. Either set by <see cref="CreateImageSync"/> or the filename of an opened file
         /// </param>
         public void CloseImage(string name) {
-            if (client == null) return;
-
             if (syncedImages.ContainsKey(name))
                 syncedImages.Remove(name);
 
@@ -251,8 +242,6 @@ namespace SimpleImageIO {
         ///     on, if tev is not running on the same machine. The image is not loaded by us, only by tev.
         /// </param>
         public void OpenImage(string filename) {
-            if (client == null) return;
-
             var packet = new OpenImagePacket {
                 GrabFocus = false,
                 ImageName = SanitizePath(filename)
@@ -269,8 +258,6 @@ namespace SimpleImageIO {
         ///     exactly, otherwise tev might have issues finding the image.
         /// </param>
         public void ReloadImage(string filename) {
-            if (client == null) return;
-
             var packet = new ReloadImagePacket {
                 GrabFocus = false,
                 ImageName = SanitizePath(filename)
