@@ -6,11 +6,18 @@
 
 float LinearToSrgb(float linear) {
     if (linear > 0.0031308) {
-        linear = 1.055f * (std::pow(linear, (1.0f / 2.4f))) - 0.055f;
+        return 1.055f * (std::pow(linear, (1.0f / 2.4f))) - 0.055f;
     } else {
-        linear = 12.92f * linear;
+        return 12.92f * linear;
     }
-    return linear;
+}
+
+float SrgbToLinear(float srgb) {
+    if (srgb <= 0.04045) {
+        return srgb / 12.92;
+    } else {
+        return std::pow((srgb + 0.055) / 1.055, 2.4);
+    }
 }
 
 extern "C" {

@@ -141,6 +141,87 @@ namespace SimpleImageIO {
         public static RgbColor Lerp(float w, RgbColor from, RgbColor to) => (1 - w) * from + w * to;
 
         /// <summary>
+        /// Maps an HSV (hue, saturation, value) to linear RGB
+        /// </summary>
+        /// <param name="hue">The hue in [0°, 360°]</param>
+        /// <param name="saturation">Saturation in [0, 1]</param>
+        /// <param name="value">Value in [0, 1]</param>
+        /// <returns>Corresponding linear RGB color</returns>
+        public static RgbColor HsvToRgb(float hue, float saturation, float value) {
+            float f(float n) {
+                float k = (n + hue / 60) % 6;
+                return value - value * saturation * Math.Clamp(Math.Min(k, 4 - k), 0, 1);
+            }
+            return SrgbToLinear(f(5), f(3), f(1));
+        }
+
+        /// <summary>
+        /// Maps a linear RGB color value to HSV (hue, saturation, value)
+        /// </summary>
+        /// <param name="rgb">The linear RGB value</param>
+        /// <returns>Corresponding HSV as a triplet, with values in ([0°, 360°], [0, 1], [0, 1])</returns>
+        public static (float Hue, float Saturation, float Value) RgbToHsv(RgbColor rgb) {
+            var (r, g, b) = LinearToSrgb(rgb);
+
+            float max = Math.Max(Math.Max(r, g), b);
+            float min = Math.Min(Math.Min(r, g), b);
+            float delta = (max - min);
+
+            float hue;
+            if (delta == 0) hue = 0;
+            else if (r > g && r > b) // red is largest
+                hue = 60 * ((g - b) / delta);
+            else if (g > r && g > b) // green is largest
+                hue = 60 * ((b - r) / delta + 2);
+            else // blue is largest
+                hue = 60 * ((r - g) / delta + 4);
+
+            // hue is in degrees and can be negative -> wrap around to [0, 360]
+            if (hue < 0) hue += 360;
+            else if (hue > 360) hue -= 360;
+
+            float saturation = max == 0 ? 0 : delta / max;
+
+            return (hue, saturation, max);
+        }
+
+        static float LinearToSrgb(float linear) {
+            if (linear > 0.0031308) {
+                return 1.055f * (MathF.Pow(linear, (1.0f / 2.4f))) - 0.055f;
+            } else {
+                return 12.92f * linear;
+            }
+        }
+
+        static float SrgbToLinear(float srgb) {
+            if (srgb <= 0.04045f) {
+                return srgb / 12.92f;
+            } else {
+                return MathF.Pow((srgb + 0.055f) / 1.055f, 2.4f);
+            }
+        }
+
+        /// <summary>
+        /// Maps linear RGB to standard RGB (sRGB)
+        /// </summary>
+        /// <param name="linear">A linear RGB color value</param>
+        /// <returns>
+        /// Triplet of standard RGB values as floating points (multiply by 255 to get LDR byte values)
+        /// </returns>
+        public static (float R, float G, float B) LinearToSrgb(RgbColor linear)
+        => (LinearToSrgb(linear.R), LinearToSrgb(linear.G), LinearToSrgb(linear.B));
+
+        /// <summary>
+        /// Converts standard RGB (sRGB) to linear RGB
+        /// </summary>
+        /// <param name="red">Red color channel in [0, 1]</param>
+        /// <param name="green">Green color channel in [0, 1]</param>
+        /// <param name="blue">Blue color channel in [0, 1]</param>
+        /// <returns>Linear RGB color value</returns>
+        public static RgbColor SrgbToLinear(float red, float green, float blue)
+        => new(SrgbToLinear(red), SrgbToLinear(green), SrgbToLinear(blue));
+
+        /// <summary>
         /// Checks whether this object is exactly equal to another RgbColor or Vector3 object.
         /// Does not account for floating point imprecision.
         /// </summary>
