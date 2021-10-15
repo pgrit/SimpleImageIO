@@ -210,7 +210,7 @@ namespace SimpleImageIO {
             return result;
         }
 
-        static void EnsureDirectory(string filename) {
+        internal static void EnsureDirectory(string filename) {
             var dirname = System.IO.Path.GetDirectoryName(filename);
             if (dirname != "")
                 System.IO.Directory.CreateDirectory(dirname);
@@ -228,36 +228,6 @@ namespace SimpleImageIO {
             EnsureDirectory(filename);
             SimpleImageIOCore.WriteImage(DataPointer, NumChannels * Width, Width, Height, NumChannels,
                 filename, jpegQuality);
-        }
-
-        /// <summary>
-        /// Writes a multi-layer .exr file where each layer is represented by a separate image with one or more channels
-        /// </summary>
-        /// <param name="filename">Name of the output .exr file, extension should be .exr</param>
-        /// <param name="layers">Pairs of layer names and layer images to write to the .exr. Must have equal resolutions.</param>
-        public static void WriteLayeredExr(string filename, params (string, ImageBase)[] layers) {
-            EnsureDirectory(filename);
-
-            Array.Sort(layers, (a,b) => a.Item1.CompareTo(b.Item1));
-
-            // Assemble the raw data in a C-API compatible format
-            List<IntPtr> dataPointers = new();
-            List<int> strides = new();
-            List<int> NumChannels = new();
-            List<string> names = new();
-            int Width = layers[0].Item2.Width;
-            int Height = layers[0].Item2.Height;
-            foreach (var (name, img) in layers) {
-                dataPointers.Add(img.DataPointer);
-                strides.Add(img.NumChannels * img.Width);
-                NumChannels.Add(img.NumChannels);
-                names.Add(name);
-                Debug.Assert(img.Width == Width, "All layers must have the same resolution");
-                Debug.Assert(img.Height == Height, "All layers must have the same resolution");
-            }
-
-            SimpleImageIOCore.WriteLayeredExr(dataPointers.ToArray(), strides.ToArray(), Width, Height,
-                NumChannels.ToArray(), dataPointers.Count, names.ToArray(), filename);
         }
 
         /// <summary>
@@ -311,39 +281,6 @@ namespace SimpleImageIO {
             // Copy to managed memory array
             Alloc();
             SimpleImageIOCore.CopyCachedImage(id, DataPointer);
-        }
-
-        /// <summary>
-        /// Loads a multi-layer .exr file and separates the layers into individual images
-        /// </summary>
-        /// <param name="filename">Name of an existing .exr image with one or more layers</param>
-        /// <returns>A dictionary where layer names are the keys, and the layer images are the values</returns>
-        public static Dictionary<string, ImageBase> LoadLayersFromFile(string filename) {
-            if (!File.Exists(filename))
-                throw new FileNotFoundException("Image file does not exist.", filename);
-
-            // Read the image from the file, it is cached in native memory
-            int id = SimpleImageIOCore.CacheImage(out int width, out int height, out _, filename);
-            if (id < 0 || width <= 0 || height <= 0)
-                throw new IOException($"ERROR: Could not load image file '{filename}'");
-
-            Dictionary<string, ImageBase> layers = new();
-
-            int numLayers = SimpleImageIOCore.GetExrLayerCount(id);
-            for (int i = 0; i < numLayers; ++i) {
-                int len = SimpleImageIOCore.GetExrLayerNameLen(id, i);
-                StringBuilder nameBuilder = new(len);
-                SimpleImageIOCore.GetExrLayerName(id, i, nameBuilder);
-                string name = nameBuilder.ToString();
-
-                int numChans = SimpleImageIOCore.GetExrLayerChannelCount(id, name);
-                layers[name] = new(width, height, numChans);
-                SimpleImageIOCore.CopyCachedLayer(id, name, layers[name].DataPointer);
-            }
-
-            SimpleImageIOCore.DeleteCachedImage(id);
-
-            return layers;
         }
 
         /// <summary>
@@ -417,53 +354,6 @@ namespace SimpleImageIO {
 
             SimpleImageIOCore.ZoomWithNearestInterp(other.DataPointer, NumChannels * other.Width, DataPointer,
                 NumChannels * Width, other.Width, other.Height, NumChannels, scale);
-        }
-
-        /// <summary>
-        /// Computes the mean square error of two images
-        /// </summary>
-        /// <param name="image">The first image</param>
-        /// <param name="reference">The second image</param>
-        public static float MSE(ImageBase image, ImageBase reference) {
-            Debug.Assert(image.Width == reference.Width);
-            Debug.Assert(image.Height == reference.Height);
-            Debug.Assert(image.NumChannels == reference.NumChannels);
-            return SimpleImageIOCore.ComputeMSE(image.DataPointer, image.NumChannels * image.Width, reference.DataPointer,
-                image.NumChannels * reference.Width, image.Width, image.Height, image.NumChannels);
-        }
-
-        /// <summary>
-        /// Computes the relative mean square error of two images
-        /// </summary>
-        /// <param name="image">The first image</param>
-        /// <param name="reference">The second image</param>
-        /// <param name="epsilon">Small offset added to the squared mean to avoid division by zero</param>
-        /// <returns>Mean of: Square error of each pixel, divided by the squared mean</returns>
-        public static float RelMSE(ImageBase image, ImageBase reference, float epsilon = 0.001f) {
-            Debug.Assert(image.Width == reference.Width);
-            Debug.Assert(image.Height == reference.Height);
-            Debug.Assert(image.NumChannels == reference.NumChannels);
-            return SimpleImageIOCore.ComputeRelMSE(image.DataPointer, image.NumChannels * image.Width,
-                reference.DataPointer, image.NumChannels * reference.Width, image.Width, image.Height,
-                image.NumChannels, epsilon);
-        }
-
-        /// <summary>
-        /// Computes the relative mean square error of two images. Ignores a small percentage of the
-        /// brightest pixels. The result is less obscured by outliers this way.
-        /// </summary>
-        /// <param name="image">The first image</param>
-        /// <param name="reference">The second image</param>
-        /// <param name="epsilon">Small offset added to the squared mean to avoid division by zero</param>
-        /// <param name="percentage">Percentage of pixels to ignore</param>
-        public static float RelMSE_OutlierRejection(ImageBase image, ImageBase reference,
-                                                    float epsilon = 0.001f, float percentage = 0.1f) {
-            Debug.Assert(image.Width == reference.Width);
-            Debug.Assert(image.Height == reference.Height);
-            Debug.Assert(image.NumChannels == reference.NumChannels);
-            return SimpleImageIOCore.ComputeRelMSEOutlierReject(image.DataPointer, image.NumChannels * image.Width,
-                reference.DataPointer, image.NumChannels * reference.Width, image.Width, image.Height,
-                image.NumChannels, epsilon, percentage);
         }
     }
 }

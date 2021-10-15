@@ -1,7 +1,7 @@
 namespace SimpleImageIO.Integration {
     static class TestDenoise {
         public static void TestPathTracer() {
-            var layers = RgbImage.LoadLayersFromFile("Data/PathTracer.exr");
+            var layers = Layers.LoadFromFile("Data/PathTracer.exr");
             RgbImage color = RgbImage.StealData(layers["default"]);
             RgbImage albedo = RgbImage.StealData(layers["albedo"]);
             RgbImage normal = RgbImage.StealData(layers["normal"]);
@@ -17,7 +17,7 @@ namespace SimpleImageIO.Integration {
         }
 
         public static void TestBidir() {
-            var layers = RgbImage.LoadLayersFromFile("Data/ClassicBidir.exr");
+            var layers = Layers.LoadFromFile("Data/ClassicBidir.exr");
             RgbImage color = RgbImage.StealData(layers["default"]);
 
             Denoiser denoiser = new();
@@ -31,7 +31,7 @@ namespace SimpleImageIO.Integration {
         }
 
         public static void TestVcm() {
-            var layers = RgbImage.LoadLayersFromFile("Data/Vcm.exr");
+            var layers = Layers.LoadFromFile("Data/Vcm.exr");
             RgbImage color = RgbImage.StealData(layers["default"]);
 
             Denoiser denoiser = new();

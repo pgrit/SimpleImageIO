@@ -35,15 +35,15 @@ namespace SimpleImageIO.Benchmark {
             RgbImage image = new("../PyTest/noisy.exr");
 
             Stopwatch stopwatch = Stopwatch.StartNew();
-            float mse = RgbImage.MSE(image, reference);
+            float mse = Metrics.MSE(image, reference);
             Console.WriteLine($"Computing MSE {mse:F2} took {stopwatch.ElapsedMilliseconds} ms");
 
             stopwatch.Restart();
-            float relmse = RgbImage.RelMSE(image, reference, 0.0001f);
+            float relmse = Metrics.RelMSE(image, reference, 0.0001f);
             Console.WriteLine($"Computing relMSE {relmse:F2} took {stopwatch.ElapsedMilliseconds} ms");
 
             stopwatch.Restart();
-            float relmseOut = RgbImage.RelMSE_OutlierRejection(image, reference, 0.0001f, 0.1f);
+            float relmseOut = Metrics.RelMSE_OutlierRejection(image, reference, 0.0001f, 0.1f);
             Console.WriteLine($"Computing relMSE w/o outliers {relmseOut:F2} took {stopwatch.ElapsedMilliseconds} ms");
         }
 

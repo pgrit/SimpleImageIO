@@ -57,7 +57,7 @@ namespace SimpleImageIO.Tests {
             otherImage.SetPixel(1, 0, new(1, 0, 1));
             otherImage.SetPixel(1, 1, new(1, 1, 1));
 
-            ImageBase.WriteLayeredExr("layered.exr", ("albedo", image), ("normal", otherImage));
+            Layers.WriteToExr("layered.exr", ("albedo", image), ("normal", otherImage));
 
             Assert.True(File.Exists("layered.exr"));
 
@@ -78,7 +78,7 @@ namespace SimpleImageIO.Tests {
             otherImage.SetPixel(1, 0, 2);
             otherImage.SetPixel(1, 1, 3);
 
-            ImageBase.WriteLayeredExr("layered.exr", ("albedo", image), ("normal", otherImage));
+            Layers.WriteToExr("layered.exr", ("albedo", image), ("normal", otherImage));
 
             Assert.True(File.Exists("layered.exr"));
 
@@ -99,7 +99,7 @@ namespace SimpleImageIO.Tests {
             otherImage.SetPixel(1, 0, new(1, 0, 1));
             otherImage.SetPixel(1, 1, new(1, 1, 1));
 
-            ImageBase.WriteLayeredExr("layered.exr", ("default", image), ("normal", otherImage));
+            Layers.WriteToExr("layered.exr", ("default", image), ("normal", otherImage));
 
             RgbImage def = new("layered.exr");
             Assert.Equal(image.GetPixel(0, 0), def.GetPixel(0, 0));
@@ -130,9 +130,9 @@ namespace SimpleImageIO.Tests {
             thirdImage.SetPixel(1, 0, 0.1f);
             thirdImage.SetPixel(1, 1, 0.01f);
 
-            ImageBase.WriteLayeredExr("layered.exr",
+            Layers.WriteToExr("layered.exr",
                 ("normal", otherImage), ("depth", thirdImage), ("default", image));
-            var layers = ImageBase.LoadLayersFromFile("layered.exr");
+            var layers = Layers.LoadFromFile("layered.exr");
 
             RgbImage def = RgbImage.StealData(layers["default"]);
             Assert.Equal(image.GetPixel(0, 0), def.GetPixel(0, 0));
