@@ -17,6 +17,7 @@ target_sources(SimpleImageIOCore
         "imageio.cpp"
         "manipulation.cpp"
         "tonemapping.cpp"
+        "filter.cpp"
 
         "External/tinyexr.h"
         "External/tiny_dng_loader.h"

@@ -26,7 +26,7 @@ namespace SimpleImageIO.Benchmark {
             Console.WriteLine($"Reading .exr took {stopwatch.ElapsedMilliseconds} ms");
 
             stopwatch.Restart();
-            string b64 = Convert.ToBase64String(img.WriteToMemory(".png"));
+            string b64 = Convert.ToBase64String(img.WriteToMemory(".bmp"));
             Console.WriteLine($"To base64 in memory took {stopwatch.ElapsedMilliseconds} ms");
         }
 
@@ -90,10 +90,27 @@ namespace SimpleImageIO.Benchmark {
             Console.WriteLine($"Splatting {numSplats} samples (average: {avg}) took {time} ms");
         }
 
+        static void BenchFilter() {
+            RgbImage image = new("../PyTest/dikhololo_night_4k.hdr");
+            RgbImage imageBlur = new(image.Width, image.Height);
+            BoxFilter filter = new(8);
+
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            int n = 2;
+            for (int i = 0; i < n; ++i)
+                filter.Apply(image, imageBlur);
+            stopwatch.Stop();
+
+            imageBlur.WriteToFile("blur.exr");
+
+            Console.WriteLine($"Filtering {n} times took {stopwatch.ElapsedMilliseconds} ms");
+        }
+
         static void Main(string[] args) {
             BenchIO();
             BenchErrors();
             BenchSplatting();
+            BenchFilter();
         }
     }
 }

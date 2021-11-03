@@ -84,6 +84,10 @@ namespace SimpleImageIO {
                                                         int resRowStride, int origWidth, int origHeight,
                                                         int numChannels, int scale);
 
+        [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void BoxFilter(IntPtr image, int imgRowStride, IntPtr result, int resRowStride,
+                                            int width, int height, int numChannels, int radius);
+
         #endregion
     }
 }
