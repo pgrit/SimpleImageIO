@@ -88,6 +88,30 @@ static int nextIndex = 0;
 
 static std::unordered_set<void*> allocedMemory;
 
+uint8_t GammaCorrect(float rgb) {
+    rgb = std::pow(rgb, 1.0f / 2.2f) * 255;
+    float clipped = rgb < 0 ? 0 : rgb;
+    clipped = clipped > 255 ? 255 : clipped;
+    return (uint8_t) clipped;
+}
+
+/// Applies the same gamma correction as the loading code of stb_image,
+/// which does not handle sRGB or gamma information stored in the file
+void ConvertToStbByteImage(const float* data, int rowStride, uint8_t* buffer, int width, int height,
+                           int numChannels) {
+    ForAllPixels(width, height, numChannels, rowStride, width * numChannels,
+        [&](int idxIn, int idxOut, int col, int row, int chan) {
+            buffer[idxOut] = GammaCorrect(data[idxIn]);
+        });
+}
+
+void AlignImage(const float* data, int rowStride, float* buffer, int width, int height, int numChannels) {
+    ForAllPixels(width, height, numChannels, rowStride, width * numChannels,
+        [&](int idxIn, int idxOut, int col, int row, int chan) {
+            buffer[chan + numChannels * (col + width * row)] = data[idxIn];
+        });
+}
+
 int CacheExrImage(const char* filename) {
     ExrImageData result;
 
@@ -449,7 +473,7 @@ void WriteTiffImage(const float* data, int rowStride, int width, int height, int
     writer.WriteToFile(filename, &err);
 
     if (!err.empty()) {
-        std::cerr << err;
+        std::cerr << err << std::endl;
     }
 }
 
@@ -477,32 +501,8 @@ void CopyCachedStbImage(int id, float* out) {
     stbi_image_free(data.data);
 }
 
-uint8_t GammaCorrect(float rgb) {
-    rgb = std::pow(rgb, 1.0f / 2.2f) * 255;
-    float clipped = rgb < 0 ? 0 : rgb;
-    clipped = clipped > 255 ? 255 : clipped;
-    return (uint8_t) clipped;
-}
-
-/// Applies the same gamma correction as the loading code of stb_image,
-/// which does not handle sRGB or gamma information stored in the file
-void ConvertToStbByteImage(const float* data, int rowStride, uint8_t* buffer, int width, int height,
-                           int numChannels) {
-    ForAllPixels(width, height, numChannels, rowStride, width * numChannels,
-        [&](int idxIn, int idxOut, int col, int row, int chan) {
-            buffer[idxOut] = GammaCorrect(data[idxIn]);
-        });
-}
-
-void AlignImage(const float* data, int rowStride, float* buffer, int width, int height, int numChannels) {
-    ForAllPixels(width, height, numChannels, rowStride, width * numChannels,
-        [&](int idxIn, int idxOut, int col, int row, int chan) {
-            buffer[chan + numChannels * (col + width * row)] = data[idxIn];
-        });
-}
-
 void WriteImageWithStbImage(const float* data, int rowStride, int width, int height, int numChannels,
-                            const char* filename, int jpegQuality) {
+                            const char* filename, int lossyQuality) {
     auto fname = std::string(filename);
     auto fext = fname.substr(fname.size() - 3, 3);
     if (fext == "hdr") {
@@ -523,7 +523,7 @@ void WriteImageWithStbImage(const float* data, int rowStride, int width, int hei
         else if (fext == "tga")
             stbi_write_tga(filename, width, height, numChannels, buffer.data());
         else if (fext == "jpg")
-            stbi_write_jpg(filename, width, height, numChannels, buffer.data(), jpegQuality);
+            stbi_write_jpg(filename, width, height, numChannels, buffer.data(), lossyQuality);
     }
 }
 
@@ -631,19 +631,19 @@ SIIO_API void WriteLayeredExr(const float** datas, int* strides, int width, int 
 }
 
 SIIO_API void WriteImage(const float* data, int rowStride, int width, int height, int numChannels,
-                         const char* filename, int jpegQuality) {
+                         const char* filename, int lossyQuality) {
     auto fname = std::string(filename);
     if (fname.compare(fname.size() - 4, 4, ".exr") == 0) {
         // This is an .exr image, write it with tinyexr
         WriteImageToExr(&data, &rowStride, width, height, &numChannels, 1, nullptr, filename, nullptr, nullptr);
     } else if (fname.compare(fname.size() - 4, 4, ".pfm") == 0) {
-        return WritePfmImage(data, rowStride, width, height, numChannels, filename);
+        WritePfmImage(data, rowStride, width, height, numChannels, filename);
     } else if (fname.compare(fname.size() - 4, 4, ".tif") == 0
             || fname.compare(fname.size() - 5, 5, ".tiff") == 0) {
-        return WriteTiffImage(data, rowStride, width, height, numChannels, filename);
+        WriteTiffImage(data, rowStride, width, height, numChannels, filename);
     } else {
         // This is some other format, assume that stb_image can handle it
-        WriteImageWithStbImage(data, rowStride, width, height, numChannels, filename, jpegQuality);
+        WriteImageWithStbImage(data, rowStride, width, height, numChannels, filename, lossyQuality);
     }
 }
 
@@ -658,7 +658,7 @@ void StbWriteFunc(void* context, void* data, int size) {
 }
 
 SIIO_API unsigned char* WriteToMemory(const float* data, int rowStride, int width, int height,
-                                      int numChannels, const char* extension, int jpegQuality,
+                                      int numChannels, const char* extension, int lossyQuality,
                                       int* numBytes) {
     if (!strncmp(extension, ".exr", 4)) {
         unsigned char* result;
@@ -683,7 +683,7 @@ SIIO_API unsigned char* WriteToMemory(const float* data, int rowStride, int widt
     ConvertToStbByteImage(data, rowStride, buffer.data(), width, height, numChannels);
 
     if (!strncmp(extension, ".jpg", 4)) {
-        stbi_write_jpg_to_func(StbWriteFunc, &outBuffer, width, height, numChannels, buffer.data(), jpegQuality);
+        stbi_write_jpg_to_func(StbWriteFunc, &outBuffer, width, height, numChannels, buffer.data(), lossyQuality);
     } else if (!strncmp(extension, ".bmp", 4)) {
         stbi_write_bmp_to_func(StbWriteFunc, &outBuffer, width, height, numChannels, buffer.data());
     } else if (!strncmp(extension, ".tga", 4)) {

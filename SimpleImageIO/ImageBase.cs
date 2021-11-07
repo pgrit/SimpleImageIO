@@ -220,14 +220,14 @@ namespace SimpleImageIO {
         /// Writes the image into a file. Not all formats support all / arbitrary channel layouts.
         /// </summary>
         /// <param name="filename">Name of the file to write, extension must be one of the supported formats</param>
-        /// <param name="jpegQuality">
+        /// <param name="lossyQuality">
         /// If the format is ".jpeg", this number between 0 and 100 determines the compression
         /// quality. Otherwise, it is ignored.
         /// </param>
-        public void WriteToFile(string filename, int jpegQuality = 80) {
+        public void WriteToFile(string filename, int lossyQuality = 80) {
             EnsureDirectory(filename);
             SimpleImageIOCore.WriteImage(DataPointer, NumChannels * Width, Width, Height, NumChannels,
-                filename, jpegQuality);
+                filename, lossyQuality);
         }
 
         /// <summary>
@@ -236,14 +236,14 @@ namespace SimpleImageIO {
         /// <param name="extension">
         /// The file name extension of the desired format, e.g., ".exr" or ".png".
         /// </param>
-        /// <param name="jpegQuality">
+        /// <param name="lossyQuality">
         /// If the format is ".jpeg", this number between 0 and 100 determines the compression
         /// quality. Otherwise, it is ignored.
         /// </param>
         /// <returns>The memory contents of the image file</returns>
-        public byte[] WriteToMemory(string extension, int jpegQuality = 80) {
+        public byte[] WriteToMemory(string extension, int lossyQuality = 80) {
             IntPtr mem = SimpleImageIOCore.WriteToMemory(DataPointer, NumChannels * Width, Width, Height,
-                NumChannels, extension, jpegQuality, out int numBytes);
+                NumChannels, extension, lossyQuality, out int numBytes);
 
             byte[] bytes = new byte[numBytes];
             Marshal.Copy(mem, bytes, 0, numBytes);

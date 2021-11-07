@@ -36,7 +36,7 @@ namespace SimpleImageIO {
 
         [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
         public static extern void WriteImage(IntPtr data, int rowStride, int width, int height, int numChannels,
-                                             string filename, int jpegQuality);
+                                             string filename, int lossyQuality);
 
         [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
         public static extern void WriteLayeredExr(IntPtr[] datas, int[] strides, int width, int height,
@@ -44,7 +44,7 @@ namespace SimpleImageIO {
 
         [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr WriteToMemory(IntPtr data, int rowStride, int width, int height,
-                                                  int numChannels, string extension, int jpegQuality,
+                                                  int numChannels, string extension, int lossyQuality,
                                                   out int len);
 
         [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
