@@ -71,8 +71,8 @@ namespace SimpleImageIO {
 
         [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
         public static extern void oidnSetSharedFilterImage(IntPtr filter, string name,
-            IntPtr ptr, OIDNFormat format, UIntPtr width, UIntPtr height, UIntPtr byteOffset,
-            UIntPtr bytePixelStride, UIntPtr byteRowStride);
+            IntPtr ptr, OIDNFormat format, nuint width, nuint height, nuint byteOffset,
+            nuint bytePixelStride, nuint byteRowStride);
 
         [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
         public static extern void oidnSetFilter1b(IntPtr filter, string name, bool value);

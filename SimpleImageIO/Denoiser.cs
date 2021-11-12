@@ -25,8 +25,7 @@ namespace SimpleImageIO {
 
         static void SetFilterImage(IntPtr filter, ImageBase image, string name) {
             OpenImageDenoise.oidnSetSharedFilterImage(filter, name, image.DataPointer,
-                (OIDNFormat)image.NumChannels, (UIntPtr)image.Width, (UIntPtr)image.Height,
-                UIntPtr.Zero, UIntPtr.Zero, UIntPtr.Zero);
+                (OIDNFormat)image.NumChannels, (nuint)image.Width, (nuint)image.Height, 0, 0, 0);
         }
 
         /// <summary>
