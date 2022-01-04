@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 
 namespace SimpleImageIO.Benchmark {
     class Program {
+        static int RepeatFilter = 10;
         static void BenchIO() {
             Stopwatch stopwatch = Stopwatch.StartNew();
             RgbImage img = new("../PyTest/NoisyRender.exr");
@@ -98,27 +99,112 @@ namespace SimpleImageIO.Benchmark {
             Console.WriteLine($"Splatting {numSplats} samples (average: {avg}) took {time} ms");
         }
 
-        static void BenchFilter() {
+        static void BenchBoxFilter() {
             RgbImage image = new("../PyTest/dikhololo_night_4k.hdr");
             RgbImage imageBlur = new(image.Width, image.Height);
             BoxFilter filter = new(8);
 
             Stopwatch stopwatch = Stopwatch.StartNew();
-            int n = 2;
-            for (int i = 0; i < n; ++i)
+            for (int i = 0; i < RepeatFilter; ++i)
                 filter.Apply(image, imageBlur);
             stopwatch.Stop();
 
             imageBlur.WriteToFile("blur.exr");
 
-            Console.WriteLine($"Filtering {n} times took {stopwatch.ElapsedMilliseconds} ms");
+            Console.WriteLine($"Box filtering {RepeatFilter} times took {stopwatch.ElapsedMilliseconds} ms");
+        }
+
+        static void BenchBoxFilter3() {
+            RgbImage image = new("../PyTest/dikhololo_night_4k.hdr");
+            RgbImage imageBlur = new(image.Width, image.Height);
+            RgbImage buffer = new(image.Width, image.Height);
+            BoxFilter filter = new(8);
+
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            for (int i = 0; i < RepeatFilter; ++i) {
+                filter.ApplyFast(image, imageBlur, buffer);
+            }
+            stopwatch.Stop();
+
+            imageBlur.WriteToFile("blur3x3.exr");
+
+            Console.WriteLine($"Box3x3 filtering {RepeatFilter} times took {stopwatch.ElapsedMilliseconds} ms");
+        }
+
+        static void BenchDilationFilter() {
+            RgbImage image = new("../PyTest/dikhololo_night_4k.hdr");
+            RgbImage imageBlur = new(image.Width, image.Height);
+            RgbImage buffer = new(image.Width, image.Height);
+            DilationFilter filter = new(8);
+
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            for (int i = 0; i < RepeatFilter; ++i) {
+                filter.Apply(image, imageBlur, buffer);
+            }
+            stopwatch.Stop();
+
+            imageBlur.WriteToFile("dilation.exr");
+
+            Console.WriteLine($"Dilation filtering {RepeatFilter} times took {stopwatch.ElapsedMilliseconds} ms");
+        }
+
+        static void BenchErosionFilter() {
+            RgbImage image = new("../PyTest/dikhololo_night_4k.hdr");
+            RgbImage imageBlur = new(image.Width, image.Height);
+            RgbImage buffer = new(image.Width, image.Height);
+            ErosionFilter filter = new(8);
+
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            for (int i = 0; i < RepeatFilter; ++i) {
+                filter.Apply(image, imageBlur, buffer);
+            }
+            stopwatch.Stop();
+
+            imageBlur.WriteToFile("erosion.exr");
+
+            Console.WriteLine($"Erosion filtering {RepeatFilter} times took {stopwatch.ElapsedMilliseconds} ms");
+        }
+
+        static void BenchMedianFilter() {
+            RgbImage image = new("../PyTest/dikhololo_night_4k.hdr");
+            RgbImage imageBlur = new(image.Width, image.Height);
+            
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            for (int i = 0; i < RepeatFilter; ++i) {
+                MedianFilter.Apply3x3(image, imageBlur);
+            }
+            stopwatch.Stop();
+
+            imageBlur.WriteToFile("median.exr");
+
+            Console.WriteLine($"Median3x3 filtering {RepeatFilter} times took {stopwatch.ElapsedMilliseconds} ms");
+        }
+
+        static void BenchGaussFilter() {
+            RgbImage image = new("../PyTest/dikhololo_night_4k.hdr");
+            RgbImage imageBlur = new(image.Width, image.Height);
+            
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            for (int i = 0; i < RepeatFilter; ++i) {
+                GaussFilter.Apply3x3(image, imageBlur);
+            }
+            stopwatch.Stop();
+
+            imageBlur.WriteToFile("gauss.exr");
+
+            Console.WriteLine($"Gauss3x3 filtering {RepeatFilter} times took {stopwatch.ElapsedMilliseconds} ms");
         }
 
         static void Main(string[] args) {
             BenchIO();
             BenchErrors();
             BenchSplatting();
-            BenchFilter();
+            BenchBoxFilter();
+            BenchBoxFilter3();
+            BenchDilationFilter();
+            BenchErosionFilter();
+            BenchMedianFilter();
+            BenchGaussFilter();
         }
     }
 }
