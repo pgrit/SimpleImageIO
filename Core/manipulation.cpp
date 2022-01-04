@@ -39,6 +39,14 @@ SIIO_API void LinearToSrgb(float* image, int imgStride, float* result, int resSt
         });
 }
 
+SIIO_API void SrgbToLinear(float* image, int imgStride, float* result, int resStride,
+                           int width, int height, int numChans) {
+    ForAllPixels(width, height, numChans, imgStride, resStride,
+        [&](int imgIdx, int resIdx, int col, int row, int chan) {
+            result[resIdx] = SrgbToLinear(image[imgIdx]);
+        });
+}
+
 SIIO_API void ToByteImage(float* image, int imgStride, uint8_t* result, int resStride,
                           int width, int height, int numChans) {
     ForAllPixels(width, height, numChans, imgStride, resStride,

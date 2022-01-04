@@ -10,6 +10,10 @@ _lin_to_srgb = corelib.core.LinearToSrgb
 _lin_to_srgb.argtypes = (POINTER(c_float), c_int, POINTER(c_float), c_int, c_int, c_int, c_int)
 _lin_to_srgb.restype = None
 
+_srgb_to_lin = corelib.core.SrgbToLinear
+_srgb_to_lin.argtypes = (POINTER(c_float), c_int, POINTER(c_float), c_int, c_int, c_int, c_int)
+_srgb_to_lin.restype = None
+
 _to_byte_img = corelib.core.ToByteImage
 _to_byte_img.argtypes = (POINTER(c_float), c_int, POINTER(c_uint8), c_int, c_int, c_int, c_int)
 _to_byte_img.restype = None
@@ -38,6 +42,9 @@ def exposure(img, exposure=0):
 
 def lin_to_srgb(img):
     return corelib.invoke_with_output(_lin_to_srgb, img)
+
+def srgb_to_lin(img):
+    return corelib.invoke_with_output(_srgb_to_lin, img)
 
 def to_byte_image(img):
     return corelib.invoke_with_byte_output(_to_byte_img, img)
