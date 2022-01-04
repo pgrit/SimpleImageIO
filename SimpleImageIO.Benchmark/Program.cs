@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 namespace SimpleImageIO.Benchmark {
     class Program {
         static int RepeatFilter = 10;
+        static int FilterRadius = 8; // The radius all filters use if possible
+
         static void BenchIO() {
             Stopwatch stopwatch = Stopwatch.StartNew();
             RgbImage img = new("../PyTest/NoisyRender.exr");
@@ -102,7 +104,7 @@ namespace SimpleImageIO.Benchmark {
         static void BenchBoxFilter() {
             RgbImage image = new("../PyTest/dikhololo_night_4k.hdr");
             RgbImage imageBlur = new(image.Width, image.Height);
-            BoxFilter filter = new(8);
+            BoxFilter filter = new(FilterRadius);
 
             Stopwatch stopwatch = Stopwatch.StartNew();
             for (int i = 0; i < RepeatFilter; ++i)
@@ -111,14 +113,14 @@ namespace SimpleImageIO.Benchmark {
 
             imageBlur.WriteToFile("blur.exr");
 
-            Console.WriteLine($"Box filtering {RepeatFilter} times took {stopwatch.ElapsedMilliseconds} ms");
+            Console.WriteLine($"Box (r={FilterRadius}) filtering {RepeatFilter} times took {stopwatch.ElapsedMilliseconds} ms");
         }
 
         static void BenchBoxFilter3() {
             RgbImage image = new("../PyTest/dikhololo_night_4k.hdr");
             RgbImage imageBlur = new(image.Width, image.Height);
             RgbImage buffer = new(image.Width, image.Height);
-            BoxFilter filter = new(8);
+            BoxFilter filter = new(FilterRadius);
 
             Stopwatch stopwatch = Stopwatch.StartNew();
             for (int i = 0; i < RepeatFilter; ++i) {
@@ -128,14 +130,14 @@ namespace SimpleImageIO.Benchmark {
 
             imageBlur.WriteToFile("blur3x3.exr");
 
-            Console.WriteLine($"Box3x3 filtering {RepeatFilter} times took {stopwatch.ElapsedMilliseconds} ms");
+            Console.WriteLine($"Box3x3 (r={FilterRadius}) filtering {RepeatFilter} times took {stopwatch.ElapsedMilliseconds} ms");
         }
 
         static void BenchDilationFilter() {
             RgbImage image = new("../PyTest/dikhololo_night_4k.hdr");
             RgbImage imageBlur = new(image.Width, image.Height);
             RgbImage buffer = new(image.Width, image.Height);
-            DilationFilter filter = new(8);
+            DilationFilter filter = new(FilterRadius);
 
             Stopwatch stopwatch = Stopwatch.StartNew();
             for (int i = 0; i < RepeatFilter; ++i) {
@@ -145,14 +147,14 @@ namespace SimpleImageIO.Benchmark {
 
             imageBlur.WriteToFile("dilation.exr");
 
-            Console.WriteLine($"Dilation filtering {RepeatFilter} times took {stopwatch.ElapsedMilliseconds} ms");
+            Console.WriteLine($"Dilation (r={FilterRadius}) filtering {RepeatFilter} times took {stopwatch.ElapsedMilliseconds} ms");
         }
 
         static void BenchErosionFilter() {
             RgbImage image = new("../PyTest/dikhololo_night_4k.hdr");
             RgbImage imageBlur = new(image.Width, image.Height);
             RgbImage buffer = new(image.Width, image.Height);
-            ErosionFilter filter = new(8);
+            ErosionFilter filter = new(FilterRadius);
 
             Stopwatch stopwatch = Stopwatch.StartNew();
             for (int i = 0; i < RepeatFilter; ++i) {
@@ -162,7 +164,7 @@ namespace SimpleImageIO.Benchmark {
 
             imageBlur.WriteToFile("erosion.exr");
 
-            Console.WriteLine($"Erosion filtering {RepeatFilter} times took {stopwatch.ElapsedMilliseconds} ms");
+            Console.WriteLine($"Erosion (r={FilterRadius}) filtering {RepeatFilter} times took {stopwatch.ElapsedMilliseconds} ms");
         }
 
         static void BenchMedianFilter() {
@@ -177,7 +179,7 @@ namespace SimpleImageIO.Benchmark {
 
             imageBlur.WriteToFile("median.exr");
 
-            Console.WriteLine($"Median3x3 filtering {RepeatFilter} times took {stopwatch.ElapsedMilliseconds} ms");
+            Console.WriteLine($"Median3x3 (r=1) filtering {RepeatFilter} times took {stopwatch.ElapsedMilliseconds} ms");
         }
 
         static void BenchGaussFilter() {
@@ -192,12 +194,12 @@ namespace SimpleImageIO.Benchmark {
 
             imageBlur.WriteToFile("gauss.exr");
 
-            Console.WriteLine($"Gauss3x3 filtering {RepeatFilter} times took {stopwatch.ElapsedMilliseconds} ms");
+            Console.WriteLine($"Gauss3x3 (r=1) filtering {RepeatFilter} times took {stopwatch.ElapsedMilliseconds} ms");
         }
 
         static void Main(string[] args) {
             BenchIO();
-            BenchErrors();
+            // BenchErrors();
             BenchSplatting();
             BenchBoxFilter();
             BenchBoxFilter3();

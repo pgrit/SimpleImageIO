@@ -3,6 +3,9 @@
 #include <array>
 #include <cmath>
 
+// A horizontal + vertical sweep version for symmetrical kernels (which all are in our case)
+// would be faster but would also require an additional buffer
+
 template<typename Func, typename BorderFunc>
 inline void ConvFilter3(float* image, int imgStride, float* result, int resStride,
                         int width, int height, int numChans,
