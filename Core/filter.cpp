@@ -39,13 +39,13 @@ inline void ConvFilter3(float* image, int imgStride, float* result, int resStrid
     };
 
     if(width == 1 && height == 1) {
-        // Single pixel image should be traited as a special case
+        // Single pixel image should be treated as a special case
         op(0, 0, {false, false, false,
                   false, true,  false,
                   false, false, false});
     } else if(width == 1) {
         // A row vector is just a vertical sweep
-        
+
         // First edge
         op(0, 0, {false, false, false,
                   false, true,  false,
@@ -90,7 +90,7 @@ inline void ConvFilter3(float* image, int imgStride, float* result, int resStrid
         op(0, 0, {false, false, false,
                   false, true,  true,
                   false, true,  true});
-        
+
         // Top edge
         #pragma omp parallel for
         for(int c = 1; c < width-1; ++c) {
@@ -103,7 +103,7 @@ inline void ConvFilter3(float* image, int imgStride, float* result, int resStrid
         op(0, width-1, {false, false, false,
                         true,  true,  false,
                         true,  true,  false});
- 
+
         // Left edge
         #pragma omp parallel for
         for(int r = 1; r < height-1; ++r) {
@@ -121,7 +121,7 @@ inline void ConvFilter3(float* image, int imgStride, float* result, int resStrid
                           true, true, true});
             }
         }
- 
+
         // Right edge
         #pragma omp parallel for
         for(int r = 1; r < height-1; ++r) {
@@ -134,7 +134,7 @@ inline void ConvFilter3(float* image, int imgStride, float* result, int resStrid
         op(height-1, 0, {false, true,  true,
                          false, true,  true,
                          false, false, false});
-        
+
         // Bottom edge
         #pragma omp parallel for
         for(int c = 1; c < width-1; ++c) {
@@ -265,7 +265,7 @@ SIIO_API void GaussFilter3x3(float* image, int imgStride, float* result, int res
     const float c22 = c2 * c2;
 
     const float a = 1 / (c00 + c01 + c02 + c10 + c11 + c12 + c20 + c21 + c22);
-    
+
     const auto func = [=] (float m00, float m01, float m02, float m10, float m11, float m12, float m20, float m21, float m22, int /*size*/) {
         return a * (m00 * c00 + m01 * c01 + m02 * c02 + m10 * c10 + m11 * c11 + m12 * c12 + m20 * c20 + m21 * c21 + m22 * c22);
     };
@@ -273,9 +273,9 @@ SIIO_API void GaussFilter3x3(float* image, int imgStride, float* result, int res
     const auto in = [=](int row, int col, int channel) {
         return image[channel + imgStride * row + col * numChans];
     };
-    
+
     // Wrap border
-    const auto bfunc = [=] (int row, int col, int channel) { 
+    const auto bfunc = [=] (int row, int col, int channel) {
         return in(std::min(height-1, std::max(0, row)), std::min(width-1, std::max(0, col)), channel);
     };
 
