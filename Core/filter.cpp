@@ -90,11 +90,6 @@ inline void ConvFilter3(float* image, int imgStride, float* result, int resStrid
         op(0, 0, {false, false, false,
                   false, true,  true,
                   false, true,  true});
-        for (int chan = 0; chan < numChans; ++chan) {
-            out(0, 0, chan) = func(0, 0,              0,
-                                   0, in(0, 0, chan), in(0, 1, chan),
-                                   0, in(1, 0, chan), in(1, 1, chan), 4);
-        }
         
         // Top edge
         #pragma omp parallel for
