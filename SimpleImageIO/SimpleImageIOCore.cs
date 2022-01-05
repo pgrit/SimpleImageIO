@@ -90,23 +90,23 @@ namespace SimpleImageIO {
 
         [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
         public static extern void BoxFilter3x3(IntPtr image, int imgRowStride, IntPtr result, int resRowStride,
-                                            int width, int height, int numChannels);
+                                               int width, int height, int numChannels);
 
         [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
         public static extern void DilationFilter3x3(IntPtr image, int imgRowStride, IntPtr result, int resRowStride,
-                                            int width, int height, int numChannels);
+                                                    int width, int height, int numChannels);
 
         [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
         public static extern void ErosionFilter3x3(IntPtr image, int imgRowStride, IntPtr result, int resRowStride,
-                                            int width, int height, int numChannels);
+                                                   int width, int height, int numChannels);
 
         [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
         public static extern void MedianFilter3x3(IntPtr image, int imgRowStride, IntPtr result, int resRowStride,
-                                            int width, int height, int numChannels);
+                                                  int width, int height, int numChannels);
 
         [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
         public static extern void GaussFilter3x3(IntPtr image, int imgRowStride, IntPtr result, int resRowStride,
-                                            int width, int height, int numChannels);
+                                                 int width, int height, int numChannels);
 
         #endregion
     }

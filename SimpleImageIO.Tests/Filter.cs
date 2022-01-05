@@ -19,10 +19,8 @@ namespace SimpleImageIO.Tests {
             RgbImage aImage = new(image.Width, image.Height);
             RgbImage bImage = new(image.Width, image.Height);
 
-            BoxFilter filter = new(radius);
-
-            filter.Apply(image, aImage);
-            filter.ApplyFast(image, bImage);
+            SimpleImageIO.Filter.Box(image, aImage, radius);
+            SimpleImageIO.Filter.RepeatedBox(image, bImage, radius);
 
             Assert.Equal(aImage.AsBase64Png(), bImage.AsBase64Png());
         }
@@ -43,10 +41,8 @@ namespace SimpleImageIO.Tests {
             MonochromeImage aImage = new(image.Width, image.Height);
             MonochromeImage bImage = new(image.Width, image.Height);
 
-            BoxFilter filter = new(radius);
-
-            filter.Apply(image, aImage);
-            filter.ApplyFast(image, bImage);
+            SimpleImageIO.Filter.Box(image, aImage, radius);
+            SimpleImageIO.Filter.RepeatedBox(image, bImage, radius);
 
             Assert.Equal(aImage.AsBase64Png(), bImage.AsBase64Png());
         }

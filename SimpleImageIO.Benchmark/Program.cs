@@ -104,11 +104,10 @@ namespace SimpleImageIO.Benchmark {
         static void BenchBoxFilter() {
             RgbImage image = new("../PyTest/dikhololo_night_4k.hdr");
             RgbImage imageBlur = new(image.Width, image.Height);
-            BoxFilter filter = new(FilterRadius);
 
             Stopwatch stopwatch = Stopwatch.StartNew();
             for (int i = 0; i < RepeatFilter; ++i)
-                filter.Apply(image, imageBlur);
+                Filter.Box(image, imageBlur, FilterRadius);
             stopwatch.Stop();
 
             imageBlur.WriteToFile("blur.exr");
@@ -119,12 +118,10 @@ namespace SimpleImageIO.Benchmark {
         static void BenchBoxFilter3() {
             RgbImage image = new("../PyTest/dikhololo_night_4k.hdr");
             RgbImage imageBlur = new(image.Width, image.Height);
-            RgbImage buffer = new(image.Width, image.Height);
-            BoxFilter filter = new(FilterRadius);
 
             Stopwatch stopwatch = Stopwatch.StartNew();
             for (int i = 0; i < RepeatFilter; ++i) {
-                filter.ApplyFast(image, imageBlur, buffer);
+                Filter.RepeatedBox(image, imageBlur, FilterRadius);
             }
             stopwatch.Stop();
 
@@ -136,12 +133,10 @@ namespace SimpleImageIO.Benchmark {
         static void BenchDilationFilter() {
             RgbImage image = new("../PyTest/dikhololo_night_4k.hdr");
             RgbImage imageBlur = new(image.Width, image.Height);
-            RgbImage buffer = new(image.Width, image.Height);
-            DilationFilter filter = new(FilterRadius);
 
             Stopwatch stopwatch = Stopwatch.StartNew();
             for (int i = 0; i < RepeatFilter; ++i) {
-                filter.Apply(image, imageBlur, buffer);
+                Filter.Dilation(image, imageBlur, FilterRadius);
             }
             stopwatch.Stop();
 
@@ -154,11 +149,10 @@ namespace SimpleImageIO.Benchmark {
             RgbImage image = new("../PyTest/dikhololo_night_4k.hdr");
             RgbImage imageBlur = new(image.Width, image.Height);
             RgbImage buffer = new(image.Width, image.Height);
-            ErosionFilter filter = new(FilterRadius);
 
             Stopwatch stopwatch = Stopwatch.StartNew();
             for (int i = 0; i < RepeatFilter; ++i) {
-                filter.Apply(image, imageBlur, buffer);
+                Filter.Erosion(image, imageBlur, FilterRadius, buffer);
             }
             stopwatch.Stop();
 
@@ -170,7 +164,7 @@ namespace SimpleImageIO.Benchmark {
         static void BenchMedianFilter() {
             RgbImage image = new("../PyTest/dikhololo_night_4k.hdr");
             RgbImage imageBlur = new(image.Width, image.Height);
-            
+
             Stopwatch stopwatch = Stopwatch.StartNew();
             for (int i = 0; i < RepeatFilter; ++i) {
                 MedianFilter.Apply3x3(image, imageBlur);
@@ -185,10 +179,10 @@ namespace SimpleImageIO.Benchmark {
         static void BenchGaussFilter() {
             RgbImage image = new("../PyTest/dikhololo_night_4k.hdr");
             RgbImage imageBlur = new(image.Width, image.Height);
-            
+
             Stopwatch stopwatch = Stopwatch.StartNew();
             for (int i = 0; i < RepeatFilter; ++i) {
-                GaussFilter.Apply3x3(image, imageBlur);
+                Filter.Gauss(image, imageBlur, 1);
             }
             stopwatch.Stop();
 
@@ -199,7 +193,7 @@ namespace SimpleImageIO.Benchmark {
 
         static void Main(string[] args) {
             BenchIO();
-            // BenchErrors();
+            BenchErrors();
             BenchSplatting();
             BenchBoxFilter();
             BenchBoxFilter3();
