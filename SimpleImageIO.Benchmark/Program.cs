@@ -167,7 +167,7 @@ namespace SimpleImageIO.Benchmark {
 
             Stopwatch stopwatch = Stopwatch.StartNew();
             for (int i = 0; i < RepeatFilter; ++i) {
-                MedianFilter.Apply3x3(image, imageBlur);
+                Filter.Median(image, imageBlur);
             }
             stopwatch.Stop();
 
