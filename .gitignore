@@ -2,6 +2,7 @@
 .vs
 .vscode/settings.json
 .idea
+.ionide
 
 # OS related
 .DS_Store
