@@ -21,6 +21,12 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>SimpleImageIO.Benchmark</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
   <!-- Each additional platform requires an entry here, to copy the corresponding native binaries -->
   <!-- Windows -->
   <ItemGroup>

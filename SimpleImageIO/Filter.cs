@@ -27,8 +27,8 @@ namespace SimpleImageIO {
             }
 
             if ((radius % 2) == 0) {
-                // The actual result is in buffer not target
-                buffer.RawData.CopyTo(target.RawData);
+                // The actual result is in buffer not target. We simply flip their pointers.
+                (buffer.DataPointer, target.DataPointer) = (target.DataPointer, buffer.DataPointer);
             }
 
             if (ownBuffer) {

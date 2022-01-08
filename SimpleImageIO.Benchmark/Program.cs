@@ -191,7 +191,76 @@ namespace SimpleImageIO.Benchmark {
             Console.WriteLine($"Gauss3x3 (r=1) filtering {RepeatFilter} times took {stopwatch.ElapsedMilliseconds} ms");
         }
 
+        static void BenchGetSetPixel() {
+            MonochromeImage img = new(600, 600);
+
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            for (int i = 0; i < 10; ++i) {
+                for (int row = 0; row < 600; ++row) {
+                    for (int col = 0; col < 600; ++col) {
+                        img.SetPixel(col, row, 1.3f);
+                    }
+                }
+            }
+            stopwatch.Stop();
+            Console.WriteLine($"Setting all pixels took {stopwatch.ElapsedMilliseconds / 10.0f}ms");
+
+            stopwatch.Restart();
+            for (int i = 0; i < 10; ++i) {
+                for (int row = 0; row < 600; ++row) {
+                    for (int col = 0; col < 600; ++col) {
+                        float tmp = img.GetPixel(col, row);
+                    }
+                }
+            }
+            stopwatch.Stop();
+            Console.WriteLine($"Getting all pixels took {stopwatch.ElapsedMilliseconds / 10.0f}ms");
+
+            float[] data = new float[600*600];
+            stopwatch.Restart();
+            for (int i = 0; i < 10; ++i) {
+                for (int row = 0; row < 600; ++row) {
+                    for (int col = 0; col < 600; ++col) {
+                        data[row * 600 + col] = 1.3f;
+                    }
+                }
+            }
+            stopwatch.Stop();
+            Console.WriteLine($"Setting all in array took {stopwatch.ElapsedMilliseconds / 10.0f}ms");
+
+            stopwatch.Restart();
+            for (int i = 0; i < 10; ++i) {
+                for (int row = 0; row < 600; ++row) {
+                    for (int col = 0; col < 600; ++col) {
+                        float tmp = data[row * 600 + col];
+                    }
+                }
+            }
+            stopwatch.Stop();
+            Console.WriteLine($"Getting all in array took {stopwatch.ElapsedMilliseconds / 10.0f}ms");
+
+            unsafe {
+                stopwatch.Restart();
+                for (int i = 0; i < 10; ++i) {
+                    for (int row = 0; row < 600; ++row) {
+                        for (int col = 0; col < 600; ++col) {
+                            Span<float> rawData = new(img.DataPointer.ToPointer(), img.Width * img.Height * img.NumChannels);
+                            rawData[row * 600 + col] = 1.3f;
+                        }
+                    }
+                }
+                stopwatch.Stop();
+                Console.WriteLine($"Setting all in native span took {stopwatch.ElapsedMilliseconds / 10.0f}ms");
+            }
+
+            stopwatch.Restart();
+            img.Fill(13.0f);
+            stopwatch.Stop();
+            Console.WriteLine($"Fill took {stopwatch.ElapsedMilliseconds}ms");
+        }
+
         static void Main(string[] args) {
+            BenchGetSetPixel();
             BenchIO();
             BenchErrors();
             BenchSplatting();

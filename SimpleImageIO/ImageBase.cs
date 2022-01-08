@@ -1,11 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
 
 namespace SimpleImageIO {
     /// <summary>
@@ -30,12 +28,12 @@ namespace SimpleImageIO {
         /// <summary>
         /// Pointer to the native memory containing the image data
         /// </summary>
-        public IntPtr DataPointer;
+        internal IntPtr DataPointer;
 
-        /// <summary>
-        /// Provides direct access to the unmanaged memory. Layout is a row major array.
-        /// </summary>
-        public Span<float> RawData => new(DataPointer.ToPointer(), Width * Height * NumChannels);
+        private float* dataPtr {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => (float*)DataPointer.ToPointer();
+        }
 
         /// <summary>
         /// Creates a new empty image that is not yet managing any data
@@ -52,7 +50,7 @@ namespace SimpleImageIO {
             Alloc();
 
             // Zero out the values to avoid undefined contents
-            RawData.Clear();
+            Unsafe.InitBlock(dataPtr, 0, (uint)(Width * Height * NumChannels * sizeof(float)));
         }
 
         /// <summary>
@@ -70,6 +68,7 @@ namespace SimpleImageIO {
             dest.NumChannels = src.NumChannels;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         int GetIndex(int col, int row) => (row * Width + col) * NumChannels;
 
         /// <summary>
@@ -79,13 +78,14 @@ namespace SimpleImageIO {
         /// <param name="row">Vertical pixel coordinate (0 is top)</param>
         /// <param name="chan">Channel index</param>
         /// <returns>Pixel channel value</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float GetPixelChannel(int col, int row, int chan) {
             Debug.Assert(chan < NumChannels);
 
             int c = Math.Clamp(col, 0, Width - 1);
             int r = Math.Clamp(row, 0, Height - 1);
 
-            return RawData[GetIndex(c, r) + chan];
+            return dataPtr[GetIndex(c, r) + chan];
         }
 
         /// <summary>
@@ -102,6 +102,7 @@ namespace SimpleImageIO {
         ///     the number of channels.
         /// </param>
         /// <returns>Pixel channel value</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetPixelChannels(int col, int row, params float[] channels) {
             Debug.Assert(channels.Length == NumChannels);
 
@@ -109,7 +110,7 @@ namespace SimpleImageIO {
             int r = Math.Clamp(row, 0, Height - 1);
 
             for (int chan = 0; chan < NumChannels; ++chan)
-                RawData[GetIndex(c, r) + chan] = channels[chan];
+                dataPtr[GetIndex(c, r) + chan] = channels[chan];
         }
 
         /// <summary>
@@ -120,24 +121,25 @@ namespace SimpleImageIO {
         /// <param name="row">Vertical pixel coordinate (0 is top)</param>
         /// <param name="chan">Channel index</param>
         /// <param name="value">New value of the channel</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetPixelChannel(int col, int row, int chan, float value) {
             int c = Math.Clamp(col, 0, Width - 1);
             int r = Math.Clamp(row, 0, Height - 1);
-            RawData[GetIndex(c, r) + chan] = value;
+            dataPtr[GetIndex(c, r) + chan] = value;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static void AtomicAddFloat(ref float target, float value) {
             float initialValue, computedValue;
-
-            // Prevent infinite loop if a pixel value is NaN
-            if (!float.IsFinite(target))
-                return;
-
             do {
                 initialValue = target;
                 computedValue = initialValue + value;
-            } while (initialValue != Interlocked.CompareExchange(ref target,
-                computedValue, initialValue));
+            } while (
+                initialValue != Interlocked.CompareExchange(ref target, computedValue, initialValue)
+                // If another thread changes target to NaN in the meantime, we will be stuck forever
+                // since NaN != NaN is always true, and NaN + value is also NaN
+                && !float.IsNaN(initialValue)
+            );
         }
 
         /// <summary>
@@ -149,11 +151,12 @@ namespace SimpleImageIO {
         /// <param name="row">Vertical pixel coordinate (0 is top)</param>
         /// <param name="chan">Channel index</param>
         /// <param name="value">Value to add to the channel</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AtomicAddChannel(int col, int row, int chan, float value) {
             int c = Math.Clamp(col, 0, Width - 1);
             int r = Math.Clamp(row, 0, Height - 1);
             int idx = GetIndex(c, r);
-            AtomicAddFloat(ref RawData[idx + chan], value);
+            AtomicAddFloat(ref *(dataPtr + idx + chan), value);
         }
 
         /// <summary>
@@ -162,6 +165,7 @@ namespace SimpleImageIO {
         /// Can be slower than incrementing each individual pixel, due to the allocation of the parameter
         /// array on the heap.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AtomicAddChannels(int col, int row, params float[] channels) {
             Debug.Assert(channels.Length == NumChannels);
 
@@ -169,32 +173,34 @@ namespace SimpleImageIO {
             int r = Math.Clamp(row, 0, Height - 1);
             int idx = GetIndex(c, r);
             for (int chan = 0; chan < NumChannels; ++chan)
-                AtomicAddFloat(ref RawData[idx + chan], channels[chan]);
+                AtomicAddFloat(ref *(dataPtr + idx + chan), channels[chan]);
         }
 
         /// <summary>
         /// Sets all pixels in the image equal to the given value(s)
         /// </summary>
         /// <param name="channels">The color channel values</param>
-        public void Fill(params float[] channels)
-        => Parallel.For(0, Height, row => {
-            for (int col = 0; col < Width; ++col) {
-                for (int chan = 0; chan < NumChannels; ++chan)
-                    RawData[GetIndex(col, row) + chan] = channels[chan];
+        public void Fill(params float[] channels) {
+            for (int row = 0; row < Height; ++row) {
+                for (int col = 0; col < Width; ++col) {
+                    for (int chan = 0; chan < NumChannels; ++chan)
+                        dataPtr[GetIndex(col, row) + chan] = channels[chan];
+                }
             }
-        });
+        }
 
         /// <summary>
         /// Scales all values of all channels in all pixels by multiplying them with a scalar
         /// </summary>
         /// <param name="s">Scalar to multiply on all values</param>
-        public void Scale(float s)
-        => Parallel.For(0, Height, row => {
-            for (int col = 0; col < Width; ++col) {
-                for (int chan = 0; chan < NumChannels; ++chan)
-                    RawData[GetIndex(col, row) + chan] *= s;
+        public void Scale(float s) {
+            for (int row = 0; row < Height; ++row) {
+                for (int col = 0; col < Width; ++col) {
+                    for (int chan = 0; chan < NumChannels; ++chan)
+                        dataPtr[GetIndex(col, row) + chan] *= s;
+                }
             }
-        });
+        }
 
         /// <summary>
         /// Computes the sum of all pixel and channel values
@@ -204,7 +210,7 @@ namespace SimpleImageIO {
             for (int row = 0; row < Height; ++row) {
                 for (int col = 0; col < Width; ++col) {
                     for (int chan = 0; chan < NumChannels; ++chan)
-                        result += RawData[GetIndex(col, row) + chan];
+                        result += dataPtr[GetIndex(col, row) + chan];
                 }
             }
             return result;
@@ -288,22 +294,22 @@ namespace SimpleImageIO {
         /// The image is modified in-place, no new image is allocated.
         /// </summary>
         public void FlipHorizontal() {
-            Parallel.For(0, Height, row => {
+            for (int row = 0; row < Height; ++row) {
                 for (int col = 0; col < Width / 2; ++col) {
                     for (int chan = 0; chan < NumChannels; ++chan) {
                         int idxLeft = GetIndex(col, row) + chan;
                         int idxRight = GetIndex(Width - 1 - col, row) + chan;
-                        (RawData[idxLeft], RawData[idxRight]) = (RawData[idxRight], RawData[idxLeft]);
+                        (dataPtr[idxLeft], dataPtr[idxRight]) = (dataPtr[idxRight], dataPtr[idxLeft]);
                     }
                 }
-            });
+            }
         }
 
         /// <returns>A deep copy of the image object</returns>
         public virtual ImageBase Copy() {
             if (DataPointer == IntPtr.Zero) return null;
             ImageBase other = new(Width, Height, NumChannels);
-            RawData.CopyTo(other.RawData);
+            Unsafe.CopyBlock(other.dataPtr, dataPtr, (uint)(Width * Height * NumChannels * sizeof(float)));
             return other;
         }
 

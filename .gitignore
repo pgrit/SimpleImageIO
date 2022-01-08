@@ -17,6 +17,10 @@ __pycache__
 /SimpleImageIO.egg-info
 launchSettings.json
 
+# Profiler output
+*.nettrace
+*.speedscope.json
+
 # Compiled shared libraries
 Runtimes/*
 
