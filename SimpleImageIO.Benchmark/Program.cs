@@ -50,11 +50,11 @@ namespace SimpleImageIO.Benchmark {
             Console.WriteLine($"Computing MSE {mse:F2} took {stopwatch.ElapsedMilliseconds} ms");
 
             stopwatch.Restart();
-            float relmse = Metrics.RelMSE(image, reference, 0.0001f);
+            float relmse = Metrics.RelMSE(image, reference);
             Console.WriteLine($"Computing relMSE {relmse:F2} took {stopwatch.ElapsedMilliseconds} ms");
 
             stopwatch.Restart();
-            float relmseOut = Metrics.RelMSE_OutlierRejection(image, reference, 0.0001f, 0.1f);
+            float relmseOut = Metrics.RelMSE_OutlierRejection(image, reference, 0.1f);
             Console.WriteLine($"Computing relMSE w/o outliers {relmseOut:F2} took {stopwatch.ElapsedMilliseconds} ms");
         }
 

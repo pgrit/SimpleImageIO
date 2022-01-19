@@ -32,14 +32,14 @@ namespace SimpleImageIO.Tests {
             for (int row = 0; row < 15; ++row) {
                 for (int col = 0; col < 10; ++col) {
                     Vector3 imgVal = new(row / 15.0f);
-                    Vector3 refVal = new((15 - row - 1) / 15.0f);
+                    Vector3 refVal = new((15 - row) / 15.0f);
 
                     image.SetPixel(col, row, imgVal);
                     reference.SetPixel(col, row, refVal);
 
                     var delta = (imgVal - refVal) * (imgVal - refVal);
                     expectedMse += (delta.X + delta.Y + delta.Z) / 3.0f / (15 * 10);
-                    var ratio = delta / (refVal * refVal + Vector3.One * 0.01f);
+                    var ratio = delta / (refVal * refVal);
                     expectedRelMse += (ratio.X + ratio.Y + ratio.Z) / 3.0f / (15 * 10);
                 }
             }
@@ -47,8 +47,8 @@ namespace SimpleImageIO.Tests {
             float expectedRelMseOut = expectedRelMse;
 
             float mse = Metrics.MSE(image, reference);
-            float relMse = Metrics.RelMSE(image, reference, 0.01f);
-            float relMseOut = Metrics.RelMSE_OutlierRejection(image, reference, 0.01f, 0.1f);
+            float relMse = Metrics.RelMSE(image, reference);
+            float relMseOut = Metrics.RelMSE_OutlierRejection(image, reference, 0.1f);
 
             Assert.Equal(expectedMse, mse, 4);
             Assert.Equal(expectedRelMse, relMse, 4);
@@ -71,7 +71,7 @@ namespace SimpleImageIO.Tests {
             Assert.Equal(0, Metrics.RelMSE_OutlierRejection(image, reference, percentage: 25.0f));
 
             Assert.Equal(0.25f, Metrics.MSE(image, reference));
-            Assert.Equal(0.25f, Metrics.RelMSE(image, reference, epsilon: 0.0f));
+            Assert.Equal(0.25f, Metrics.RelMSE(image, reference));
         }
     }
 }

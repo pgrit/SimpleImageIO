@@ -60,12 +60,12 @@ namespace SimpleImageIO {
 
         [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
         public static extern float ComputeRelMSE(IntPtr image, int imgRowStride, IntPtr reference, int refRowStride,
-                                                 int width, int height, int numChannels, float epsilon);
+                                                 int width, int height, int numChannels);
 
         [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
         public static extern float ComputeRelMSEOutlierReject(IntPtr image, int imgRowStride, IntPtr reference,
                                                               int refRowStride, int width, int height,
-                                                              int numChannels, float epsilon, float percentage);
+                                                              int numChannels, float percentage);
 
         #endregion
 

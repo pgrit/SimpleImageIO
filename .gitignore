@@ -31,6 +31,9 @@ PyTest/*.pfm
 !PyTest/ImageWithAlpha.png
 !PyTest/memorial.pfm
 !PyTest/NoisyRender.exr
+!PyTest/Reference.exr
+!PyTest/MoreNoisy.exr
+!PyText/LessNoisy.exr
 SimpleImageIO.Benchmark/*.png
 SimpleImageIO.Benchmark/*.jpg
 SimpleImageIO.Benchmark/*.exr

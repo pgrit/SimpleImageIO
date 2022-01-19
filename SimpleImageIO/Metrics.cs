@@ -20,19 +20,18 @@ namespace SimpleImageIO {
         }
 
         /// <summary>
-        /// Computes the relative mean square error of two images
+        /// Computes the relative mean square error of two images.
         /// </summary>
         /// <param name="image">The first image</param>
         /// <param name="reference">The second image</param>
-        /// <param name="epsilon">Small offset added to the squared mean to avoid division by zero</param>
         /// <returns>Mean of: Square error of each pixel, divided by the squared mean</returns>
-        public static float RelMSE(ImageBase image, ImageBase reference, float epsilon = 0.001f) {
+        public static float RelMSE(ImageBase image, ImageBase reference) {
             Debug.Assert(image.Width == reference.Width);
             Debug.Assert(image.Height == reference.Height);
             Debug.Assert(image.NumChannels == reference.NumChannels);
             return SimpleImageIOCore.ComputeRelMSE(image.DataPointer, image.NumChannels * image.Width,
                 reference.DataPointer, image.NumChannels * reference.Width, image.Width, image.Height,
-                image.NumChannels, epsilon);
+                image.NumChannels);
         }
 
         /// <summary>
@@ -41,16 +40,14 @@ namespace SimpleImageIO {
         /// </summary>
         /// <param name="image">The first image</param>
         /// <param name="reference">The second image</param>
-        /// <param name="epsilon">Small offset added to the squared mean to avoid division by zero</param>
         /// <param name="percentage">Percentage of pixels to ignore</param>
-        public static float RelMSE_OutlierRejection(ImageBase image, ImageBase reference,
-                                                    float epsilon = 0.001f, float percentage = 0.1f) {
+        public static float RelMSE_OutlierRejection(ImageBase image, ImageBase reference, float percentage = 0.1f) {
             Debug.Assert(image.Width == reference.Width);
             Debug.Assert(image.Height == reference.Height);
             Debug.Assert(image.NumChannels == reference.NumChannels);
             return SimpleImageIOCore.ComputeRelMSEOutlierReject(image.DataPointer, image.NumChannels * image.Width,
                 reference.DataPointer, image.NumChannels * reference.Width, image.Width, image.Height,
-                image.NumChannels, epsilon, percentage);
+                image.NumChannels, percentage);
         }
     }
 }
