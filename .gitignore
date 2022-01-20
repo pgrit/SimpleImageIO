@@ -33,7 +33,7 @@ PyTest/*.pfm
 !PyTest/NoisyRender.exr
 !PyTest/Reference.exr
 !PyTest/MoreNoisy.exr
-!PyText/LessNoisy.exr
+!PyTest/LessNoisy.exr
 SimpleImageIO.Benchmark/*.png
 SimpleImageIO.Benchmark/*.jpg
 SimpleImageIO.Benchmark/*.exr
