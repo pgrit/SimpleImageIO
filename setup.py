@@ -52,7 +52,7 @@ setup(
     author='Pascal Grittmann',
     url='https://github.com/pgrit/SimpleImageIO',
 
-    description='Python wrapper around TinyEXR and stb_image',
+    description='A very simple Python wrapper to read and write various HDR and LDR image file formats.',
     long_description=long_description,
     long_description_content_type="text/markdown",
 
