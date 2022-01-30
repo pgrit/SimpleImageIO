@@ -44,7 +44,7 @@ namespace SimpleImageIO.Tests {
 
             Assert.Equal(1, loaded.Width);
             Assert.Equal(1, loaded.Height);
-            Assert.Equal(1.0f, pixel, 4);
+            Assert.Equal(1.0f, pixel, 1);
         }
 
         [Fact]
@@ -74,9 +74,9 @@ namespace SimpleImageIO.Tests {
 
             Assert.Equal(1, loaded.Width);
             Assert.Equal(1, loaded.Height);
-            Assert.Equal(0.0f, pixel.R, 2);
-            Assert.Equal(1.0f, pixel.G, 2);
-            Assert.Equal(0.0f, pixel.B, 2);
+            Assert.Equal(0.0f, pixel.R, 1);
+            Assert.Equal(1.0f, pixel.G, 1);
+            Assert.Equal(0.0f, pixel.B, 1);
         }
 
         [Fact]

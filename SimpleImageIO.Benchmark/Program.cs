@@ -9,7 +9,7 @@ namespace SimpleImageIO.Benchmark {
 
         static void BenchIO() {
             Stopwatch stopwatch = Stopwatch.StartNew();
-            RgbImage img = new("../PyTest/NoisyRender.exr");
+            RgbImage img = new("../PyTest/dikhololo_night_4k.hdr");
             Console.WriteLine($"Reading .hdr took {stopwatch.ElapsedMilliseconds} ms");
 
             stopwatch.Restart();

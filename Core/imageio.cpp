@@ -41,6 +41,10 @@ static const bool systemIsBigEndian = ((const char*)&testfloat)[0] != 0;
 #define TINY_DNG_WRITER_IMPLEMENTATION
 #include "External/tiny_dng_writer.h"
 
+#include "External/fpng.h"
+
+using OutBuffer = std::vector<unsigned char>;
+
 struct StbImageData {
     float* data;
     int width, height;
@@ -88,16 +92,18 @@ static int nextIndex = 0;
 
 static std::unordered_set<void*> allocedMemory;
 
+float LinearToSrgb(float linear);
+float SrgbToLinear(float srgb);
+
 uint8_t GammaCorrect(float rgb) {
-    rgb = std::pow(rgb, 1.0f / 2.2f) * 255;
+    rgb = 255 * LinearToSrgb(rgb);//std::pow(rgb, 1.0f / 2.2f) * 255;
     float clipped = rgb < 0 ? 0 : rgb;
     clipped = clipped > 255 ? 255 : clipped;
     return (uint8_t) clipped;
 }
 
-/// Applies the same gamma correction as the loading code of stb_image,
-/// which does not handle sRGB or gamma information stored in the file
-void ConvertToStbByteImage(const float* data, int rowStride, uint8_t* buffer, int width, int height,
+/// Converts linear rgb to srgb and maps it to the range [0, 255]
+void ConvertToSrgbByteImage(const float* data, int rowStride, uint8_t* buffer, int width, int height,
                            int numChannels) {
     ForAllPixels(width, height, numChannels, rowStride, width * numChannels,
         [&](int idxIn, int idxOut, int col, int row, int chan) {
@@ -514,7 +520,7 @@ void WriteImageWithStbImage(const float* data, int rowStride, int width, int hei
             stbi_write_hdr(filename, width, height, numChannels, data);
     } else {
         std::vector<uint8_t> buffer(width * height * numChannels);
-        ConvertToStbByteImage(data, rowStride, buffer.data(), width, height, numChannels);
+        ConvertToSrgbByteImage(data, rowStride, buffer.data(), width, height, numChannels);
 
         if (fext == "png")
             stbi_write_png(filename, width, height, numChannels, buffer.data(), width * numChannels);
@@ -525,6 +531,33 @@ void WriteImageWithStbImage(const float* data, int rowStride, int width, int hei
         else if (fext == "jpg")
             stbi_write_jpg(filename, width, height, numChannels, buffer.data(), lossyQuality);
     }
+}
+
+bool WritePngWithFpng(const float* data, int rowStride, int width, int height, int numChannels,
+                      const char* filename) {
+    fpng::fpng_init();
+
+    if (numChannels != 3 && numChannels != 4) {
+        // TODO uplift mono -> RGB instead
+        WriteImageWithStbImage(data, rowStride, width, height, numChannels, filename, 0);
+        return true;
+    }
+
+    std::vector<uint8_t> buffer(width * height * numChannels);
+    ConvertToSrgbByteImage(data, rowStride, buffer.data(), width, height, numChannels);
+
+    return fpng::fpng_encode_image_to_file(filename, buffer.data(), width, height, numChannels);
+}
+
+bool WritePngWithFpngToMemory(std::vector<uint8_t>& data, int rowStride, int width, int height, int numChannels,
+                              OutBuffer& outBuffer) {
+    fpng::fpng_init();
+    if (numChannels != 3 && numChannels != 4) {
+        // TODO uplift mono -> RGB instead
+        return false;
+    }
+
+    return fpng::fpng_encode_image_to_memory(data.data(), width, height, numChannels, outBuffer);
 }
 
 int CachePfmImage(int* width, int* height, int* numChannels, const char* filename) {
@@ -641,13 +674,13 @@ SIIO_API void WriteImage(const float* data, int rowStride, int width, int height
     } else if (fname.compare(fname.size() - 4, 4, ".tif") == 0
             || fname.compare(fname.size() - 5, 5, ".tiff") == 0) {
         WriteTiffImage(data, rowStride, width, height, numChannels, filename);
+    } else if (fname.compare(fname.size() - 4, 4, ".png") == 0) {
+        WritePngWithFpng(data, rowStride, width, height, numChannels, filename);
     } else {
         // This is some other format, assume that stb_image can handle it
         WriteImageWithStbImage(data, rowStride, width, height, numChannels, filename, lossyQuality);
     }
 }
-
-using OutBuffer = std::vector<unsigned char>;
 
 void StbWriteFunc(void* context, void* data, int size) {
     OutBuffer* outBuffer = (OutBuffer*)context;
@@ -676,11 +709,22 @@ SIIO_API unsigned char* WriteToMemory(const float* data, int rowStride, int widt
     OutBuffer outBuffer;
     if (!strncmp(extension, ".hdr", 4)) {
         stbi_write_hdr_to_func(StbWriteFunc, &outBuffer, width, height, numChannels, data);
+
+        unsigned char* result = new unsigned char[outBuffer.size()];
+        std::copy(outBuffer.begin(), outBuffer.end(), result);
+        *numBytes = (int)outBuffer.size();
+        return result;
     }
 
     // LDR formats handled by stb_image_write need a buffer of byte values
     std::vector<uint8_t> buffer(width * height * numChannels);
-    ConvertToStbByteImage(data, rowStride, buffer.data(), width, height, numChannels);
+    ConvertToSrgbByteImage(data, rowStride, buffer.data(), width, height, numChannels);
+
+    // Try to write the .png with fpng. If it fails, we fall back to stb_image below
+    if (!strncmp(extension, ".png", 4)) {
+        if (!WritePngWithFpngToMemory(buffer, rowStride, width, height, numChannels, outBuffer))
+            stbi_write_png_to_func(StbWriteFunc, &outBuffer, width, height, numChannels, buffer.data(), width * numChannels);
+    }
 
     if (!strncmp(extension, ".jpg", 4)) {
         stbi_write_jpg_to_func(StbWriteFunc, &outBuffer, width, height, numChannels, buffer.data(), lossyQuality);
@@ -688,8 +732,6 @@ SIIO_API unsigned char* WriteToMemory(const float* data, int rowStride, int widt
         stbi_write_bmp_to_func(StbWriteFunc, &outBuffer, width, height, numChannels, buffer.data());
     } else if (!strncmp(extension, ".tga", 4)) {
         stbi_write_tga_to_func(StbWriteFunc, &outBuffer, width, height, numChannels, buffer.data());
-    } else if (!strncmp(extension, ".png", 4)) {
-        stbi_write_png_to_func(StbWriteFunc, &outBuffer, width, height, numChannels, buffer.data(), width * numChannels);
     } else if (outBuffer.empty()) {
         // Writing TIFF to memory is not supported by tiny_dng_writer. Writing .pfm to memory
         // is not implemented as it doesn't make much sense, being a pure binary dump.

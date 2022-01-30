@@ -4,6 +4,11 @@ if (WIN32)
     add_compile_definitions(SIMPLE_IMAGE_IO_DLL SIMPLE_IMAGE_IO_EXPORTS)
 endif()
 
+# FPNG stuff
+if (NOT MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-strict-aliasing -DFPNG_NO_SSE=1 -msse4.1 -mpclmul")
+endif()
+
 target_include_directories(SimpleImageIOCore PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_sources(SimpleImageIOCore
@@ -26,6 +31,8 @@ target_sources(SimpleImageIOCore
         "External/stb_image_write.h"
         "External/miniz.h"
         "External/miniz.c"
+        "External/fpng.h"
+        "External/fpng.cpp"
 )
 
 set_target_properties(SimpleImageIOCore
@@ -34,6 +41,10 @@ set_target_properties(SimpleImageIOCore
         CXX_STANDARD_REQUIRED ON
         CXX_EXTENSIONS OFF
 )
+
+if (NOT MSVC)
+    target_compile_options(SimpleImageIOCore INTERFACE ${CMAKE_CXX_FLAGS})
+endif()
 
 # MSVC does not report the correct __cplusplus value unless this flag is set
 if(MSVC)
