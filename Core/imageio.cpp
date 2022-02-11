@@ -213,9 +213,12 @@ void DeleteCachedExr(int id) {
     cacheMutex.unlock();
 }
 
-void CopyCachedExrLayer(int id, std::string layerName, float* out) {
+bool CopyCachedExrLayer(int id, std::string layerName, float* out) {
     cacheMutex.lock();
     auto& img = exrImages[id];
+
+    if (img.channelsPerLayer.find(layerName) == img.channelsPerLayer.end())
+        return false;
 
     const auto& layerInfo = img.channelsPerLayer[layerName];
     int numChannels = layerInfo.CountChannels();
@@ -260,12 +263,13 @@ void CopyCachedExrLayer(int id, std::string layerName, float* out) {
                 std::cerr << "ERROR while reading .exr layer " << layerName << ": Images with "
                           << numChannels << " channels are currently not supported." << std::endl;
                 cacheMutex.unlock();
-                return;
+                return false;
             }
         }
     }
 
     cacheMutex.unlock();
+    return true;
 }
 
 void WriteImageToExr(const float** layers, const int* rowStrides, int width, int height, const int* numChannels,
@@ -767,8 +771,15 @@ SIIO_API int CacheImage(int* width, int* height, int* numChannels, const char* f
         auto& img = exrImages[idx];
         *width = img.image.width;
         *height = img.image.height;
-        auto& defLayout = img.channelsPerLayer["default"];
-        *numChannels = defLayout.CountChannels();
+        auto iter = img.channelsPerLayer.find("default");
+        if (iter != img.channelsPerLayer.end()) {
+            // Loading this as a non-layered image will return a layer named "default" (or a layer without any name)
+            auto& defLayout = img.channelsPerLayer["default"];
+            *numChannels = defLayout.CountChannels();
+        } else {
+            // If "default" does not exist, loading as an image will fail
+            *numChannels = 0;
+        }
         cacheMutex.unlock();
 
         return idx;
@@ -810,8 +821,8 @@ SIIO_API void GetExrLayerName(int id, int layerIdx, char* out) {
     cacheMutex.unlock();
 }
 
-SIIO_API void CopyCachedLayer(int id, const char* name, float* out) {
-    CopyCachedExrLayer(id, name, out);
+SIIO_API bool CopyCachedLayer(int id, const char* name, float* out) {
+    return CopyCachedExrLayer(id, name, out);
 }
 
 SIIO_API void DeleteCachedImage(int id) {
