@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <limits>
 
 // A horizontal + vertical sweep version for symmetrical kernels (which all are in our case)
 // would be faster but would also require an additional buffer
