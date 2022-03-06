@@ -12,6 +12,8 @@
 
             ValidateTevIpc.TestTev();
 
+            TestFalseColor.TestGradient();
+
             return 0;
         }
     }
