@@ -164,6 +164,9 @@ namespace SimpleImageIO {
             if (value <= min) return stops[0];
             if (value >= max) return stops[^1];
 
+            // We preserve NaN values in the output
+            if (float.IsNaN(value)) return new RgbColor(float.NaN, float.NaN, float.NaN);
+
             float relative = (value - min) / (max - min) * (stops.Length - 1);
             int lower = (int)relative;
             int upper = lower + 1;
