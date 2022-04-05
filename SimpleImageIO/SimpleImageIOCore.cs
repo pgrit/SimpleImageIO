@@ -67,6 +67,11 @@ namespace SimpleImageIO {
                                                               int refRowStride, int width, int height,
                                                               int numChannels, float percentage);
 
+        [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
+        public static extern float ComputeMSEOutlierReject(IntPtr image, int imgRowStride, IntPtr reference,
+                                                           int refRowStride, int width, int height,
+                                                           int numChannels, float percentage);
+
         #endregion
 
         #region ImageManipulation

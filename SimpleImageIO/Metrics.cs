@@ -49,5 +49,21 @@ namespace SimpleImageIO {
                 reference.DataPointer, image.NumChannels * reference.Width, image.Width, image.Height,
                 image.NumChannels, percentage);
         }
+
+        /// <summary>
+        /// Computes the relative mean square error of two images. Ignores a small percentage of the
+        /// brightest pixels. The result is less obscured by outliers this way.
+        /// </summary>
+        /// <param name="image">The first image</param>
+        /// <param name="reference">The second image</param>
+        /// <param name="percentage">Percentage of pixels to ignore</param>
+        public static float MSE_OutlierRejection(ImageBase image, ImageBase reference, float percentage = 0.1f) {
+            Debug.Assert(image.Width == reference.Width);
+            Debug.Assert(image.Height == reference.Height);
+            Debug.Assert(image.NumChannels == reference.NumChannels);
+            return SimpleImageIOCore.ComputeMSEOutlierReject(image.DataPointer, image.NumChannels * image.Width,
+                reference.DataPointer, image.NumChannels * reference.Width, image.Width, image.Height,
+                image.NumChannels, percentage);
+        }
     }
 }

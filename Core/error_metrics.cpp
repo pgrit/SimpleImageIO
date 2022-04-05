@@ -18,6 +18,35 @@ SIIO_API float ComputeMSE(float* image, int imgStride, float* reference, int ref
         });
 }
 
+SIIO_API float ComputeMSEOutlierReject(float* image, int imgStride, float* reference, int refStride,
+                                       int width, int height, int numChans, float percentage) {
+    int numOutliers = int(width * height * numChans * 0.01 * percentage);
+
+    // First, we compute all pixel errors in one big array.
+    std::vector<float> errorBuffer(width * height * numChans);
+
+    ForAllPixels(width, height, numChans, imgStride, refStride,
+        [&](int imgIdx, int refIdx, int col, int row, int chan) {
+            auto delta = (image[imgIdx] - reference[refIdx]);
+            float contrib = delta * delta / (numChans * height * width - numOutliers);
+            errorBuffer[numChans * (col + width * row) + chan] = contrib;
+        });
+
+    // Next, we partially sort the array, ensuring that the outliers are all at the end
+    std::nth_element(errorBuffer.begin(),
+        errorBuffer.begin() + errorBuffer.size() - numOutliers - 1,
+        errorBuffer.end());
+
+    // Finally, we accumulate all values except the largest [numOutlier]
+    float error = 0;
+    #pragma omp parallel for reduction(+ : error)
+    for (int i = 0; i < errorBuffer.size() - numOutliers; ++i) {
+        error += errorBuffer[i];
+    }
+
+    return error;
+}
+
 SIIO_API float ComputeRelMSE(float* image, int imgStride, float* reference, int refStride,
                              int width, int height, int numChans) {
     return Accumulate(width, height, numChans, imgStride, refStride,
