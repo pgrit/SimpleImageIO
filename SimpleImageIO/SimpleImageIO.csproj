@@ -13,7 +13,7 @@
     <IsPackable>true</IsPackable>
     <PackageTags>exr hdr png image jpg</PackageTags>
 
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <!-- Each additional platform requires an entry here, once the native binaries have been added below -->
     <RuntimeIdentifiers>win10-x64;linux-x64;osx-x64</RuntimeIdentifiers>
 
