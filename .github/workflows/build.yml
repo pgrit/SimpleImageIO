@@ -25,7 +25,7 @@ jobs:
     - name: Setup .NET Core SDK
       uses: actions/setup-dotnet@v1.7.2
       with:
-        dotnet-version: '5.0.x'
+        dotnet-version: '6.0.x'
 
     - name: Test
       working-directory: ${{github.workspace}}
@@ -59,7 +59,7 @@ jobs:
     - name: Setup .NET Core SDK
       uses: actions/setup-dotnet@v1.7.2
       with:
-        dotnet-version: '5.0.x'
+        dotnet-version: '6.0.x'
 
     # fixes sporadic build fails on Windows (https://github.com/actions/setup-dotnet/issues/155)
     - name: Clean
@@ -96,7 +96,7 @@ jobs:
     - name: Setup .NET Core SDK
       uses: actions/setup-dotnet@v1.7.2
       with:
-        dotnet-version: '5.0.x'
+        dotnet-version: '6.0.x'
 
     # Since OpenImageDenoise links TBB, which will be in the same folder, we need
     # @loader_path in the rpath of the .dylib
@@ -131,7 +131,7 @@ jobs:
     - name: Setup .NET Core SDK
       uses: actions/setup-dotnet@v1.7.2
       with:
-        dotnet-version: '5.0.x'
+        dotnet-version: '6.0.x'
 
     - name: Replace Mac OS binary
       run: cp ${{github.workspace}}/Runtimes/libOpenImageDenoise.1.dylib ${{github.workspace}}/External/OpenImageDenoise
