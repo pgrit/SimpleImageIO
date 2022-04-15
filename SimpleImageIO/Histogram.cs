@@ -48,6 +48,9 @@ public class Histogram {
         numPixels = image.Width * image.Height;
 
         // Find minimum, maximum, and average values in a parallel-reduce scheme
+        Min = float.MaxValue;
+        Max = float.MinValue;
+        Average = 0;
         Parallel.For<(float, float, float)>(0, image.Height, () => (float.MaxValue, float.MinValue, 0f),
             (row, _, state) => {
                 for (int col = 0; col < image.Width; ++col) {
@@ -61,7 +64,7 @@ public class Histogram {
                 lock (this) {
                     Min = System.Math.Min(Min, state.Item1);
                     Max = System.Math.Max(Max, state.Item2);
-                    Average += state.Item3;
+                    Average += state.Item3 / numPixels;
                 }
             });
 
