@@ -290,6 +290,13 @@ void WriteImageToExr(const float** layers, const int* rowStrides, int width, int
     image.width = width;
     image.height = height;
 
+    // Sort the layer names in ASCII byte order because OpenEXR demands it so
+    std::vector<int> layerIndices;
+    for (int i = 0; i < numLayers; ++i) layerIndices.push_back(i);
+    std::sort(layerIndices.begin(), layerIndices.end(), [layerNames] (int a, int b) {
+        return strcmp(layerNames[a], layerNames[b]) < 0;
+    });
+
     // Convert image data from AoS to SoA (i.e. one image per channel in each layer)
     std::vector<std::vector<float>> channelImages;
     float** imagePtr = (float **) alloca(sizeof(float*) * image.num_channels);
@@ -298,15 +305,15 @@ void WriteImageToExr(const float** layers, const int* rowStrides, int width, int
             channelImages.emplace_back(width * height);
         }
 
-        size_t offset = channelImages.size() - numChannels[layer];
+        size_t offset = channelImages.size() - numChannels[layerIndices[layer]];
         for (int r = 0; r < height; ++r) {
             for (int c = 0; c < width; ++c) {
-                auto start = r * rowStrides[layer] + c * numChannels[layer];
-                for (int chan = 0; chan < numChannels[layer]; ++chan) {
-                    channelImages[offset + chan][r * width + c] = layers[layer][start + chan];
+                auto start = r * rowStrides[layerIndices[layer]] + c * numChannels[layerIndices[layer]];
+                for (int chan = 0; chan < numChannels[layerIndices[layer]]; ++chan) {
+                    channelImages[offset + chan][r * width + c] = layers[layerIndices[layer]][start + chan];
 
                     // reverse channel order from RGB(A) to (A)BGR
-                    imagePtr[offset + numChannels[layer] - chan - 1] = channelImages[offset + chan].data();
+                    imagePtr[offset + numChannels[layerIndices[layer]] - chan - 1] = channelImages[offset + chan].data();
                 }
             }
         }
@@ -324,14 +331,14 @@ void WriteImageToExr(const float** layers, const int* rowStrides, int width, int
             prefixLen = strlen("default");
             strncpy(namePrefix, "default", 255);
         } else {
-            prefixLen = strlen(layerNames[lay]);
-            strncpy(namePrefix, layerNames[lay], 255);
+            prefixLen = strlen(layerNames[layerIndices[lay]]);
+            strncpy(namePrefix, layerNames[layerIndices[lay]], 255);
         }
 
-        if (numChannels[lay] == 1) {
+        if (numChannels[layerIndices[lay]] == 1) {
             strncpy(header.channels[offset + 0].name, namePrefix, 255);
             strncpy(header.channels[offset + 0].name + prefixLen, ".Y", 255 - prefixLen);
-        } else if (numChannels[lay] == 3) {
+        } else if (numChannels[layerIndices[lay]] == 3) {
             strncpy(header.channels[offset + 0].name, namePrefix, 255);
             strncpy(header.channels[offset + 0].name + prefixLen, ".B", 255 - prefixLen);
 
@@ -340,7 +347,7 @@ void WriteImageToExr(const float** layers, const int* rowStrides, int width, int
 
             strncpy(header.channels[offset + 2].name, namePrefix, 255);
             strncpy(header.channels[offset + 2].name + prefixLen, ".R", 255 - prefixLen);
-        } else if (numChannels[lay] == 4) {
+        } else if (numChannels[layerIndices[lay]] == 4) {
             strncpy(header.channels[offset + 0].name, namePrefix, 255);
             strncpy(header.channels[offset + 0].name + prefixLen, ".A", 255 - prefixLen);
 
@@ -359,7 +366,7 @@ void WriteImageToExr(const float** layers, const int* rowStrides, int width, int
             return;
         }
 
-        offset += numChannels[lay];
+        offset += numChannels[layerIndices[lay]];
     }
 
     // Define pixel type of the buffer and requested output pixel type in the file

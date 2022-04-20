@@ -61,8 +61,6 @@ namespace SimpleImageIO {
         public static void WriteToExr(string filename, params (string Name, ImageBase Image)[] layers) {
             ImageBase.EnsureDirectory(filename);
 
-            Array.Sort(layers, (a,b) => a.Name.CompareTo(b.Name));
-
             // Assemble the raw data in a C-API compatible format
             List<IntPtr> dataPointers = new();
             List<int> strides = new();
