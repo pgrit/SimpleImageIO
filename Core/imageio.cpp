@@ -301,7 +301,7 @@ void WriteImageToExr(const float** layers, const int* rowStrides, int width, int
     std::vector<std::vector<float>> channelImages;
     float** imagePtr = (float **) alloca(sizeof(float*) * image.num_channels);
     for (int layer = 0; layer < numLayers; ++layer) {
-        for (int chan = 0; chan < numChannels[layer]; ++chan) {
+        for (int chan = 0; chan < numChannels[layerIndices[layer]]; ++chan) {
             channelImages.emplace_back(width * height);
         }
 
