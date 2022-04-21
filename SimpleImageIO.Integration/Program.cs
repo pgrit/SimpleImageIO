@@ -1,20 +1,15 @@
-﻿namespace SimpleImageIO.Integration {
-    class Program {
-        static int Main(string[] args) {
-            Layers.LoadFromFile("Data/RenderMasks.exr");
+﻿using SimpleImageIO;
+using SimpleImageIO.Integration;
 
-            TestDenoise.TestPathTracer();
-            TestDenoise.TestBidir();
-            TestDenoise.TestVcm();
+Layers.LoadFromFile("Data/RenderMasks.exr");
 
-            TestTonemap.Reinhard();
-            TestTonemap.ACES();
+TestDenoise.TestPathTracer();
+TestDenoise.TestBidir();
+TestDenoise.TestVcm();
 
-            ValidateTevIpc.TestTev();
+TestTonemap.Reinhard();
+TestTonemap.ACES();
 
-            TestFalseColor.TestGradient();
+ValidateTevIpc.TestTev();
 
-            return 0;
-        }
-    }
-}
+TestFalseColor.TestGradient();
