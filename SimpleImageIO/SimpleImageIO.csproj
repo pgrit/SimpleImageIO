@@ -27,6 +27,20 @@
     </AssemblyAttribute>
   </ItemGroup>
 
+  <ItemGroup>
+    <None Remove="../PyWrapper/simpleimageio/imageViewer.js" />
+    <None Remove="../PyWrapper/simpleimageio/style.css" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="../PyWrapper/simpleimageio/imageViewer.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="../PyWrapper/simpleimageio/style.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+
   <!-- Each additional platform requires an entry here, to copy the corresponding native binaries -->
   <!-- Windows -->
   <ItemGroup>

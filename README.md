@@ -79,6 +79,12 @@ with sio.TevIpc() as tev:
 In Python, an image is a 3D row-major array, where `[0,0,0]` is the red color channel of the top left corner.
 The convention is compatible with most other libraries that make use of numpy arrays for image representation, like matplotlib.
 
+## Flip books for Jupyter and web
+
+Both, the Python and the .NET library can generate an interactive HTML viewer to display and compare images visually by flipping between them. See [FlipBookExample.dib](FlipBookExample.dib) for an example with .NET interactive and C\#, [FlipBookExample.fsx](FlipBookExample.fsx) for a static webpage generator with F\#, or [flipbook.ipynb](flipbook.ipynb) for a Jupyter notebook with Python.
+
+![](FlipBook.gif)
+
 ## Building from source
 
 If you are on an architecture different from x86-64, you will need to compile the C++ wrapper from source.
@@ -142,8 +148,10 @@ the Python package.
 You can then simply install the result via:
 
 ```
-pip install ./dist/SimpleImageIO-*.whl
+pip install ./dist/simpleimageio-*.whl
 ```
+
+Where the * has to be substituted by the version number and the compiler and platform identifier (use auto-complete).
 
 The tests can be run via:
 

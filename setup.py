@@ -6,6 +6,7 @@ import os
 import pathlib
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext as build_ext_orig
+from distutils.command import build as build_module
 
 class CMakeExtension(Extension):
     def __init__(self, name):
@@ -69,6 +70,8 @@ setup(
     ],
     ext_modules=[CMakeExtension('simpleimageio/SimpleImageIOCore')],
     cmdclass={
-        'build_ext': build_ext,
-    }
+        'build_ext': build_ext
+    },
+    include_package_data=True,
+    package_data={"simpleimageio": ["*.js", "*.css"]}
 )

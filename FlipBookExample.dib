@@ -1,0 +1,40 @@
+#!csharp
+
+// This is for local testing. You'll want to use:
+// #r "nuget: SimpleImageIO"
+#r "../bin/Debug/net6.0/SimpleImageIO.dll"
+
+using SimpleImageIO;
+using SimpleImageIO.FlipBook;
+HTML(FlipBook.MakeHeader())
+
+#!markdown
+
+# ImageLab.Flip Example
+
+This .NET interactive notebook shows how the flip book tool can be used with a Jupyter notebook and the .NET kernel. See Example.fsx for the F\# syntax.
+
+The code cell below generates two solid color images and displays them with `ImageLab.Flip`.
+
+#!csharp
+
+var red = new RgbImage(600, 400);
+red.Fill(0.3f, 0.03f, 0.05f);
+var blue = new RgbImage(600, 400);
+blue.Fill(0.03f, 0.3f, 0.7f);
+
+HTML(FlipBook.Make(("Blue", blue), ("Red", red)))
+
+#!markdown
+
+The next example displays the same images, but with an adjusted exposure value. Every pixel value is multiplied by $2^{-1}$.
+
+#!csharp
+
+ImageBase toneMap(ImageBase img) {
+    var copy = img.Copy();
+    copy.Scale(MathF.Pow(2, -1));
+    return copy;
+}
+
+HTML(FlipBook.Make(toneMap, ("Blue", blue), ("Red", red)))
