@@ -145,7 +145,7 @@ jobs:
         path: ${{github.workspace}}/SimpleImageIO/bin/**/*.nupkg
 
     - name: Publish on version change
-      uses: rohith/publish-nuget@v2
+      uses: alirezanet/publish-nuget@v3.0.4
       with:
         PROJECT_FILE_PATH: SimpleImageIO/SimpleImageIO.csproj
         NUGET_KEY: ${{secrets.NUGET_API_KEY}}
