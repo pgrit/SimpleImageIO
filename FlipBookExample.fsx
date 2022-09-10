@@ -1,7 +1,7 @@
 // This F# script file demonstrates how the FlipBook tool can be used in a script to generate a static
 // HTML page for image comparisons. See Example.dib for the C# syntax.
 
-#r "../bin/Debug/net6.0/SimpleImageIO.dll"
+#r "nuget: SimpleImageIO"
 open SimpleImageIO
 open SimpleImageIO.FlipBook
 
