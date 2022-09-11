@@ -78,6 +78,11 @@ else()
     endif()
 
     add_custom_command(
+        TARGET SimpleImageIOCore PRE_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${RUNTIMES_DIR}
+    )
+
+    add_custom_command(
         TARGET SimpleImageIOCore POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:SimpleImageIOCore> ${RUNTIMES_DIR}
     )
