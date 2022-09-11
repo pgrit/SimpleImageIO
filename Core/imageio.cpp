@@ -8,6 +8,7 @@
 #include <vector>
 #include <mutex>
 #include <cassert>
+#include <filesystem>
 
 constexpr float testfloat = -0.0f;
 static const bool systemIsBigEndian = ((const char*)&testfloat)[0] != 0;
@@ -27,6 +28,7 @@ static const bool systemIsBigEndian = ((const char*)&testfloat)[0] != 0;
 #endif
 
 // #define STB_IMAGE_IMPLEMENTATION (included by tiny_dng_loader below)
+#define STBI_WINDOWS_UTF8
 #include "External/stb_image.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -487,7 +489,12 @@ void WriteTiffImage(const float* data, int rowStride, int width, int height, int
     }
 
     std::string err;
-    writer.WriteToFile(filename, &err);
+    std::ofstream out(std::filesystem::path((const char8_t*) filename), std::ios_base::binary);
+    if (!out) {
+        std::cerr << "Could not open file for writing "
+                  << std::filesystem::path((const char8_t*) filename) << std::endl;
+    }
+    writer.WriteToStream(out, &err);
 
     if (!err.empty()) {
         std::cerr << err << std::endl;
@@ -554,10 +561,26 @@ bool WritePngWithFpng(const float* data, int rowStride, int width, int height, i
         return true;
     }
 
+    auto path = std::filesystem::path((const char8_t*) filename);
+
     std::vector<uint8_t> buffer(width * height * numChannels);
     ConvertToSrgbByteImage(data, rowStride, buffer.data(), width, height, numChannels);
 
-    return fpng::fpng_encode_image_to_file(filename, buffer.data(), width, height, numChannels);
+    std::vector<uint8_t> out_buf;
+    if (!fpng::fpng_encode_image_to_memory(buffer.data(), width, height, numChannels, out_buf)) {
+        std::cerr << "ERROR: png encoding failed when writing file: " << path << std::endl;
+        return false;
+    }
+
+    std::ofstream out(path, std::ios_base::binary);
+    if (!out) {
+        std::cerr << "ERROR: Could not open file for writing: " << path << std::endl;
+        return false;
+    }
+
+    out.write((const char*) out_buf.data(), out_buf.size());
+
+    return true;
 }
 
 bool WritePngWithFpngToMemory(std::vector<uint8_t>& data, int rowStride, int width, int height, int numChannels,
@@ -572,7 +595,7 @@ bool WritePngWithFpngToMemory(std::vector<uint8_t>& data, int rowStride, int wid
 }
 
 int CachePfmImage(int* width, int* height, int* numChannels, const char* filename) {
-    std::ifstream in(filename, std::ios_base::binary);
+    std::ifstream in(std::filesystem::path((const char8_t*) filename), std::ios_base::binary);
     if (!in) {
         std::cerr << "ERROR: Could not read file: " << filename << std::endl;
         return -1;
@@ -642,7 +665,7 @@ int CachePfmImage(int* width, int* height, int* numChannels, const char* filenam
 }
 
 void WritePfmImage(const float* data, int rowStride, int width, int height, int numChannels, const char* filename) {
-    std::ofstream out(filename, std::ios_base::binary);
+    std::ofstream out(std::filesystem::path((const char8_t*) filename), std::ios_base::binary);
 
     std::ostringstream str;
     if (numChannels == 1)

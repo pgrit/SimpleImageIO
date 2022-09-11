@@ -37,7 +37,7 @@ target_sources(SimpleImageIOCore
 
 set_target_properties(SimpleImageIOCore
     PROPERTIES
-        CXX_STANDARD 11
+        CXX_STANDARD 20
         CXX_STANDARD_REQUIRED ON
         CXX_EXTENSIONS OFF
 )

@@ -13,6 +13,14 @@ class TestInputOutput(unittest.TestCase):
         self.assertEqual(px[0,0,2], 0.0)
         os.remove("redpixel.exr")
 
+    def test_unicode_exr(self):
+        sio.write("😎😎💩😎.exr", [[[1.0,0.0,0.0]]])
+        px = sio.read("😎😎💩😎.exr")
+        self.assertEqual(px[0,0,0], 1.0)
+        self.assertEqual(px[0,0,1], 0.0)
+        self.assertEqual(px[0,0,2], 0.0)
+        os.remove("😎😎💩😎.exr")
+
     def test_small_image(self):
         sio.write("image.exr", [
             [[1.0,0.0,0.0], [0.0,1.0,0.0], [0.0,0.0,1.0]],
