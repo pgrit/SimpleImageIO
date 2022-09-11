@@ -59,10 +59,26 @@ else()
     message("WARNING: Could not find OpenMP! Performance will be lower.")
 endif()
 
+# For Python, copy the shared library to the exact path provided. For .NET, copy the library to
+# the appropriate runtime subdirectory depending on the current OS and architecture
 if (DEFINED PYLIB)
     add_custom_command(TARGET SimpleImageIOCore POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:SimpleImageIOCore> ${PYLIB})
 else()
-    add_custom_command(TARGET SimpleImageIOCore POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:SimpleImageIOCore> ${CMAKE_CURRENT_SOURCE_DIR}/../Runtimes/ )
+    if(WIN32)
+        set(RUNTIMES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../runtimes/win-x64/native/)
+    elseif(APPLE)
+        if (CMAKE_OSX_ARCHITECTURES MATCHES "arm64")
+            set(RUNTIMES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../runtimes/osx-arm64/native/)
+        else()
+            set(RUNTIMES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../runtimes/osx-x64/native/)
+        endif()
+    else()
+        set(RUNTIMES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../runtimes/linux-x64/native/)
+    endif()
+
+    add_custom_command(
+        TARGET SimpleImageIOCore POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:SimpleImageIOCore> ${RUNTIMES_DIR}
+    )
 endif()

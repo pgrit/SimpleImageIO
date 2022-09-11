@@ -15,7 +15,7 @@
 
     <TargetFramework>net6.0</TargetFramework>
     <!-- Each additional platform requires an entry here, once the native binaries have been added below -->
-    <RuntimeIdentifiers>win10-x64;linux-x64;osx-x64</RuntimeIdentifiers>
+    <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;osx-arm64</RuntimeIdentifiers>
 
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -42,52 +42,19 @@
   </ItemGroup>
 
   <!-- Each additional platform requires an entry here, to copy the corresponding native binaries -->
-  <!-- Windows -->
   <ItemGroup>
-    <Content CopyToOutputDirectory="PreserveNewest"
-      Include="../Runtimes/SimpleImageIOCore.dll"
-      Pack="true"
-      PackagePath="runtimes/win-x64/native/"
-      Condition="Exists('../Runtimes/SimpleImageIOCore.dll')"/>
+    <!-- Copy to the intended location for the nuget package -->
+    <Content CopyToOutputDirectory="Never" Include="../runtimes/**" Pack="true" PackagePath="runtimes/" />
 
-    <Content CopyToOutputDirectory="PreserveNewest"
-      Include="../External/OpenImageDenoise/OpenImageDenoise.dll"
-      Pack="true" PackagePath="runtimes/win-x64/native/"/>
-    <Content CopyToOutputDirectory="PreserveNewest"
-      Include="../External/OpenImageDenoise/tbb12.dll"
-      Pack="true" PackagePath="runtimes/win-x64/native/"/>
-  </ItemGroup>
-
-  <!-- Linux -->
-  <ItemGroup>
-    <Content CopyToOutputDirectory="PreserveNewest"
-      Include="../Runtimes/libSimpleImageIOCore.so"
-      Pack="true"
-      PackagePath="runtimes/linux-x64/native/"
-      Condition="Exists('../Runtimes/libSimpleImageIOCore.so')"/>
-
-    <Content CopyToOutputDirectory="PreserveNewest"
-      Include="../External/OpenImageDenoise/libOpenImageDenoise.so"
-      Pack="true" PackagePath="runtimes/linux-x64/native/"/>
-    <Content CopyToOutputDirectory="PreserveNewest"
-      Include="../External/OpenImageDenoise/libtbb.so.12"
-      Pack="true" PackagePath="runtimes/linux-x64/native/"/>
-  </ItemGroup>
-
-  <!-- Mac OS X -->
-  <ItemGroup>
-    <Content CopyToOutputDirectory="PreserveNewest"
-      Include="../Runtimes/libSimpleImageIOCore.dylib"
-      Pack="true"
-      PackagePath="runtimes/osx-x64/native/"
-      Condition="Exists('../Runtimes/libSimpleImageIOCore.dylib')"/>
-
-    <Content CopyToOutputDirectory="PreserveNewest"
-      Include="../External/OpenImageDenoise/libOpenImageDenoise.1.dylib"
-      Pack="true" PackagePath="runtimes/osx-x64/native/"/>
-    <Content CopyToOutputDirectory="PreserveNewest"
-      Include="../External/OpenImageDenoise/libtbb.12.dylib"
-      Pack="true" PackagePath="runtimes/osx-x64/native/"/>
+    <!-- Copy the native libs to the output directory so it will be found during debugging -->
+    <None CopyToOutputDirectory="PreserveNewest" Include="../runtimes/win-x64/native/**"
+      Condition=" $([MSBuild]::IsOsPlatform('Windows')) AND '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64' "/>
+    <None CopyToOutputDirectory="PreserveNewest" Include="../runtimes/linux-x64/native/**"
+      Condition=" $([MSBuild]::IsOsPlatform('Linux')) AND '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64' "/>
+    <None CopyToOutputDirectory="PreserveNewest" Include="../runtimes/osx-x64/native/**"
+      Condition=" $([MSBuild]::IsOsPlatform('OSX')) AND '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64' "/>
+    <None CopyToOutputDirectory="PreserveNewest" Include="../runtimes/osx-arm64/native/**"
+      Condition=" $([MSBuild]::IsOsPlatform('OSX')) AND '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64' "/>
   </ItemGroup>
 
   <ItemGroup>

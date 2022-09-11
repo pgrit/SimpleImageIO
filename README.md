@@ -92,13 +92,21 @@ Below, you can find instructions on how to accomplish that.
 
 ### Dependencies
 
-All dependencies are header-only and included in the repository. Building requires
+All dependencies *except OIDN* are header-only and included in the repository. Building requires
 - a C++11 (or newer) compiler
 - CMake
-- [.NET 5.0](https://dotnet.microsoft.com/) (or newer)
+- [.NET 6.0](https://dotnet.microsoft.com/) (or newer)
 - Python &geq; 3.6
 
-### Building the C# wrapper on x86-64 Windows, Linux, or macOS
+### Building the C# wrapper - quick and simple
+
+```
+pwsh ./make.ps1
+```
+
+Downloads precompiled binaries for Open Image Denoise, copies them to the correct directory, builds the C++ code and then builds and tests the C# wrapper.
+
+### Building the C# wrapper - manually
 
 Build the C++ low level library with [CMake](https://cmake.org/):
 ```
@@ -109,20 +117,20 @@ cmake --build . --config Release
 cd ..
 ```
 
-Compile and run the tests (optional):
+If you want to use the `Denoiser` class, compiled binaries of Open Image Denoise must be in the correct `runtimes` folder. For example, on x64 Linux, there should be a `libOpenImageDenoise.so` in `runtimes/linux-x64/native/`. See the copy operations in [make.ps1](make.ps1) for details. The project works without these binaries in place, but then any attempt to use the `Denoiser` class will result in a `DllNotFound` exception at runtime.
+
+When using binaries, especially the official ones, be aware that packaging for .NET requires the RPATH of the shared library to include the same folder that contains the library itself. Otherwise, TBB will not be found. If you don't understand what that means, or how it can be achieved, check out the build script in [RenderLibs](https://github.com/pgrit/RenderLibs). (This does not apply to Windows, since the linker there has this behavior by default.)
+
+Build the C# wrapper and run the tests:
 ```
-dotnet test
+dotnet build && dotnet test
 ```
 
-That's it. Simply add a reference to `SimpleImageIO/SimpleImageIO.csproj` to your project and you should be up and running.
-
-#### MacOS and Open Image Denoise
-
-The official Open Image Denoise binaries have the rpath set to `@executable_path/`. However, the `libtbb.12.dylib` file will be next to the `libOpenImageDenoise.1.dylib` and we do not know where that is relative to our executable. Therefore, we need to add `@loader_path/` to the rpath:
-
+To see if the denoiser is linked correctly, you can additionally run
 ```
-install_name_tool -add_rpath @loader_path/ libOpenImageDenoise.1.dylib
+dotnet run --project SimpleImageIO.Integration
 ```
+These integration tests assume that you have the [tev](https://github.com/Tom94/tev) viewer open and listening to the default port on localhost. But you can also comment out the tev-related tests and only run the denoiser ones.
 
 ### Building the C# wrapper on other platforms
 
