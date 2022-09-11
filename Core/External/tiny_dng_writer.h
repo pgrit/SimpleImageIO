@@ -249,6 +249,11 @@ class DNGWriter {
   /// Returns true upon success.
   bool WriteToFile(const char *filename, std::string *err) const;
 
+  /// Write DNG to a file.
+  /// Return error string to `err` when Write() returns false.
+  /// Returns true upon success.
+  bool WriteToStream(std::ostream& ofs, std::string *err) const;
+
  private:
   bool swap_endian_;
   bool dng_big_endian_;  // Endianness of DNG file.
@@ -1306,17 +1311,7 @@ DNGWriter::DNGWriter(bool big_endian) : dng_big_endian_(big_endian) {
   swap_endian_ = (IsBigEndian() != dng_big_endian_);
 }
 
-bool DNGWriter::WriteToFile(const char *filename, std::string *err) const {
-  std::ofstream ofs(filename, std::ostream::binary);
-
-  if (!ofs) {
-    if (err) {
-      (*err) = "Failed to open file.\n";
-    }
-
-    return false;
-  }
-
+bool DNGWriter::WriteToStream(std::ostream& ofs, std::string *err) const {
   std::ostringstream header;
   bool ret = WriteTIFFVersionHeader(&header, dng_big_endian_);
   if (!ret) {
@@ -1393,6 +1388,20 @@ bool DNGWriter::WriteToFile(const char *filename, std::string *err) const {
   }
 
   return true;
+}
+
+bool DNGWriter::WriteToFile(const char *filename, std::string *err) const {
+  std::ofstream ofs(filename, std::ostream::binary);
+
+  if (!ofs) {
+    if (err) {
+      (*err) = "Failed to open file.\n";
+    }
+
+    return false;
+  }
+
+  return WriteToStream(ofs, err);
 }
 
 #ifdef __clang__

@@ -93,7 +93,7 @@ Below, you can find instructions on how to accomplish that.
 ### Dependencies
 
 All dependencies *except OIDN* are header-only and included in the repository. Building requires
-- a C++11 (or newer) compiler
+- a C++20 compiler
 - CMake
 - [.NET 6.0](https://dotnet.microsoft.com/) (or newer)
 - Python &geq; 3.6
