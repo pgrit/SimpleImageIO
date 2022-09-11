@@ -22,7 +22,8 @@ launchSettings.json
 *.speedscope.json
 
 # Compiled shared libraries
-Runtimes/*
+runtimes/*
+prebuilt/*
 
 # Generated images
 PyTest/*.png

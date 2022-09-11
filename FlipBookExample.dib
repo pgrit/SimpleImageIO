@@ -1,8 +1,6 @@
 #!csharp
 
-// This is for local testing. You'll want to use:
-// #r "nuget: SimpleImageIO"
-#r "../bin/Debug/net6.0/SimpleImageIO.dll"
+#r "nuget: SimpleImageIO"
 
 using SimpleImageIO;
 using SimpleImageIO.FlipBook;
