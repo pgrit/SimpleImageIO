@@ -8,6 +8,7 @@ if (-not(Test-Path -Path "prebuilt" -PathType Container))
 }
 
 echo "Copying files for OIDN..."
+mkdir runtimes
 
 mkdir runtimes/linux-x64
 mkdir runtimes/linux-x64/native
