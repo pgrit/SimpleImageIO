@@ -1,16 +1,23 @@
-#!csharp
-
-#r "nuget: SimpleImageIO"
-
-using SimpleImageIO;
-using SimpleImageIO.FlipBook;
-HTML(FlipBook.MakeHeader())
-
 #!markdown
 
 # ImageLab.Flip Example
 
-This .NET interactive notebook shows how the flip book tool can be used with a Jupyter notebook and the .NET kernel. See Example.fsx for the F\# syntax.
+This .NET interactive notebook shows how the FlipBook tool can be used with a Jupyter notebook and the .NET kernel. See Example.fsx for the F\# syntax.
+
+First, a reference to SimpleImageIO is required, either locally or via nuget.
+
+Then, we can load the JavaScript and CSS code that controls our flip viewers. This needs only to be done once.
+
+(In a perfect world, the result should be written exactly once to the `<head>` element. But not a single browser seems to actually care where and how often this is written.)
+
+#!csharp
+
+#r "nuget: SimpleImageIO"
+// #r "./SimpleImageIO/bin/Debug/net6.0/SimpleImageIO.dll"
+using SimpleImageIO;
+HTML(FlipBook.Header)
+
+#!markdown
 
 The code cell below generates two solid color images and displays them with `ImageLab.Flip`.
 
@@ -21,7 +28,41 @@ red.Fill(0.3f, 0.03f, 0.05f);
 var blue = new RgbImage(600, 400);
 blue.Fill(0.03f, 0.3f, 0.7f);
 
-HTML(FlipBook.Make(("Blue", blue), ("Red", red)))
+HTML(FlipBook.New + ("blue", blue) + ("red", red))
+
+#!markdown
+
+You can save the output to a static .html page via the `Save(filename)` utility method.
+
+#!csharp
+
+(FlipBook.New + ("blue", blue) + ("red", red)).Save("test.html")
+
+#!markdown
+
+The size automatically scales to the parent element in the generated HTML. In a notebook, you can use the `Resize` utility to create a parent div with a fixed size in pixels.
+
+#!csharp
+
+HTML(FlipBook.Resize(800, 500, FlipBook.New + ("blue", blue) + ("red", red)))
+
+#!markdown
+
+If you have many flip books in the same notebook, it can be useful to define a utility function that sets them all to the same size:
+
+#!csharp
+
+using Microsoft.AspNetCore.Html;
+IHtmlContent Viewer(params (string, ImageBase)[] images) {
+    var flipbook = FlipBook.New;
+    foreach (var (name, img) in images) 
+        flipbook.Add(name, img);
+    return new HtmlString(FlipBook.Resize(640, 480, flipbook));
+}
+
+#!csharp
+
+Viewer(("blue", blue), ("red", red))
 
 #!markdown
 

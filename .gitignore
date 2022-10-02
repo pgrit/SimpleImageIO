@@ -42,3 +42,4 @@ SimpleImageIO.Benchmark/*.bmp
 /denoised*.exr
 /tonemapped*.exr
 example.html
+test.html

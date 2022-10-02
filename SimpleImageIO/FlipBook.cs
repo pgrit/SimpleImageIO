@@ -2,7 +2,7 @@
 using System.Reflection;
 using System.Text;
 
-namespace SimpleImageIO.FlipBook;
+namespace SimpleImageIO;
 
 /// <summary>
 /// Generates an HTML image viewer to compare equal-size images by flipping through them. Can be used through
@@ -22,7 +22,7 @@ public class FlipBook
     static string MakeComparisonHtml(params (string Name, string EncodedData)[] images)
     {
         StringBuilder html = new();
-        html.AppendLine("<div>");
+        html.AppendLine("<div class='flipbook'>");
 
         // For smoother Jupyter / VSCode experience, we add the style to every single viewer
         html.AppendLine("<style>" + ReadResourceText("style.css") + "</style>");
@@ -32,7 +32,7 @@ public class FlipBook
         {
             string visible = "";
             if (i == 0) visible = "visible";
-            html.AppendLine($"    <button class='method-label method-{i+1} {visible}'><kbd>{i+1}</kbd> {images[i].Name}</button>");
+            html.AppendLine($"    <button class='method-label method-{i+1} {visible}'><span class='method-key'>{i+1}</span> {images[i].Name}</button>");
         }
         html.AppendLine("  </div>");
 
@@ -166,11 +166,12 @@ public class FlipBook
     /// if this is added multiple times or in arbitrary locations (i.e., inside the &lt;body&gt; works fine, too).
     /// </summary>
     /// <returns>HTML code as a string</returns>
-    public static string MakeHeader()
-    {
-        string html = "<script>" + ReadResourceText("imageViewer.js") + "</script>";
-        html += "<style>" + ReadResourceText("style.css") + "</style>";
-        return html;
+    public static string Header {
+        get {
+            string html = "<script>" + ReadResourceText("imageViewer.js") + "</script>";
+            html += "<style>" + ReadResourceText("style.css") + "</style>";
+            return html;
+        }
     }
 
     List<(string Name, ImageBase Image)> images = new();
@@ -195,8 +196,58 @@ public class FlipBook
     }
 
     /// <summary>
+    /// Ass a new image to the flip book
+    /// </summary>
+    /// <param name="flipbook">The flip book</param>
+    /// <param name="img">The new image, a pair of name and image data</param>
+    /// <returns>The updated flipbook</returns>
+    public static FlipBook operator +(FlipBook flipbook, (string Name, ImageBase Image) img)
+    => flipbook.Copy().Add(img.Name, img.Image);
+
+    /// <summary>
+    /// Ass a new image to the flip book
+    /// </summary>
+    /// <param name="flipbook">The flip book</param>
+    /// <param name="img">The new image, a pair of name and image data</param>
+    /// <returns>The updated flipbook</returns>
+    public static FlipBook operator +(FlipBook flipbook, ImageBase img)
+    => flipbook.Copy().Add("", img);
+
+    /// <returns>A deep copy of this object</returns>
+    public FlipBook Copy() {
+        FlipBook other = new();
+        other.images = new(images);
+        return other;
+    }
+
+    /// <summary>
+    /// Utility function to save the flip viewer in a static HTML webpage
+    /// </summary>
+    /// <param name="filename">Output filename. Should end with .html</param>
+    public void Save(string filename) {
+        string content = "<!DOCTYPE html><html><head>" + Header + "</head><body>" + this + "</body>";
+        File.WriteAllText(filename, content);
+    }
+
+    /// <summary>
+    /// Converts the flipbook to an HTML string
+    /// </summary>
+    /// <param name="flipbook">The flipbook</param>
+    public static implicit operator string(FlipBook flipbook) => flipbook.ToString();
+
+    /// <summary>
     /// Generates the HTML code for the flip book with the current set of images
     /// </summary>
     /// <returns>HTML code</returns>
     public override string ToString() => Make(images.ToArray());
+
+    /// <summary>
+    /// Wraps the given HTML code within a div of the given size.
+    /// </summary>
+    /// <param name="width">Width in pixels</param>
+    /// <param name="height">Height in pixels</param>
+    /// <param name="html">Arbitrary HTML code. This can be an (implicitly) converted <see cref="FlipBook"/>.</param>
+    /// <returns></returns>
+    public static string Resize(int width, int height, string html)
+    => $"<div style='width: {width}px; height: {height}px;'>" + html + "</div>";
 }
