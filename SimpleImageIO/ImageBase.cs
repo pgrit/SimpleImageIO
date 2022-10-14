@@ -26,7 +26,7 @@ public unsafe class ImageBase : IDisposable {
     /// <summary>
     /// Pointer to the native memory containing the image data
     /// </summary>
-    internal IntPtr DataPointer;
+    public IntPtr DataPointer;
 
     private float* dataPtr {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
