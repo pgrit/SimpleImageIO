@@ -257,7 +257,7 @@ public class TevIpc : IDisposable {
     public static void ShowImage(string name, ImageBase image)
     {
         using var tevIpc = new TevIpc();
-        tevIpc.CreateImageSync(name, image.Width, image.Height, ("", image));
+        tevIpc.CreateImageSync(name, image.Width, image.Height, ("default", image));
         tevIpc.UpdateImage(name);
     }
 
