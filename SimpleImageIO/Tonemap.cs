@@ -42,5 +42,17 @@ namespace SimpleImageIO {
                 image.NumChannels);
             return RgbImage.StealData(result);
         }
+
+        /// <summary>
+        /// Applies basic exposure correction by scaling the image by 2^exposure
+        /// </summary>
+        /// <param name="image">Original image</param>
+        /// <param name="exposure">Exponent for the exposure correction (> 0 brightens, < 0 darkens the image)</param>
+        /// <returns>A new image with adjusted exposure</returns>
+        public static ImageBase Exposure(ImageBase image, float exposure) {
+            var cpy = image.Copy();
+            cpy.Scale(MathF.Pow(2.0f, exposure));
+            return cpy;
+        }
     }
 }
