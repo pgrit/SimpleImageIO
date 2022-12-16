@@ -13,7 +13,7 @@ Then, we can load the JavaScript and CSS code that controls our flip viewers. Th
 #!csharp
 
 #r "nuget: SimpleImageIO"
-// #r "./SimpleImageIO/bin/Debug/net6.0/SimpleImageIO.dll"
+// #r "./SimpleImageIO/bin/Debug/net7.0/SimpleImageIO.dll"
 using SimpleImageIO;
 HTML(FlipBook.Header)
 
@@ -55,7 +55,7 @@ If you have many flip books in the same notebook, it can be useful to define a u
 using Microsoft.AspNetCore.Html;
 IHtmlContent Viewer(params (string, ImageBase)[] images) {
     var flipbook = FlipBook.New;
-    foreach (var (name, img) in images) 
+    foreach (var (name, img) in images)
         flipbook.Add(name, img);
     return new HtmlString(FlipBook.Resize(640, 480, flipbook));
 }
