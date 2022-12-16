@@ -15,7 +15,7 @@ namespace SimpleImageIO {
         /// </summary>
         /// <param name="filename">Name of an existing .exr image with one or more layers</param>
         /// <returns>A dictionary where layer names are the keys, and the layer images are the values</returns>
-        public static Dictionary<string, ImageBase> LoadFromFile(string filename) {
+        public static Dictionary<string, Image> LoadFromFile(string filename) {
             if (!File.Exists(filename))
                 throw new FileNotFoundException("Image file does not exist.", filename);
 
@@ -24,7 +24,7 @@ namespace SimpleImageIO {
             if (id < 0 || width <= 0 || height <= 0)
                 throw new IOException($"ERROR: Could not load image file '{filename}'");
 
-            Dictionary<string, ImageBase> layers = new();
+            Dictionary<string, Image> layers = new();
 
             int numLayers = SimpleImageIOCore.GetExrLayerCount(id);
             for (int i = 0; i < numLayers; ++i) {
@@ -58,8 +58,8 @@ namespace SimpleImageIO {
         /// <param name="layers">
         /// Pairs of layer names and layer images to write to the .exr. Must have equal resolutions.
         /// </param>
-        public static void WriteToExr(string filename, params (string Name, ImageBase Image)[] layers) {
-            ImageBase.EnsureDirectory(filename);
+        public static void WriteToExr(string filename, params (string Name, Image Image)[] layers) {
+            Image.EnsureDirectory(filename);
 
             // Assemble the raw data in a C-API compatible format
             List<IntPtr> dataPointers = new();

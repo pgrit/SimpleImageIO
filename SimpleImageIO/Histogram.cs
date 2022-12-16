@@ -41,7 +41,7 @@ public class Histogram {
     /// <param name="image">The image</param>
     /// <param name="resolution">Number of bins in the histogram</param>
     /// <param name="channel">Index of the color channel</param>
-    public Histogram(ImageBase image, int resolution = 100, int channel = 0) {
+    public Histogram(Image image, int resolution = 100, int channel = 0) {
         Resolution = resolution;
 
         counts = new int[resolution];

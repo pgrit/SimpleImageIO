@@ -152,7 +152,7 @@ internal struct ReloadImagePacket {
 public class TevIpc : IDisposable {
     readonly TcpClient client;
     readonly NetworkStream stream;
-    readonly Dictionary<string, (string name, ImageBase image)[]> syncedImages = new();
+    readonly Dictionary<string, (string name, Image image)[]> syncedImages = new();
 
     /// <summary>
     /// Initializes a new TCP connection to tev
@@ -179,7 +179,7 @@ public class TevIpc : IDisposable {
     /// <param name="width">Width in pixels</param>
     /// <param name="height">Height in pixels</param>
     /// <param name="layers">Pairs of names and images, one entry for each layer</param>
-    public void CreateImageSync(string name, int width, int height, params (string, ImageBase)[] layers) {
+    public void CreateImageSync(string name, int width, int height, params (string, Image)[] layers) {
         Debug.Assert(!syncedImages.ContainsKey(name));
         CloseImage(name);
         syncedImages[name] = layers;
@@ -254,7 +254,7 @@ public class TevIpc : IDisposable {
     /// </summary>
     /// <param name="name">Name of the image that will be shown in tev</param>
     /// <param name="image">Image data to display</param>
-    public static void ShowImage(string name, ImageBase image)
+    public static void ShowImage(string name, Image image)
     {
         using var tevIpc = new TevIpc();
         tevIpc.CreateImageSync(name, image.Width, image.Height, ("default", image));
@@ -280,7 +280,7 @@ public class TevIpc : IDisposable {
     /// <summary>
     /// Updates the image content of an existing synchronized image added by <see cref="CreateImageSync"/>.
     /// All current image data in all layer images is sent to tev, as we currently don't support
-    /// tracking changes in <see cref="ImageBase"/>.
+    /// tracking changes in <see cref="Image"/>.
     /// </summary>
     /// <param name="name">The exact same unique name that was used to create the image synchronization</param>
     public void UpdateImage(string name) {
@@ -303,7 +303,7 @@ public class TevIpc : IDisposable {
             updatePacket.Top = rowStart;
             updatePacket.Height = Math.Min(layers[0].image.Height - rowStart, stride);
 
-            void SendPacket(ImageBase image, int channel) {
+            void SendPacket(Image image, int channel) {
                 for (int row = rowStart; row < image.Height && row < rowStart + stride; row++) {
                     for (int col = 0; col < image.Width; col++) {
                         updatePacket.Data[(row - rowStart) * image.Width + col] =

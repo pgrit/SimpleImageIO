@@ -6,15 +6,15 @@ namespace SimpleImageIO {
     /// Offers some basic image filtering operations as static functions.
     /// </summary>
     public static class Filter {
-        private static void AssertCompatible(ImageBase original, ImageBase target) {
+        private static void AssertCompatible(Image original, Image target) {
             Debug.Assert(target.NumChannels == original.NumChannels);
             Debug.Assert(target.Width == original.Width);
             Debug.Assert(target.Height == original.Height);
             Debug.Assert(!ReferenceEquals(original, target), "cannot run in-place");
         }
 
-        private static void ApplySuccessive(ImageBase original, ImageBase target, int radius, ImageBase buffer,
-                                          Action<ImageBase, ImageBase> filter) {
+        private static void ApplySuccessive(Image original, Image target, int radius, Image buffer,
+                                          Action<Image, Image> filter) {
             bool ownBuffer = buffer == null;
             if (ownBuffer)
                 buffer = target.Copy();
@@ -46,7 +46,7 @@ namespace SimpleImageIO {
         /// <param name="radius">
         /// Radius of the box filter in pixels. Radius of 1 corresponds to a 3x3 kernel.
         /// </param>
-        public static void Box(ImageBase original, ImageBase target, int radius) {
+        public static void Box(Image original, Image target, int radius) {
             AssertCompatible(original, target);
 
             if (radius == 1)
@@ -68,7 +68,7 @@ namespace SimpleImageIO {
         /// Radius of the filter in pixels, i.e., the number of times the box filter is applied.
         /// </param>
         /// <param name="buffer">Can be set to null to allow automatic allocation and deallocation of the buffer. If not equal null it has to be the same size as target.</param>
-        public static void RepeatedBox(ImageBase original, ImageBase target, int radius, ImageBase buffer = null) {
+        public static void RepeatedBox(Image original, Image target, int radius, Image buffer = null) {
             AssertCompatible(original, target);
 
             if (radius == 1)
@@ -85,7 +85,7 @@ namespace SimpleImageIO {
         /// <param name="target">The target image the result will be written to. Has to be a different object but equal size.</param>
         /// <param name="radius">The radius in pixels of the dilation</param>
         /// <param name="buffer">Can be set to null to allow automatic allocation and deallocation of the buffer. If not equal null it has to be the same size as target.</param>
-        public static void Dilation(ImageBase original, ImageBase target, int radius, ImageBase buffer = null) {
+        public static void Dilation(Image original, Image target, int radius, Image buffer = null) {
             AssertCompatible(original, target);
 
             if (radius == 1)
@@ -101,7 +101,7 @@ namespace SimpleImageIO {
         /// <param name="target">The target image the result will be written to. Has to be a different object but equal size.</param>
         /// <param name="radius">The radius in pixels of the dilation</param>
         /// <param name="buffer">Can be set to null to allow automatic allocation and deallocation of the buffer. If not equal null it has to be the same size as target.</param>
-        public static void Erosion(ImageBase original, ImageBase target, int radius, ImageBase buffer = null) {
+        public static void Erosion(Image original, Image target, int radius, Image buffer = null) {
             AssertCompatible(original, target);
 
             if (radius == 1)
@@ -118,7 +118,7 @@ namespace SimpleImageIO {
         /// <param name="target">The target image the result will be written to. Has to be a different object but equal size.</param>
         /// <param name="radius">The radius in pixels of the dilation</param>
         /// <param name="buffer">Can be set to null to allow automatic allocation and deallocation of the buffer. If not equal null it has to be the same size as target.</param>
-        public static void Gauss(ImageBase original, ImageBase target, int radius, ImageBase buffer = null) {
+        public static void Gauss(Image original, Image target, int radius, Image buffer = null) {
             AssertCompatible(original, target);
 
             if (radius == 1)
@@ -134,30 +134,30 @@ namespace SimpleImageIO {
         /// <param name="original">The original image. Will not be modified.</param>
         /// <param name="target">The target image the result will be written to. Has to be a different object but equal size.</param>
         /// <param name="buffer">Can be set to null to allow automatic allocation and deallocation of the buffer. If not equal null it has to be the same size as target.</param>
-        public static void Median(ImageBase original, ImageBase target, ImageBase buffer = null) {
+        public static void Median(Image original, Image target, Image buffer = null) {
             AssertCompatible(original, target);
             Median3x3(original, target);
         }
 
-        private static void Median3x3(ImageBase original, ImageBase target) {
+        private static void Median3x3(Image original, Image target) {
             SimpleImageIOCore.MedianFilter3x3(original.DataPointer, original.NumChannels * original.Width,
                 target.DataPointer, original.NumChannels * original.Width, original.Width, original.Height,
                 original.NumChannels);
         }
 
-        private static void Dilate3x3(ImageBase original, ImageBase target) {
+        private static void Dilate3x3(Image original, Image target) {
             SimpleImageIOCore.DilationFilter3x3(original.DataPointer, original.NumChannels * original.Width,
                 target.DataPointer, original.NumChannels * original.Width, original.Width, original.Height,
                 original.NumChannels);
         }
 
-        private static void Erosion3x3(ImageBase original, ImageBase target) {
+        private static void Erosion3x3(Image original, Image target) {
             SimpleImageIOCore.ErosionFilter3x3(original.DataPointer, original.NumChannels * original.Width,
                 target.DataPointer, original.NumChannels * original.Width, original.Width, original.Height,
                 original.NumChannels);
         }
 
-        private static void Gauss3x3(ImageBase original, ImageBase target) {
+        private static void Gauss3x3(Image original, Image target) {
             SimpleImageIOCore.GaussFilter3x3(original.DataPointer, original.NumChannels * original.Width,
                 target.DataPointer, original.NumChannels * original.Width, original.Width, original.Height,
                 original.NumChannels);

@@ -9,7 +9,7 @@ public static class Metrics {
     /// </summary>
     /// <param name="image">The first image</param>
     /// <param name="reference">The second image</param>
-    public static float MSE(ImageBase image, ImageBase reference) {
+    public static float MSE(Image image, Image reference) {
         Debug.Assert(image.Width == reference.Width);
         Debug.Assert(image.Height == reference.Height);
         Debug.Assert(image.NumChannels == reference.NumChannels);
@@ -24,7 +24,7 @@ public static class Metrics {
     /// <param name="image">The first image</param>
     /// <param name="reference">The second image</param>
     /// <returns>Mean of: Square error of each pixel, divided by the squared mean</returns>
-    public static float RelMSE(ImageBase image, ImageBase reference) {
+    public static float RelMSE(Image image, Image reference) {
         Debug.Assert(image.Width == reference.Width);
         Debug.Assert(image.Height == reference.Height);
         Debug.Assert(image.NumChannels == reference.NumChannels);
@@ -40,7 +40,7 @@ public static class Metrics {
     /// <param name="image">The first image</param>
     /// <param name="reference">The second image</param>
     /// <param name="percentage">Percentage of pixels to ignore</param>
-    public static float RelMSE_OutlierRejection(ImageBase image, ImageBase reference, float percentage = 0.1f) {
+    public static float RelMSE_OutlierRejection(Image image, Image reference, float percentage = 0.1f) {
         Debug.Assert(image.Width == reference.Width);
         Debug.Assert(image.Height == reference.Height);
         Debug.Assert(image.NumChannels == reference.NumChannels);
@@ -56,7 +56,7 @@ public static class Metrics {
     /// <param name="image">The first image</param>
     /// <param name="reference">The second image</param>
     /// <param name="percentage">Percentage of pixels to ignore</param>
-    public static float MSE_OutlierRejection(ImageBase image, ImageBase reference, float percentage = 0.1f) {
+    public static float MSE_OutlierRejection(Image image, Image reference, float percentage = 0.1f) {
         Debug.Assert(image.Width == reference.Width);
         Debug.Assert(image.Height == reference.Height);
         Debug.Assert(image.NumChannels == reference.NumChannels);

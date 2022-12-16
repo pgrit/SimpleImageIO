@@ -57,15 +57,15 @@ public class FlipBook
     /// </summary>
     /// <param name="input">The original image</param>
     /// <returns>The tone mapped or otherwise modified result</returns>
-    public delegate ImageBase ToneMapper(ImageBase input);
+    public delegate Image ToneMapper(Image input);
 
     static string MakeHelper<T>(ToneMapper toneMapper, IEnumerable<(string Name, T Image)> images)
-    where T : ImageBase
+    where T : Image
     {
         var data = new List<(string Name, string EncodedData)>();
         foreach (var img in images)
         {
-            var toneMapped = toneMapper?.Invoke(img.Image) ?? (img.Image as ImageBase);
+            var toneMapped = toneMapper?.Invoke(img.Image) ?? (img.Image as Image);
             data.Add((img.Name, "data:image/png;base64," + toneMapped.AsBase64Png()));
         }
         return MakeComparisonHtml(data.ToArray());
@@ -76,7 +76,7 @@ public class FlipBook
     /// </summary>
     /// <param name="images">Tuples of name and image data</param>
     /// <returns>HTML code for the flip book</returns>
-    public static string Make<T>(params (string Name, T Image)[] images) where T : ImageBase
+    public static string Make<T>(params (string Name, T Image)[] images) where T : Image
     => MakeHelper(null, images);
 
     /// <summary>
@@ -86,7 +86,7 @@ public class FlipBook
     /// <param name="toneMapper">The operation to run on every image</param>
     /// <param name="images">Tuples of name and image data</param>
     /// <returns>HTML code for the flip book</returns>
-    public static string Make<T>(ToneMapper toneMapper, params (string Name, T Image)[] images) where T : ImageBase
+    public static string Make<T>(ToneMapper toneMapper, params (string Name, T Image)[] images) where T : Image
     => MakeHelper(toneMapper, images);
 
     /// <summary>
@@ -94,7 +94,7 @@ public class FlipBook
     /// </summary>
     /// <param name="images">Tuples of name and image data</param>
     /// <returns>HTML code for the flip book</returns>
-    public static string Make<T>(IEnumerable<(string Name, T Image)> images) where T : ImageBase
+    public static string Make<T>(IEnumerable<(string Name, T Image)> images) where T : Image
     => MakeHelper(null, images);
 
     /// <summary>
@@ -104,7 +104,7 @@ public class FlipBook
     /// <param name="toneMapper">The operation to run on every image</param>
     /// <param name="images">Tuples of name and image data</param>
     /// <returns>HTML code for the flip book</returns>
-    public static string Make<T>(ToneMapper toneMapper, IEnumerable<(string Name, T Image)> images) where T : ImageBase
+    public static string Make<T>(ToneMapper toneMapper, IEnumerable<(string Name, T Image)> images) where T : Image
     => MakeHelper(toneMapper, images);
 
     /// <summary>
@@ -112,7 +112,7 @@ public class FlipBook
     /// </summary>
     /// <param name="images">Tuples of name and image data</param>
     /// <returns>HTML code for the flip book</returns>
-    public static string Make<T>(IEnumerable<Tuple<string, T>> images) where T : ImageBase
+    public static string Make<T>(IEnumerable<Tuple<string, T>> images) where T : Image
     => Make(null, images);
 
     /// <summary>
@@ -122,12 +122,12 @@ public class FlipBook
     /// <param name="toneMapper">The operation to run on every image</param>
     /// <param name="images">Tuples of name and image data</param>
     /// <returns>HTML code for the flip book</returns>
-    public static string Make<T>(ToneMapper toneMapper, IEnumerable<Tuple<string, T>> images) where T : ImageBase
+    public static string Make<T>(ToneMapper toneMapper, IEnumerable<Tuple<string, T>> images) where T : Image
     {
-        var imageObjects = new List<(string, ImageBase)>();
+        var imageObjects = new List<(string, Image)>();
         foreach (var (name, img) in images)
         {
-            imageObjects.Add((name, img as ImageBase));
+            imageObjects.Add((name, img as Image));
         }
         return MakeHelper(toneMapper, imageObjects);
     }
@@ -150,7 +150,7 @@ public class FlipBook
     /// <returns>HTML code for the flip book</returns>
     public static string Make(ToneMapper toneMapper, params (string Name, string Filename)[] images)
     {
-        var imageObjects = new List<(string, ImageBase)>();
+        var imageObjects = new List<(string, Image)>();
         foreach (var img in images)
         {
             imageObjects.Add((img.Name, new RgbImage(img.Filename)));
@@ -174,7 +174,7 @@ public class FlipBook
         }
     }
 
-    List<(string Name, ImageBase Image)> images = new();
+    List<(string Name, Image Image)> images = new();
 
     /// <summary>
     /// Syntactic sugar to create a new object of this class. Makes the fluent API more readable.
@@ -187,7 +187,7 @@ public class FlipBook
     /// <param name="name">Name of the new image</param>
     /// <param name="image">Image object, must have the same resolution as existing images</param>
     /// <returns>This object (fluent API)</returns>
-    public FlipBook Add(string name, ImageBase image)
+    public FlipBook Add(string name, Image image)
     {
         if (images.Count > 0 && (images[0].Image.Width != image.Width || images[0].Image.Height != image.Height))
             throw new ArgumentException("Image resolution does not match", nameof(image));
@@ -201,7 +201,7 @@ public class FlipBook
     /// <param name="flipbook">The flip book</param>
     /// <param name="img">The new image, a pair of name and image data</param>
     /// <returns>The updated flipbook</returns>
-    public static FlipBook operator +(FlipBook flipbook, (string Name, ImageBase Image) img)
+    public static FlipBook operator +(FlipBook flipbook, (string Name, Image Image) img)
     => flipbook.Copy().Add(img.Name, img.Image);
 
     /// <summary>
@@ -210,7 +210,7 @@ public class FlipBook
     /// <param name="flipbook">The flip book</param>
     /// <param name="img">The new image, a pair of name and image data</param>
     /// <returns>The updated flipbook</returns>
-    public static FlipBook operator +(FlipBook flipbook, ImageBase img)
+    public static FlipBook operator +(FlipBook flipbook, Image img)
     => flipbook.Copy().Add("", img);
 
     /// <returns>A deep copy of this object</returns>

@@ -23,7 +23,7 @@ namespace SimpleImageIO {
             if (!disposed) OpenImageDenoise.oidnReleaseDevice(device);
         }
 
-        static void SetFilterImage(IntPtr filter, ImageBase image, string name) {
+        static void SetFilterImage(IntPtr filter, Image image, string name) {
             OpenImageDenoise.oidnSetSharedFilterImage(filter, name, image.DataPointer,
                 (OIDNFormat)image.NumChannels, (nuint)image.Width, (nuint)image.Height, 0, 0, 0);
         }

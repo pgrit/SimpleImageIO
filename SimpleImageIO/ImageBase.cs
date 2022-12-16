@@ -7,7 +7,7 @@ namespace SimpleImageIO;
 /// <summary>
 /// Wraps an image with arbitrarily many channels that is stored in native memory
 /// </summary>
-public unsafe class ImageBase : IDisposable {
+public unsafe class Image : IDisposable {
     /// <summary>
     /// Width of the image in pixels
     /// </summary>
@@ -36,12 +36,12 @@ public unsafe class ImageBase : IDisposable {
     /// <summary>
     /// Creates a new empty image that is not yet managing any data
     /// </summary>
-    protected ImageBase() { }
+    public Image() { }
 
     /// <summary>
     /// Creates an image buffer initialized to zero
     /// </summary>
-    public ImageBase(int w, int h, int numChannels) {
+    public Image(int w, int h, int numChannels) {
         Width = w;
         Height = h;
         this.NumChannels = numChannels;
@@ -58,7 +58,7 @@ public unsafe class ImageBase : IDisposable {
     ///
     /// This is a potentially unsafe operation, use only if you know what you are doing!
     /// </summary>
-    public static void Move(ImageBase src, ImageBase dest) {
+    public static void Move(Image src, Image dest) {
         dest.DataPointer = src.DataPointer;
         src.DataPointer = IntPtr.Zero;
         dest.Width = src.Width;
@@ -304,9 +304,9 @@ public unsafe class ImageBase : IDisposable {
     }
 
     /// <returns>A deep copy of the image object</returns>
-    public virtual ImageBase Copy() {
+    public virtual Image Copy() {
         if (DataPointer == IntPtr.Zero) return null;
-        ImageBase other = new(Width, Height, NumChannels);
+        Image other = new(Width, Height, NumChannels);
         Unsafe.CopyBlock(other.dataPtr, dataPtr, (uint)(Width * Height * NumChannels * sizeof(float)));
         return other;
     }
@@ -329,7 +329,7 @@ public unsafe class ImageBase : IDisposable {
     /// <summary>
     /// Frees the native memory
     /// </summary>
-    ~ImageBase() => Free();
+    ~Image() => Free();
 
     /// <summary>
     /// Frees the native memory
@@ -346,7 +346,7 @@ public unsafe class ImageBase : IDisposable {
     /// </summary>
     /// <param name="other">The image to zoom, will not be modified</param>
     /// <param name="scale">The scaling factor</param>
-    protected void Zoom(ImageBase other, int scale) {
+    protected void Zoom(Image other, int scale) {
         Debug.Assert(scale > 0);
 
         if (DataPointer != IntPtr.Zero) Free();
@@ -359,4 +359,102 @@ public unsafe class ImageBase : IDisposable {
         SimpleImageIOCore.ZoomWithNearestInterp(other.DataPointer, NumChannels * other.Width, DataPointer,
             NumChannels * Width, other.Width, other.Height, NumChannels, scale);
     }
+
+    /// <summary>
+    /// Combines two images by applying a function to each pair of values in each channel in each pixel.
+    /// Calls op(a[i], b[i]) for every position i.
+    /// </summary>
+    /// <param name="a">The first image</param>
+    /// <param name="b">The second image</param>
+    /// <param name="op">Function to invoke</param>
+    /// <returns>A new image with the combined values</returns>
+    /// <exception cref="ArgumentException">Image dimensions or channel counts do not match</exception>
+    public static T ApplyOp<T>(T a, T b, Func<float, float, float> op) where T : Image, new() {
+        if (a.Width != b.Width || a.Height != b.Height || a.NumChannels != b.NumChannels)
+            throw new ArgumentException("Image dimensions must match");
+
+        var result = new T();
+        result.Width = a.Width;
+        result.Height = a.Height;
+        result.NumChannels = a.NumChannels;
+        result.Alloc();
+        for (int row = 0; row < a.Height; ++row) {
+            for (int col = 0; col < a.Width; ++col) {
+                for (int chan = 0; chan < a.NumChannels; ++chan) {
+                    float av = a.GetPixelChannel(col, row, chan);
+                    float bv = b.GetPixelChannel(col, row, chan);
+                    result.SetPixelChannel(col, row, chan, op(av, bv));
+                }
+            }
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Generates a new image by applying a function to each pixel in a given image
+    /// </summary>
+    /// <param name="a">The initial image</param>
+    /// <param name="op">Function to invoke</param>
+    /// <returns>A new image with the updated values</returns>
+    public static T ApplyOp<T>(T a, Func<float, float> op) where T : Image, new() {
+        var result = new T();
+        result.Width = a.Width;
+        result.Height = a.Height;
+        result.NumChannels = a.NumChannels;
+        result.Alloc();
+        for (int row = 0; row < a.Height; ++row) {
+            for (int col = 0; col < a.Width; ++col) {
+                for (int chan = 0; chan < a.NumChannels; ++chan) {
+                    float av = a.GetPixelChannel(col, row, chan);
+                    result.SetPixelChannel(col, row, chan, op(av));
+                }
+            }
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Adds two equal-sized images with equal channel count
+    /// </summary>
+    public static Image operator +(Image a, Image b) => ApplyOp(a, b, (x, y) => x + y);
+
+    /// <summary>
+    /// Subtracts two equal-sized images with equal channel count
+    /// </summary>
+    public static Image operator -(Image a, Image b) => ApplyOp(a, b, (x, y) => x - y);
+
+    /// <summary>
+    /// Divides two equal-sized images with equal channel count
+    /// </summary>
+    public static Image operator /(Image a, Image b) => ApplyOp(a, b, (x, y) => x / y);
+
+    /// <summary>
+    /// Multiplies two equal-sized images with equal channel count
+    /// </summary>
+    public static Image operator *(Image a, Image b) => ApplyOp(a, b, (x, y) => x * y);
+
+    /// <summary>
+    /// Adds a constant to each pixel channel value
+    /// </summary>
+    public static Image operator +(Image a, float b) => ApplyOp(a, (x) => x + b);
+
+    /// <summary>
+    /// Subtracts a constant from each pixel channel value
+    /// </summary>
+    public static Image operator -(Image a, float b) => ApplyOp(a, (x) => x - b);
+
+    /// <summary>
+    /// Divides a constant from each pixel channel value
+    /// </summary>
+    public static Image operator /(Image a, float b) => ApplyOp(a, (x) => x / b);
+
+    /// <summary>
+    /// Multiplies a constant to each pixel channel value
+    /// </summary>
+    public static Image operator *(Image a, float b) => ApplyOp(a, (x) => x * b);
+
+    /// <summary>
+    /// Multiplies a constant to each pixel channel value
+    /// </summary>
+    public static Image operator *(float b, Image a) => ApplyOp(a, (x) => x * b);
 }

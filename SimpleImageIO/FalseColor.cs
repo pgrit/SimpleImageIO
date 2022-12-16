@@ -20,7 +20,7 @@ public class FalseColor {
     /// Original image. If multiple channels exist, the average of all channels is used as the scalar value.
     /// </param>
     /// <param name="toneMapped">Receives the output color image</param>
-    public void Apply(ImageBase original, RgbImage toneMapped) {
+    public void Apply(Image original, RgbImage toneMapped) {
         Debug.Assert(original.Width == toneMapped.Width);
         Debug.Assert(original.Height == toneMapped.Height);
 
@@ -43,7 +43,7 @@ public class FalseColor {
     /// Original image. If multiple channels exist, the average of all channels is used as the scalar value.
     /// </param>
     /// <returns>The output color image</returns>
-    public RgbImage Apply(ImageBase original) {
+    public RgbImage Apply(Image original) {
         RgbImage result = new(original.Width, original.Height);
         Apply(original, result);
         return result;
