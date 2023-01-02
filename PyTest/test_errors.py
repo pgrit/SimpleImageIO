@@ -10,10 +10,10 @@ class TestRelMSE(unittest.TestCase):
         low = sio.read("LessNoisy.exr")
         high = sio.read("MoreNoisy.exr")
 
-        rl = sio.relative_mse(low, ref)
+        rl = sio.relative_mse(low, ref, epsilon=0)
         self.assertAlmostEqual(rl, 0.0682, 3)
 
-        rh = sio.relative_mse(high, ref)
+        rh = sio.relative_mse(high, ref, epsilon=0)
         self.assertAlmostEqual(rh, 0.4079, 3)
 
     def test_black_pixel(self):
