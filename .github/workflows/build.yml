@@ -67,7 +67,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
-          python-version: '3.9'
+          python-version: '3.11'
 
       - name: Fetch Python build dependencies
         run: python -m pip install --user wheel
@@ -87,7 +87,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
-          python-version: '3.9'
+          python-version: '3.11'
 
       - name: Fetch Python build dependencies
         run: python -m pip install --user wheel
