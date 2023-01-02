@@ -48,18 +48,18 @@ SIIO_API float ComputeMSEOutlierReject(float* image, int imgStride, float* refer
 }
 
 SIIO_API float ComputeRelMSE(float* image, int imgStride, float* reference, int refStride,
-                             int width, int height, int numChans) {
+                             int width, int height, int numChans, float epsilon) {
     return Accumulate(width, height, numChans, imgStride, refStride,
         [&](int imgIdx, int refIdx, int col, int row, int chan) {
             float r = reference[refIdx];
             float delta = (image[imgIdx] - r);
             if (r == 0.0) return 0.0f;
-            return delta * delta / (r * r) / (height * width * numChans);
+            return delta * delta / (r * r + epsilon) / (height * width * numChans);
         });
 }
 
 SIIO_API float ComputeRelMSEOutlierReject(float* image, int imgStride, float* reference, int refStride,
-                                          int width, int height, int numChans, float percentage) {
+                                          int width, int height, int numChans, float percentage, float epsilon) {
     int numOutliers = int(width * height * numChans * 0.01 * percentage);
 
     // First, we compute all pixel errors in one big array.
@@ -73,7 +73,7 @@ SIIO_API float ComputeRelMSEOutlierReject(float* image, int imgStride, float* re
             if (r == 0.0)
                 contrib = 0.0f;
             else
-                contrib = delta * delta / (r * r) / (numChans * height * width - numOutliers);
+                contrib = delta * delta / (r * r + epsilon) / (numChans * height * width - numOutliers);
             errorBuffer[numChans * (col + width * row) + chan] = contrib;
         });
 
