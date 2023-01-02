@@ -296,6 +296,12 @@ void WriteImageToExr(const float** layers, const int* rowStrides, int width, int
     std::vector<int> layerIndices;
     for (int i = 0; i < numLayers; ++i) layerIndices.push_back(i);
     std::sort(layerIndices.begin(), layerIndices.end(), [layerNames] (int a, int b) {
+        if (layerNames[a] == nullptr) {
+            if (layerNames[b] == nullptr) return false;
+            else return true;
+        }
+        else if (layerNames[b] == nullptr) return false;
+
         return strcmp(layerNames[a], layerNames[b]) < 0;
     });
 
@@ -329,38 +335,39 @@ void WriteImageToExr(const float** layers, const int* rowStrides, int width, int
     for (int lay = 0; lay < numLayers; ++lay) {
         char namePrefix[256];
         size_t prefixLen = 0;
-        if (!layerNames) {
-            prefixLen = strlen("default");
-            strncpy(namePrefix, "default", 255);
+        if (!layerNames || !layerNames[layerIndices[lay]] || layerNames[layerIndices[lay]] == "") {
+            prefixLen = 0;
+            namePrefix[0] = 0;
         } else {
-            prefixLen = strlen(layerNames[layerIndices[lay]]);
+            prefixLen = strlen(layerNames[layerIndices[lay]]) + 1;
             strncpy(namePrefix, layerNames[layerIndices[lay]], 255);
+            namePrefix[prefixLen - 1] = '.';
         }
 
         if (numChannels[layerIndices[lay]] == 1) {
             strncpy(header.channels[offset + 0].name, namePrefix, 255);
-            strncpy(header.channels[offset + 0].name + prefixLen, ".Y", 255 - prefixLen);
+            strncpy(header.channels[offset + 0].name + prefixLen, "Y", 255 - prefixLen);
         } else if (numChannels[layerIndices[lay]] == 3) {
             strncpy(header.channels[offset + 0].name, namePrefix, 255);
-            strncpy(header.channels[offset + 0].name + prefixLen, ".B", 255 - prefixLen);
+            strncpy(header.channels[offset + 0].name + prefixLen, "B", 255 - prefixLen);
 
             strncpy(header.channels[offset + 1].name, namePrefix, 255);
-            strncpy(header.channels[offset + 1].name + prefixLen, ".G", 255 - prefixLen);
+            strncpy(header.channels[offset + 1].name + prefixLen, "G", 255 - prefixLen);
 
             strncpy(header.channels[offset + 2].name, namePrefix, 255);
-            strncpy(header.channels[offset + 2].name + prefixLen, ".R", 255 - prefixLen);
+            strncpy(header.channels[offset + 2].name + prefixLen, "R", 255 - prefixLen);
         } else if (numChannels[layerIndices[lay]] == 4) {
             strncpy(header.channels[offset + 0].name, namePrefix, 255);
-            strncpy(header.channels[offset + 0].name + prefixLen, ".A", 255 - prefixLen);
+            strncpy(header.channels[offset + 0].name + prefixLen, "A", 255 - prefixLen);
 
             strncpy(header.channels[offset + 1].name, namePrefix, 255);
-            strncpy(header.channels[offset + 1].name + prefixLen, ".B", 255 - prefixLen);
+            strncpy(header.channels[offset + 1].name + prefixLen, "B", 255 - prefixLen);
 
             strncpy(header.channels[offset + 2].name, namePrefix, 255);
-            strncpy(header.channels[offset + 2].name + prefixLen, ".G", 255 - prefixLen);
+            strncpy(header.channels[offset + 2].name + prefixLen, "G", 255 - prefixLen);
 
             strncpy(header.channels[offset + 3].name, namePrefix, 255);
-            strncpy(header.channels[offset + 3].name + prefixLen, ".R", 255 - prefixLen);
+            strncpy(header.channels[offset + 3].name + prefixLen, "R", 255 - prefixLen);
         } else {
             std::cerr << "ERROR while writing " << filename
                     << ": images with " << numChannels << " channels are currently not supported. "
@@ -690,8 +697,6 @@ void WritePfmImage(const float* data, int rowStride, int width, int height, int 
 
 extern "C" {
 
-// Apparently, layers must be sorted alphabetically by their names!
-// Otherwise, OpenEXR loads them in incorrect order.
 SIIO_API void WriteLayeredExr(const float** datas, int* strides, int width, int height, const int* numChannels,
                               int numLayers, const char** names, const char* filename) {
     WriteImageToExr(datas, strides, width, height, numChannels, numLayers, names, filename, nullptr, nullptr);
