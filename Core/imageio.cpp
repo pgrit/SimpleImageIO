@@ -335,7 +335,7 @@ void WriteImageToExr(const float** layers, const int* rowStrides, int width, int
     for (int lay = 0; lay < numLayers; ++lay) {
         char namePrefix[256];
         size_t prefixLen = 0;
-        if (!layerNames || !layerNames[layerIndices[lay]] || layerNames[layerIndices[lay]] == "") {
+        if (!layerNames || !layerNames[layerIndices[lay]] || layerNames[layerIndices[lay]][0] == 0) {
             prefixLen = 0;
             namePrefix[0] = 0;
         } else {
