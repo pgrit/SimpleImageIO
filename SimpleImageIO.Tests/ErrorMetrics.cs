@@ -29,18 +29,19 @@ namespace SimpleImageIO.Tests {
             RgbImage reference = new(10, 15);
             float expectedMse = 0;
             float expectedRelMse = 0;
+            float epsilon = 0.01f;
             for (int row = 0; row < 15; ++row) {
                 for (int col = 0; col < 10; ++col) {
-                    Vector3 imgVal = new(row / 15.0f);
-                    Vector3 refVal = new((15 - row) / 15.0f);
+                    RgbColor imgVal = new(row / 15.0f);
+                    RgbColor refVal = new((15 - row) / 15.0f);
 
                     image.SetPixel(col, row, imgVal);
                     reference.SetPixel(col, row, refVal);
 
                     var delta = (imgVal - refVal) * (imgVal - refVal);
-                    expectedMse += (delta.X + delta.Y + delta.Z) / 3.0f / (15 * 10);
-                    var ratio = delta / (refVal * refVal);
-                    expectedRelMse += (ratio.X + ratio.Y + ratio.Z) / 3.0f / (15 * 10);
+                    expectedMse += (delta.R + delta.G + delta.B) / 3.0f / (15 * 10);
+                    var ratio = delta / (refVal * refVal + epsilon);
+                    expectedRelMse += (ratio.R + ratio.G + ratio.B) / 3.0f / (15 * 10);
                 }
             }
             // We are not removing any outliers (percentage less than one pixel)
@@ -48,7 +49,7 @@ namespace SimpleImageIO.Tests {
 
             float mse = Metrics.MSE(image, reference);
             float relMse = Metrics.RelMSE(image, reference);
-            float relMseOut = Metrics.RelMSE_OutlierRejection(image, reference, 0.1f);
+            float relMseOut = Metrics.RelMSE_OutlierRejection(image, reference, 0.1f, epsilon);
 
             Assert.Equal(expectedMse, mse, 4);
             Assert.Equal(expectedRelMse, relMse, 4);
@@ -68,10 +69,10 @@ namespace SimpleImageIO.Tests {
             reference.SetPixel(0, 1, new(2,1,1));
             reference.SetPixel(1, 1, new(1,1,3));
 
-            Assert.Equal(0, Metrics.RelMSE_OutlierRejection(image, reference, percentage: 25.0f));
+            Assert.Equal(0, Metrics.RelMSE_OutlierRejection(image, reference, percentage: 25.0f, epsilon: 0f));
 
             Assert.Equal(0.25f, Metrics.MSE(image, reference));
-            Assert.Equal(0.25f, Metrics.RelMSE(image, reference));
+            Assert.Equal(0.25f, Metrics.RelMSE(image, reference, epsilon: 0f));
         }
     }
 }
