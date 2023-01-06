@@ -153,6 +153,9 @@ namespace SimpleImageIO {
             this.min = min;
             this.max = max;
             this.stops = stops ?? Inferno;
+
+            Debug.Assert(float.IsFinite(min) && float.IsFinite(max));
+            Debug.Assert(max > min);
         }
 
         /// <summary>
