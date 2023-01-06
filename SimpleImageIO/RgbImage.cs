@@ -108,6 +108,16 @@ public class RgbImage : Image {
     }
 
     /// <summary>
+    /// Syntactic sugar for <see cref="GetPixel"/> and <see cref="SetPixel"/>
+    /// </summary>
+    /// <param name="col">Horizontal pixel index, left is 0</param>
+    /// <param name="row">Vertical pixel index, top is 0</param>
+    public RgbColor this[int col, int row] {
+        get => GetPixel(col, row);
+        set => SetPixel(col, row, value);
+    }
+
+    /// <summary>
     /// Adds two equal-sized images with equal channel count
     /// </summary>
     public static RgbImage operator +(RgbImage a, RgbImage b) => ApplyOp(a, b, (x, y) => x + y);

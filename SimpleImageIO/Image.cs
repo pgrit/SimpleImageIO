@@ -175,6 +175,17 @@ public unsafe class Image : IDisposable {
     }
 
     /// <summary>
+    /// Syntactic sugar for <see cref="GetPixelChannel"/> and <see cref="SetPixelChannel"/>
+    /// </summary>
+    /// <param name="col">Horizontal pixel index, left is 0</param>
+    /// <param name="row">Vertical pixel index, top is 0</param>
+    /// <param name="channel">Channel index</param>
+    public float this[int col, int row, int channel] {
+        get => GetPixelChannel(col, row, channel);
+        set => SetPixelChannel(col, row, channel, value);
+    }
+
+    /// <summary>
     /// Sets all pixels in the image equal to the given value(s)
     /// </summary>
     /// <param name="channels">The color channel values</param>
@@ -191,14 +202,7 @@ public unsafe class Image : IDisposable {
     /// Scales all values of all channels in all pixels by multiplying them with a scalar
     /// </summary>
     /// <param name="s">Scalar to multiply on all values</param>
-    public void Scale(float s) {
-        for (int row = 0; row < Height; ++row) {
-            for (int col = 0; col < Width; ++col) {
-                for (int chan = 0; chan < NumChannels; ++chan)
-                    dataPtr[GetIndex(col, row) + chan] *= s;
-            }
-        }
-    }
+    public void Scale(float s) => ApplyOpInPlace(v => v * s);
 
     /// <summary>
     /// Computes the sum of all pixel and channel values
@@ -411,6 +415,42 @@ public unsafe class Image : IDisposable {
             }
         }
         return result;
+    }
+
+    /// <summary>
+    /// Modifies the image by applying a function to each pixel channel
+    /// </summary>
+    /// <param name="op">Function to invoke</param>
+    /// <returns>this image object</returns>
+    public Image ApplyOpInPlace(Func<float, float> op) {
+        for (int row = 0; row < Height; ++row) {
+            for (int col = 0; col < Width; ++col) {
+                for (int chan = 0; chan < NumChannels; ++chan) {
+                    this[col, row, chan] = op(this[col, row, chan]);
+                }
+            }
+        }
+        return this;
+    }
+
+    /// <summary>
+    /// Merges another image into this one by applying a function to each pixel channel.
+    /// </summary>
+    /// <param name="other">The other image. Must match the size and channel count</param>
+    /// <param name="op">Function to invoke</param>
+    /// <returns>this image object</returns>
+    public Image ApplyOpInPlace(Image other, Func<float, float, float> op) {
+        if (Width != other.Width || Height != other.Height || NumChannels != other.NumChannels)
+            throw new ArgumentException("Image dimensions must match");
+
+        for (int row = 0; row < Height; ++row) {
+            for (int col = 0; col < Width; ++col) {
+                for (int chan = 0; chan < NumChannels; ++chan) {
+                    this[col, row, chan] = op(this[col, row, chan], other[col, row, chan]);
+                }
+            }
+        }
+        return this;
     }
 
     /// <summary>
