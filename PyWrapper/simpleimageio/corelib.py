@@ -21,7 +21,7 @@ def get_numpy_data(img):
     if len(img.shape) == 3 and (img.strides[2] != 4 or img.strides[1] != 4 * 3):
         # we could have been given a masked array with gaps between values
         # our C-API does not support this, so we need to copy
-        img = np.ascontiguousarray(img, dtype=np.float32, copy=True)
+        img = np.ascontiguousarray(img, dtype=np.float32)
 
     height = img.shape[0]
     width = img.shape[1]
