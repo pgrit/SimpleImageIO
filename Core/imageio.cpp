@@ -219,8 +219,11 @@ bool CopyCachedExrLayer(int id, std::string layerName, float* out) {
     cacheMutex.lock();
     auto& img = exrImages[id];
 
-    if (img.channelsPerLayer.find(layerName) == img.channelsPerLayer.end())
+    if (img.channelsPerLayer.find(layerName) == img.channelsPerLayer.end()) {
+        std::cerr << "ERROR .exr layer '" << layerName << "' does not exist." << std::endl;
+        cacheMutex.unlock();
         return false;
+    }
 
     const auto& layerInfo = img.channelsPerLayer[layerName];
     int numChannels = layerInfo.CountChannels();
