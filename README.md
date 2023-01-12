@@ -45,7 +45,7 @@ TevIpc tevIpc = new(); // uses tev's default port on localhost
 
 // Create the image and initialize a tev sync
 MonochromeImage image = new(width: 20, height: 10);
-tevIpc.CreateImageSync("MyAwesomeImage", 20, 10, ("default", image));
+tevIpc.CreateImageSync("MyAwesomeImage", 20, 10, ("", image));
 
 // Pretend we are a renderer and write some image data.
 image.SetPixel(0, 0, val: 1);

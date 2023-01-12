@@ -149,7 +149,7 @@ class TestInputOutput(unittest.TestCase):
             [[0.5,0.0,3.0], [0.0,0.5,3.0], [0.0,0.0,3.5]]
         ], dtype=np.float32)
 
-        sio.write_layered_exr("layered.exr", {"default": img, "albedo": other})
+        sio.write_layered_exr("layered.exr", {"": img, "albedo": other})
         i = sio.read("layered.exr")
 
         self.assertEqual(img[0,0,0], i[0,0,0])
@@ -203,10 +203,10 @@ class TestInputOutput(unittest.TestCase):
             [[0.5,0.0,3.0], [0.0,0.5,3.0], [0.0,0.0,3.5]]
         ], dtype=np.float32)
 
-        sio.write_layered_exr("layered.exr", {"default": img, "albedo": other})
+        sio.write_layered_exr("layered.exr", {"": img, "albedo": other})
         layers = sio.read_layered_exr("layered.exr")
 
-        self.assertTrue("default" in layers)
+        self.assertTrue("" in layers)
         self.assertTrue("albedo" in layers)
 
         self.assertEqual(other[0,0,0], layers["albedo"][0,0,0])

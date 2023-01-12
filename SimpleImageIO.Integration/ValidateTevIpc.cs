@@ -14,7 +14,7 @@ namespace SimpleImageIO.Integration {
             MonochromeImage image = new(20, 10);
             using TevIpc tevIpc = new();
             tevIpc.CloseImage("monotest.exr");
-            tevIpc.CreateImageSync("monotest.exr", 20, 10, ("default", image));
+            tevIpc.CreateImageSync("monotest.exr", 20, 10, (null, image));
 
             image.SetPixel(0, 0, val: 1);
             image.SetPixel(10, 0, val: 2);
@@ -28,7 +28,7 @@ namespace SimpleImageIO.Integration {
             RgbImage image = new(20, 10);
             using TevIpc tevIpc = new();
             tevIpc.CloseImage("rgbtest.exr");
-            tevIpc.CreateImageSync("rgbtest.exr", 20, 10, ("default", image));
+            tevIpc.CreateImageSync("rgbtest.exr", 20, 10, (null, image));
 
             image.SetPixel(0, 0, new(1, 0, 0));
             image.SetPixel(10, 0, new(1, 0, 1));
@@ -44,7 +44,7 @@ namespace SimpleImageIO.Integration {
             RgbImage image = new(20, 10);
             using TevIpc tevIpc = new();
             tevIpc.CloseImage("windows/rgbtest.exr");
-            tevIpc.CreateImageSync("windows/rgbtest.exr", 20, 10, ("default", image));
+            tevIpc.CreateImageSync("windows/rgbtest.exr", 20, 10, (null, image));
 
             image.SetPixel(0, 0, new(1, 0, 0));
             image.SetPixel(10, 0, new(1, 0, 1));

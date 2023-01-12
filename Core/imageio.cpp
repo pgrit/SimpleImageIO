@@ -161,7 +161,7 @@ int CacheExrImage(const char* filename) {
         size_t len = strlen(result.header.channels[chan].name);
 
         std::string layerName;
-        if (len <= 2) layerName = "default";
+        if (len <= 2) layerName = "";
         else layerName = std::string(result.header.channels[chan].name, len - 2);
 
         char chanName = result.header.channels[chan].name[len - 1];
@@ -806,13 +806,13 @@ SIIO_API int CacheImage(int* width, int* height, int* numChannels, const char* f
         auto& img = exrImages[idx];
         *width = img.image.width;
         *height = img.image.height;
-        auto iter = img.channelsPerLayer.find("default");
+        auto iter = img.channelsPerLayer.find("");
         if (iter != img.channelsPerLayer.end()) {
-            // Loading this as a non-layered image will return a layer named "default" (or a layer without any name)
-            auto& defLayout = img.channelsPerLayer["default"];
+            // Loading this as a non-layered image will return the layer without any name, if it exists
+            auto& defLayout = img.channelsPerLayer[""];
             *numChannels = defLayout.CountChannels();
         } else {
-            // If "default" does not exist, loading as an image will fail
+            // If "" does not exist, loading as an image will fail
             *numChannels = 0;
         }
         cacheMutex.unlock();
@@ -881,7 +881,7 @@ SIIO_API void CopyCachedImage(int id, float* out) {
     cacheMutex.lock();
     if (exrImages.find(id) != exrImages.end()) {
         cacheMutex.unlock();
-        CopyCachedExrLayer(id, "default", out);
+        CopyCachedExrLayer(id, "", out);
         DeleteCachedExr(id);
     } else if (stbImages.find(id) != stbImages.end()) {
         cacheMutex.unlock();

@@ -192,15 +192,16 @@ public class TevIpc : IDisposable {
             Debug.Assert(image.Width == width && image.Height == height);
 
             numChannels += image.NumChannels;
+            string prefix = string.IsNullOrEmpty(layerName) ? "" : $"{layerName}.";
             if (image.NumChannels == 1) {
-                channelNames.Add(layerName + ".Y");
+                channelNames.Add(prefix + "Y");
             } else {
-                channelNames.Add(layerName + ".R");
-                channelNames.Add(layerName + ".G");
-                channelNames.Add(layerName + ".B");
+                channelNames.Add(prefix + "R");
+                channelNames.Add(prefix + "G");
+                channelNames.Add(prefix + "B");
             }
             if (image.NumChannels == 4)
-                channelNames.Add(layerName + ".A");
+                channelNames.Add(prefix + "A");
         }
 
         var packet = new CreateImagePacket {
@@ -257,7 +258,7 @@ public class TevIpc : IDisposable {
     public static void ShowImage(string name, Image image)
     {
         using var tevIpc = new TevIpc();
-        tevIpc.CreateImageSync(name, image.Width, image.Height, ("default", image));
+        tevIpc.CreateImageSync(name, image.Width, image.Height, (null, image));
         tevIpc.UpdateImage(name);
     }
 
@@ -315,19 +316,20 @@ public class TevIpc : IDisposable {
             }
 
             foreach (var layer in layers) {
+                string prefix = string.IsNullOrEmpty(layer.name) ? "" : $"{layer.name}.";
                 if (layer.image.NumChannels == 1) {
-                    updatePacket.ChannelName = layer.name + ".Y";
+                    updatePacket.ChannelName = prefix + "Y";
                     SendPacket(layer.image, 0);
                 } else {
-                    updatePacket.ChannelName = layer.name + ".R";
+                    updatePacket.ChannelName = prefix + "R";
                     SendPacket(layer.image, 0);
-                    updatePacket.ChannelName = layer.name + ".G";
+                    updatePacket.ChannelName = prefix + "G";
                     SendPacket(layer.image, 1);
-                    updatePacket.ChannelName = layer.name + ".B";
+                    updatePacket.ChannelName = prefix + "B";
                     SendPacket(layer.image, 2);
                 }
                 if (layer.image.NumChannels == 4) {
-                    updatePacket.ChannelName = layer.name + ".A";
+                    updatePacket.ChannelName = prefix + "A";
                     SendPacket(layer.image, 3);
                 }
             }

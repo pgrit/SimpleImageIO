@@ -99,7 +99,7 @@ namespace SimpleImageIO.Tests {
             otherImage.SetPixel(1, 0, new(1, 0, 1));
             otherImage.SetPixel(1, 1, new(1, 1, 1));
 
-            Layers.WriteToExr("layered.exr", ("default", image), ("normal", otherImage));
+            Layers.WriteToExr("layered.exr", ("", image), ("normal", otherImage));
 
             RgbImage def = new("layered.exr");
             Assert.Equal(image.GetPixel(0, 0), def.GetPixel(0, 0));
@@ -131,10 +131,10 @@ namespace SimpleImageIO.Tests {
             thirdImage.SetPixel(1, 1, 0.01f);
 
             Layers.WriteToExr("layered.exr",
-                ("normal", otherImage), ("depth", thirdImage), ("default", image));
+                ("normal", otherImage), ("depth", thirdImage), ("", image));
             var layers = Layers.LoadFromFile("layered.exr");
 
-            RgbImage def = RgbImage.StealData(layers["default"]);
+            RgbImage def = RgbImage.StealData(layers[""]);
             Assert.Equal(image.GetPixel(0, 0), def.GetPixel(0, 0));
             Assert.Equal(image.GetPixel(0, 1), def.GetPixel(0, 1));
             Assert.Equal(image.GetPixel(1, 0), def.GetPixel(1, 0));

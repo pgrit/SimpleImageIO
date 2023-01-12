@@ -5,7 +5,7 @@ namespace SimpleImageIO.Integration {
             RgbImage result = RgbImage.StealData(Tonemap.Reinhard(input, 4));
 
             using TevIpc tev = new();
-            tev.CreateImageSync("tonemappedReinhard.exr", result.Width, result.Height, ("default", result));
+            tev.CreateImageSync("tonemappedReinhard.exr", result.Width, result.Height, (null, result));
             tev.UpdateImage("tonemappedReinhard.exr");
 
             result.WriteToFile("tonemappedReinhard.exr");
@@ -16,7 +16,7 @@ namespace SimpleImageIO.Integration {
             RgbImage result = RgbImage.StealData(Tonemap.ACES(input));
 
             using TevIpc tev = new();
-            tev.CreateImageSync("tonemappedACES.exr", result.Width, result.Height, ("default", result));
+            tev.CreateImageSync("tonemappedACES.exr", result.Width, result.Height, (null, result));
             tev.UpdateImage("tonemappedACES.exr");
 
             result.WriteToFile("tonemappedACES.exr");
