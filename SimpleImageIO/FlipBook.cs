@@ -196,7 +196,7 @@ public class FlipBook
     }
 
     /// <summary>
-    /// Ass a new image to the flip book
+    /// Add a new image to the flip book
     /// </summary>
     /// <param name="flipbook">The flip book</param>
     /// <param name="img">The new image, a pair of name and image data</param>
@@ -205,7 +205,7 @@ public class FlipBook
     => flipbook.Copy().Add(img.Name, img.Image);
 
     /// <summary>
-    /// Ass a new image to the flip book
+    /// Add a new image to the flip book
     /// </summary>
     /// <param name="flipbook">The flip book</param>
     /// <param name="img">The new image, a pair of name and image data</param>
