@@ -1,5 +1,7 @@
 ﻿using SimpleImageIO.Benchmark;
 
+ColorBench.BenchLerp(1000000);
+
 IOBench.BenchIO();
 
 ImageOpsBench.BenchComputePercentile();

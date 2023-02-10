@@ -65,11 +65,11 @@ static class ImageOpsBench {
         Console.WriteLine($"Splatting {numSplats} samples (average: {avg}) took {time} ms");
     }
 
-    public static void BenchGetSetPixel() {
+    public static void BenchGetSetPixel(int numTrials = 100) {
         MonochromeImage img = new(600, 600);
 
         Stopwatch stopwatch = Stopwatch.StartNew();
-        for (int i = 0; i < 10; ++i) {
+        for (int i = 0; i < numTrials; ++i) {
             for (int row = 0; row < 600; ++row) {
                 for (int col = 0; col < 600; ++col) {
                     img.SetPixel(col, row, 1.3f);
@@ -77,10 +77,10 @@ static class ImageOpsBench {
             }
         }
         stopwatch.Stop();
-        Console.WriteLine($"Setting all pixels took {stopwatch.ElapsedMilliseconds / 10.0f}ms");
+        Console.WriteLine($"Setting all pixels took {stopwatch.ElapsedMilliseconds / (float)numTrials}ms");
 
         stopwatch.Restart();
-        for (int i = 0; i < 10; ++i) {
+        for (int i = 0; i < numTrials; ++i) {
             for (int row = 0; row < 600; ++row) {
                 for (int col = 0; col < 600; ++col) {
                     float tmp = img.GetPixel(col, row);
@@ -88,11 +88,11 @@ static class ImageOpsBench {
             }
         }
         stopwatch.Stop();
-        Console.WriteLine($"Getting all pixels took {stopwatch.ElapsedMilliseconds / 10.0f}ms");
+        Console.WriteLine($"Getting all pixels took {stopwatch.ElapsedMilliseconds / (float)numTrials}ms");
 
         float[] data = new float[600 * 600];
         stopwatch.Restart();
-        for (int i = 0; i < 10; ++i) {
+        for (int i = 0; i < numTrials; ++i) {
             for (int row = 0; row < 600; ++row) {
                 for (int col = 0; col < 600; ++col) {
                     data[row * 600 + col] = 1.3f;
@@ -100,10 +100,10 @@ static class ImageOpsBench {
             }
         }
         stopwatch.Stop();
-        Console.WriteLine($"Setting all in array took {stopwatch.ElapsedMilliseconds / 10.0f}ms");
+        Console.WriteLine($"Setting all in array took {stopwatch.ElapsedMilliseconds / (float)numTrials}ms");
 
         stopwatch.Restart();
-        for (int i = 0; i < 10; ++i) {
+        for (int i = 0; i < numTrials; ++i) {
             for (int row = 0; row < 600; ++row) {
                 for (int col = 0; col < 600; ++col) {
                     float tmp = data[row * 600 + col];
@@ -111,11 +111,11 @@ static class ImageOpsBench {
             }
         }
         stopwatch.Stop();
-        Console.WriteLine($"Getting all in array took {stopwatch.ElapsedMilliseconds / 10.0f}ms");
+        Console.WriteLine($"Getting all in array took {stopwatch.ElapsedMilliseconds / (float)numTrials}ms");
 
         unsafe {
             stopwatch.Restart();
-            for (int i = 0; i < 10; ++i) {
+            for (int i = 0; i < numTrials; ++i) {
                 for (int row = 0; row < 600; ++row) {
                     for (int col = 0; col < 600; ++col) {
                         Span<float> rawData = new(img.DataPointer.ToPointer(), img.Width * img.Height * img.NumChannels);
@@ -124,7 +124,7 @@ static class ImageOpsBench {
                 }
             }
             stopwatch.Stop();
-            Console.WriteLine($"Setting all in native span took {stopwatch.ElapsedMilliseconds / 10.0f}ms");
+            Console.WriteLine($"Setting all in native span took {stopwatch.ElapsedMilliseconds / (float)numTrials}ms");
         }
 
         stopwatch.Restart();
