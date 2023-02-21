@@ -32,21 +32,21 @@ namespace SimpleImageIO {
     internal static class OpenImageDenoise {
         const string LibName = "OpenImageDenoise";
 
-        static OpenImageDenoise() {
-            NativeLibrary.SetDllImportResolver(typeof(OpenImageDenoise).Assembly, ImportResolver);
-        }
+        // static OpenImageDenoise() {
+        //     NativeLibrary.SetDllImportResolver(typeof(OpenImageDenoise).Assembly, ImportResolver);
+        // }
 
-        private static IntPtr ImportResolver(string libraryName, Assembly assembly,
-                                             DllImportSearchPath? dllImportSearchPath) {
-            string mappedName = libraryName;
+        // private static IntPtr ImportResolver(string libraryName, Assembly assembly,
+        //                                      DllImportSearchPath? dllImportSearchPath) {
+        //     string mappedName = libraryName;
 
-            // Linking on OS X only works correctly if the file contains the version number.
-            if (libraryName == LibName && RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
-                mappedName = "libOpenImageDenoise.1.dylib";
-            }
+        //     // Linking on OS X only works correctly if the file contains the version number.
+        //     if (libraryName == LibName && RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
+        //         mappedName = "libOpenImageDenoise.1.4.3.dylib";
+        //     }
 
-            return NativeLibrary.Load(mappedName, assembly, dllImportSearchPath);
-        }
+        //     return NativeLibrary.Load(mappedName, assembly, dllImportSearchPath);
+        // }
 
         #region Device
 
