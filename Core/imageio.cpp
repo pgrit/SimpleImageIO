@@ -295,82 +295,63 @@ void WriteImageToExr(const float** layers, const int* rowStrides, int width, int
     image.width = width;
     image.height = height;
 
-    // Sort the layer names in ASCII byte order because OpenEXR demands it so
-    std::vector<int> layerIndices;
-    for (int i = 0; i < numLayers; ++i) layerIndices.push_back(i);
-    std::sort(layerIndices.begin(), layerIndices.end(), [layerNames] (int a, int b) {
-        if (layerNames[a] == nullptr) {
-            if (layerNames[b] == nullptr) return false;
-            else return true;
-        }
-        else if (layerNames[b] == nullptr) return false;
-
-        return strcmp(layerNames[a], layerNames[b]) < 0;
-    });
-
     // Convert image data from AoS to SoA (i.e. one image per channel in each layer)
     std::vector<std::vector<float>> channelImages;
-    float** imagePtr = (float **) alloca(sizeof(float*) * image.num_channels);
     for (int layer = 0; layer < numLayers; ++layer) {
-        for (int chan = 0; chan < numChannels[layerIndices[layer]]; ++chan) {
+        for (int chan = 0; chan < numChannels[layer]; ++chan) {
             channelImages.emplace_back(width * height);
         }
 
-        size_t offset = channelImages.size() - numChannels[layerIndices[layer]];
+        size_t offset = channelImages.size() - numChannels[layer];
         for (int r = 0; r < height; ++r) {
             for (int c = 0; c < width; ++c) {
-                auto start = r * rowStrides[layerIndices[layer]] + c * numChannels[layerIndices[layer]];
-                for (int chan = 0; chan < numChannels[layerIndices[layer]]; ++chan) {
-                    channelImages[offset + chan][r * width + c] = layers[layerIndices[layer]][start + chan];
-
-                    // reverse channel order from RGB(A) to (A)BGR
-                    imagePtr[offset + numChannels[layerIndices[layer]] - chan - 1] = channelImages[offset + chan].data();
+                auto start = r * rowStrides[layer] + c * numChannels[layer];
+                for (int chan = 0; chan < numChannels[layer]; ++chan) {
+                    channelImages[offset + chan][r * width + c] = layers[layer][start + chan];
                 }
             }
         }
     }
-    image.images = (unsigned char**)imagePtr;
 
     // Set the channel names
-    std::vector<EXRChannelInfo> channels(header.num_channels);
-    header.channels = channels.data();
+    std::vector<EXRChannelInfo> channels(totalChannels);
     int offset = 0;
     for (int lay = 0; lay < numLayers; ++lay) {
         char namePrefix[256];
         size_t prefixLen = 0;
-        if (!layerNames || !layerNames[layerIndices[lay]] || layerNames[layerIndices[lay]][0] == 0) {
+        if (!layerNames || !layerNames[lay] || layerNames[lay][0] == 0) {
             prefixLen = 0;
             namePrefix[0] = 0;
         } else {
-            prefixLen = strlen(layerNames[layerIndices[lay]]) + 1;
-            strncpy(namePrefix, layerNames[layerIndices[lay]], 255);
+            prefixLen = strlen(layerNames[lay]) + 1;
+            strncpy(namePrefix, layerNames[lay], 255);
             namePrefix[prefixLen - 1] = '.';
         }
 
-        if (numChannels[layerIndices[lay]] == 1) {
-            strncpy(header.channels[offset + 0].name, namePrefix, 255);
-            strncpy(header.channels[offset + 0].name + prefixLen, "Y", 255 - prefixLen);
-        } else if (numChannels[layerIndices[lay]] == 3) {
-            strncpy(header.channels[offset + 0].name, namePrefix, 255);
-            strncpy(header.channels[offset + 0].name + prefixLen, "B", 255 - prefixLen);
+        if (numChannels[lay] == 1) {
+            strncpy(channels[offset + 0].name, namePrefix, 255);
+            strncpy(channels[offset + 0].name + prefixLen, "Y", 255 - prefixLen);
+        } else if (numChannels[lay] == 3) {
+            strncpy(channels[offset + 0].name, namePrefix, 255);
+            strncpy(channels[offset + 0].name + prefixLen, "R", 255 - prefixLen);
 
-            strncpy(header.channels[offset + 1].name, namePrefix, 255);
-            strncpy(header.channels[offset + 1].name + prefixLen, "G", 255 - prefixLen);
+            strncpy(channels[offset + 1].name, namePrefix, 255);
+            strncpy(channels[offset + 1].name + prefixLen, "G", 255 - prefixLen);
 
-            strncpy(header.channels[offset + 2].name, namePrefix, 255);
-            strncpy(header.channels[offset + 2].name + prefixLen, "R", 255 - prefixLen);
-        } else if (numChannels[layerIndices[lay]] == 4) {
-            strncpy(header.channels[offset + 0].name, namePrefix, 255);
-            strncpy(header.channels[offset + 0].name + prefixLen, "A", 255 - prefixLen);
+            strncpy(channels[offset + 2].name, namePrefix, 255);
+            strncpy(channels[offset + 2].name + prefixLen, "B", 255 - prefixLen);
+        } else if (numChannels[lay] == 4) {
+            strncpy(channels[offset + 0].name, namePrefix, 255);
+            strncpy(channels[offset + 0].name + prefixLen, "R", 255 - prefixLen);
 
-            strncpy(header.channels[offset + 1].name, namePrefix, 255);
-            strncpy(header.channels[offset + 1].name + prefixLen, "B", 255 - prefixLen);
+            strncpy(channels[offset + 1].name, namePrefix, 255);
+            strncpy(channels[offset + 1].name + prefixLen, "G", 255 - prefixLen);
 
-            strncpy(header.channels[offset + 2].name, namePrefix, 255);
-            strncpy(header.channels[offset + 2].name + prefixLen, "G", 255 - prefixLen);
+            strncpy(channels[offset + 2].name, namePrefix, 255);
+            strncpy(channels[offset + 2].name + prefixLen, "B", 255 - prefixLen);
 
-            strncpy(header.channels[offset + 3].name, namePrefix, 255);
-            strncpy(header.channels[offset + 3].name + prefixLen, "R", 255 - prefixLen);
+            strncpy(channels[offset + 3].name, namePrefix, 255);
+            strncpy(channels[offset + 3].name + prefixLen, "A", 255 - prefixLen);
         } else {
             std::cerr << "ERROR while writing " << filename
                     << ": images with " << numChannels << " channels are currently not supported. "
@@ -378,8 +359,24 @@ void WriteImageToExr(const float** layers, const int* rowStrides, int width, int
             return;
         }
 
-        offset += numChannels[layerIndices[lay]];
+        offset += numChannels[lay];
     }
+
+    // Sort channels by the ASCII byte code of their names because thats what OpenEXR expects
+    std::vector<int> channelIndices;
+    for (int i = 0; i < totalChannels; ++i) channelIndices.emplace_back(i);
+    std::sort(channelIndices.begin(), channelIndices.end(), [&channels] (int a, int b) {
+        return strcmp(channels[a].name, channels[b].name) < 0;
+    });
+
+    std::vector<EXRChannelInfo> sortedChannels(totalChannels);
+    float** imagePtr = (float **) alloca(sizeof(float*) * image.num_channels);
+    for (int i = 0; i < totalChannels; ++i) {
+        sortedChannels[i] = channels[channelIndices[i]];
+        imagePtr[i] = channelImages[channelIndices[i]].data();
+    }
+    header.channels = sortedChannels.data();
+    image.images = (unsigned char**)imagePtr;
 
     // Define pixel type of the buffer and requested output pixel type in the file
     header.pixel_types = (int*) alloca(sizeof(int) * header.num_channels);

@@ -39,6 +39,7 @@ SimpleImageIO.Benchmark/*.png
 SimpleImageIO.Benchmark/*.jpg
 SimpleImageIO.Benchmark/*.exr
 SimpleImageIO.Benchmark/*.bmp
+SimpleImageIO.Integration/*.exr
 /denoised*.exr
 /tonemapped*.exr
 example.html
