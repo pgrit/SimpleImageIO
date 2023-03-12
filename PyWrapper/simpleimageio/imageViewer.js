@@ -4,47 +4,46 @@ var dragYStart = 0;
 var zoomLevels = new Map();
 var positions = new Map();
 
-const baseWidth = 600;
+var wheelOpt = false;
+try {
+    window.addEventListener("test", null, Object.defineProperty({}, 'passive', {
+        get: function () { wheelOpt = { passive: false }; }
+    }));
+} catch (exc) { }
 
-function initImageViewers(numImages) {
-    var containers = document.getElementsByClassName("image-container");
-    [].forEach.call(containers, function (e) {
-        var wheelOpt = false;
-        try {
-            window.addEventListener("test", null, Object.defineProperty({}, 'passive', {
-                get: function () { wheelOpt = { passive: false }; }
-            }));
-        } catch (exc) { }
+function initImageViewers(flipbook) {
+    var container = flipbook.getElementsByClassName("image-container")[0];
 
-        e.addEventListener("keypress", onKeyDownImage);
-        e.addEventListener("mousemove", onMouseMove);
-        e.addEventListener("mouseout", onMouseOut);
-        e.addEventListener("wheel", onScrollContainer, wheelOpt);
-        var placer = e.getElementsByClassName("image-placer")[0];
-        placer.addEventListener("wheel", onScrollImage, wheelOpt);
+    container.addEventListener("keypress", onKeyDownImage);
+    container.addEventListener("mousemove", onMouseMove);
+    container.addEventListener("mouseout", onMouseOut);
+    container.addEventListener("wheel", onScrollContainer, wheelOpt);
+    var placer = container.getElementsByClassName("image-placer")[0];
+    placer.addEventListener("wheel", onScrollImage, wheelOpt);
 
-        // Set the initial size of the image
-        var img = placer.getElementsByTagName("img")[0];
-        placer.style.top = "0px";
-        placer.style.left = "0px";
-        placer.style.height = ((img.naturalHeight / img.naturalWidth) * baseWidth).toString() + "px";
-        placer.style.width = baseWidth.toString() + "px";
+    let numImages = placer.getElementsByTagName("canvas").length;
 
-        // Add logic to the buttons
-        var labels = document.getElementsByClassName("method-label");
-        for (i = 0; i < labels.length; ++i) {
-            for (idx = 1; idx <= numImages; ++idx) {
-                if (labels[i].classList.contains("method-" + idx.toString())) {
-                    let container = labels[i].parentElement.parentElement.getElementsByClassName("image-container")[0];
-                    let thisIndex = idx;
-                    labels[i].addEventListener("click", function () { flipImage(container, thisIndex); })
-                }
+    // Set the initial position of the image
+    var img = placer.getElementsByTagName("canvas")[0];
+    placer.style.top = "0px";
+    placer.style.left = "0px";
+    positions.set(container, [0, 0]);
+
+    // Zoom image to fill the container
+    let initialZoom = container.clientWidth / img.width;
+    scaleImage(container, initialZoom)
+
+    // Add logic to the buttons
+    var labels = document.getElementsByClassName("method-label");
+    for (i = 0; i < labels.length; ++i) {
+        for (idx = 1; idx <= numImages; ++idx) {
+            if (labels[i].classList.contains("method-" + idx.toString())) {
+                let container = labels[i].parentElement.parentElement.getElementsByClassName("image-container")[0];
+                let thisIndex = idx;
+                labels[i].addEventListener("click", function () { flipImage(container, thisIndex); })
             }
         }
-
-        zoomLevels.set(e, 1.0);
-        positions.set(e, [0, 0]);
-    });
+    }
 }
 
 function flipImage(container, index) {
@@ -81,9 +80,9 @@ function scaleImage(container, scale) {
     zoomLevels.set(container, scale);
 
     var placer = container.getElementsByClassName("image-placer")[0];
-    var aspect = placer.getElementsByTagName("img")[0].naturalHeight / placer.getElementsByTagName("img")[0].naturalWidth;
-    placer.style.width = (baseWidth * scale).toString() + "px";
-    placer.style.height = (baseWidth * aspect * scale).toString() + "px";
+    let img = placer.getElementsByTagName("canvas")[0];
+    placer.style.width = (img.width * scale).toString() + "px";
+    placer.style.height = (img.height * scale).toString() + "px";
 }
 
 function onMouseOut(event) {

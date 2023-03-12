@@ -12,7 +12,7 @@
     position: relative;
     width: 100%;
     flex: 1;
-    min-height: 400px;
+    min-height: 600px;
 }
 
     .image-container:focus {
@@ -56,3 +56,24 @@
 .image-placer {
     position: absolute;
 }
+
+.tmo-script {
+    display: none;
+}
+    .tmo-script.visible {
+        display: block;
+    }
+
+.tmo-exposure {
+    display: none;
+}
+    .tmo-exposure.visible {
+        display: block;
+    }
+
+.tmo-falsecolor {
+    display: none;
+}
+    .tmo-falsecolor.visible {
+        display: block;
+    }

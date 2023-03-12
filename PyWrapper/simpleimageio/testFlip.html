@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="style.css">
+        <script src="jquery-3.6.4.min.js"></script>
+        <script src="imageViewer.js"></script>
+        <script src="imageOps.js"></script>
+    </head>
+    <body>
+        <div class='flipbook' id='flipbook-1'>
+            <div class='method-list'>
+                <button class='method-label method-1 visible'><span class='method-key'>1</span> First image</button>
+            </div>
+            <div tabindex='1' class='image-container'>
+                <div class='image-placer'>
+                    <canvas draggable='false' class='image image-1 visible' width="2000" height="1000"></canvas>
+                </div>
+            </div>
+            <div class='tmo-container'>
+                <p>
+                    <label><input type="radio" value="exposure" name="tmo-1" checked="checked"> Exposure</label>
+                    <label><input type="radio" value="falsecolor" name="tmo-1"> False color</label>
+                    <label><input type="radio" value="script" name="tmo-1"> Script</label>
+                </p>
+                <p class='tmo-script visible'>
+                <textarea rows="5" cols="80" name="text">
+let s = 2**0;
+return [s * r, s * g, s * b];</textarea>
+                </p>
+                <p class="tmo-exposure visible"><label>EV <input type="number" value="0" step="0.5"></label></p>
+                <p class="tmo-falsecolor visible">
+                    <label>min <input type="number" value="0" step="0.1" name="min"></label>
+                    <label>max <input type="number" value="1" step="0.1" name="max"></label>
+                    <label>log <input type="checkbox" value="0" name="logscale"></label>
+                </p>
+            </div>
+        </div>
+        <script>
+            let width = 2000;
+            let height = 1000;
+            var pixels = Array(width*height*3).fill(0.0);
+            for (var row = 0; row < height; ++row) {
+                for (var col = 0; col < width; ++col) {
+                    pixels[(row * width + col) * 3 + 0] = 0.1;
+                    pixels[(row * width + col) * 3 + 1] = row % 10 == 0 ? 0.6 : 0.3;
+                    pixels[(row * width + col) * 3 + 2] = 1.0 * col / width;
+                }
+            }
+
+            var canvas = document.getElementsByClassName("image-1")[0];
+            createImage(canvas, pixels, (r, g, b) => [r, g, b]);
+            initImageViewers(document.getElementById("flipbook-1"));
+
+            let txt = document.getElementsByClassName('tmo-script')[0].getElementsByTagName("textarea")[0];
+            var dirty = false;
+            function updateScript() { dirty = true; }
+            txt.oninput = updateScript;
+            setInterval(function() {
+                if (!dirty) return;
+                dirty = false;
+
+                var fn = new Function("r", "g", "b", txt.value);
+
+                try {
+                    var [r, g, b] = fn(0, 0, 0)
+                } catch (e) {
+                    return; // input is not currently valid
+                }
+
+                createImage(canvas, pixels, fn);
+            }, 500)
+
+            function updateExposure() {
+                let s = 2.0**$(".tmo-exposure").find('input').val();
+                createImage(canvas, pixels, function (r, g, b) {
+                    return [s * r, s * g, s * b];
+                });
+            }
+            $(".tmo-exposure").find('input').change(updateExposure)
+
+            let falseClrControls = document.getElementsByClassName('tmo-falsecolor')[0];
+
+            function updateFalseColor() {
+                let min = $('.tmo-falsecolor').find('input[name=min]').val();
+                let max = $('.tmo-falsecolor').find('input[name=max]').val();
+                let useLog = $('.tmo-falsecolor').find('input[name=logscale]').is(":checked");
+                createImage(canvas, pixels, function (r, g, b) {
+                    let value = (r + g + b) / 3;
+                    if (useLog) value = Math.log(value + 1)
+                    return falseColor("inferno", min, max, value);
+                })
+            }
+            $('.tmo-falsecolor').find('input').change(updateFalseColor)
+
+            $('.tmo-container').find('input[type=radio]').change(function() {
+                let container = $(this).closest(".tmo-container");
+                if ($(this).val() == "exposure") {
+                    container.find(".tmo-exposure").addClass("visible");
+                    container.find(".tmo-script").removeClass("visible");
+                    container.find(".tmo-falsecolor").removeClass("visible");
+                    updateExposure();
+                } else if ($(this).val() == "falsecolor") {
+                    container.find(".tmo-exposure").removeClass("visible");
+                    container.find(".tmo-script").removeClass("visible");
+                    container.find(".tmo-falsecolor").addClass("visible");
+                    updateFalseColor();
+                } else if ($(this).val() == "script") {
+                    container.find(".tmo-exposure").removeClass("visible");
+                    container.find(".tmo-script").addClass("visible");
+                    container.find(".tmo-falsecolor").removeClass("visible");
+                    updateScript();
+                }
+            })
+
+            // TODO TMO selection,
+
+            // TODO magnifier with values,
+
+            // TODO tying multiple flip books together
+
+            // TODO support LDR mode for file size reasons
+        </script>
+    </body>
+</html>
