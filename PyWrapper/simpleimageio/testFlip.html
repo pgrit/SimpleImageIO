@@ -7,7 +7,9 @@
         <script src="imageOps.js"></script>
     </head>
     <body>
-        <div class='flipbook' id='flipbook-1'>
+        <div id="magnifier"><table class="magnifier"></table></div>
+
+        <div class='flipbook' id='flipbook-1' oncontextmenu="return false;">
             <div class='method-list'>
                 <button class='method-label method-1 visible'><span class='method-key'>1</span> First image</button>
                 <button class='method-label method-2'><span class='method-key'>2</span> Second image</button>
@@ -25,7 +27,12 @@
                     <label><input type="radio" value="script" name="tmo-1"> GLSL</label>
                 </p>
                 <p class='tmo-script'>
-                <textarea rows="5" cols="80" name="text">rgb = pow(2.0, 0.0) * rgb;</textarea>
+                <textarea rows="7" cols="80" name="text">
+// rgb: linear RGB pixel value [in / out]
+// uv: coordinate within the image (0, 0) is top left, (1, 1) bottom right
+// hdr: texture storing raw image (linear RGB, float32)
+
+rgb = pow(2.0, 0.0) * rgb;</textarea>
                 </p>
                 <p class="tmo-exposure visible"><label>EV <input type="number" value="0" step="0.5"></label></p>
                 <p class="tmo-falsecolor">

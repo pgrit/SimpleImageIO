@@ -1,8 +1,10 @@
+// globals that track the position and zoom operations
 var dragTarget = null;
 var dragXStart = 0;
 var dragYStart = 0;
 var zoomLevels = new Map();
 var positions = new Map();
+var curImageIdx = new Map();
 
 var wheelOpt = false;
 try {
@@ -18,10 +20,19 @@ function initImageViewers(flipbook) {
     container.addEventListener("mousemove", onMouseMove);
     container.addEventListener("mouseout", onMouseOut);
     container.addEventListener("wheel", onScrollContainer, wheelOpt);
+
     var placer = container.getElementsByClassName("image-placer")[0];
     placer.addEventListener("wheel", onScrollImage, wheelOpt);
+    placer.addEventListener("mousemove", args => onMouseMoveOverImage(container, args));
+    placer.addEventListener("mousedown", args => onMouseMoveOverImage(container, args));
+    placer.addEventListener("mouseout", onMouseOutOverImage);
 
     let numImages = placer.getElementsByTagName("canvas").length;
+
+    // Prevent mouseout of the canvas from propagating to its parent if the selection changes
+    // This keeps the magnifier visible while flipping images.
+    // TODO this only works if we also update the magnifier to the new image data
+    // $(placer).find('canvas').on("mouseout", event => event.stopPropagation());
 
     // Set the initial position of the image
     var img = placer.getElementsByTagName("canvas")[0];
@@ -44,9 +55,13 @@ function initImageViewers(flipbook) {
             }
         }
     }
+
+    flipImage(container, 1);
 }
 
 function flipImage(container, index) {
+    curImageIdx.set(container, index);
+
     // Only proceed if the number is mapped to an existing image
     var selected = container.getElementsByClassName("image-" + index.toString());
     if (selected.length == 0) return;
@@ -113,6 +128,82 @@ function onMouseMove(event) {
 
     // Update the position of the image
     shiftImage(dragTarget, deltaX, deltaY)
+}
+
+function onMouseMoveOverImage(container, event) {
+    let scale = zoomLevels.get(container);
+    let curPixelCol = Math.floor(event.offsetX / scale);
+    let curPixelRow = Math.floor(event.offsetY / scale);
+
+    if ((event.buttons & 2) == 0)
+    {
+        hideMagnifier();
+        return;
+    }
+
+    const offset = 10;
+    let magnifierLeft = event.pageX + offset;
+    let magnifierTop = event.pageY + offset;
+
+    showMagnifier(magnifierLeft, magnifierTop, curPixelCol, curPixelRow, container);
+}
+
+function onMouseOutOverImage(event) {
+    hideMagnifier();
+}
+
+const MagnifierResolution = 2;
+
+function approxSrgb(linear) {
+    let srgb = Math.pow(linear, 1.0 / 2.2) * 255;
+    return srgb < 0 ? 0 : (srgb > 255 ? 255 : srgb);
+}
+
+function showMagnifier(magnifierLeft, magnifierTop, magnifyCol, magnifyRow, container) {
+    $("#magnifier").addClass("visible");
+    $("#magnifier").css({ top: magnifierTop, left: magnifierLeft });
+
+    let table = $("#magnifier").find("table");
+    table.children().remove();
+
+    let activeImage = flipBookImages.get(container)[curImageIdx.get(container) - 1];
+
+    for (let row = magnifyRow - MagnifierResolution; row <= magnifyRow + MagnifierResolution; ++row) {
+        if (row < 0 || row >= activeImage.height) continue;
+
+        table.append("<tr></tr>");
+        let tr = table.find("tr").last();
+
+        for (let col = magnifyCol - MagnifierResolution; col <= magnifyCol + MagnifierResolution; ++col) {
+            if (col < 0 || col >= activeImage.width) continue;
+
+            let classNames = "magnifier";
+            if (row == magnifyRow && col == magnifyCol)
+                classNames += " selected";
+
+            // TODO use the canvas / tonemapped color
+            let clrR = activeImage.pixels[3 * (row * activeImage.width + col) + 0]; //tonemapped.GetPixelChannel(col, row, 0);
+            let clrG = activeImage.pixels[3 * (row * activeImage.width + col) + 1]; //tonemapped.GetPixelChannel(col, row, 1);
+            let clrB = activeImage.pixels[3 * (row * activeImage.width + col) + 2]; //tonemapped.GetPixelChannel(col, row, 2);
+
+            let r = activeImage.pixels[3 * (row * activeImage.width + col) + 0];
+            let g = activeImage.pixels[3 * (row * activeImage.width + col) + 1];
+            let b = activeImage.pixels[3 * (row * activeImage.width + col) + 2];
+
+            tr.append(`
+            <td class='${classNames}'
+                style="background-color: rgb(${approxSrgb(clrR)}, ${approxSrgb(clrG)}, ${approxSrgb(clrB)});">
+                <p class="magnifier" style="color: rgb(255,0,0);">${r}</p>
+                <p class="magnifier" style="color: rgb(0,255,0);">${g}</p>
+                <p class="magnifier" style="color: rgb(0,0,255);">${b}</p>
+            </td>
+            `);
+        }
+    }
+}
+
+function hideMagnifier() {
+    $("#magnifier").removeClass("visible");
 }
 
 function computeZoomScale(container, evt, left, top) {
