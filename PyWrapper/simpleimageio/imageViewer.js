@@ -52,7 +52,8 @@ function flipImage(container, index) {
     if (selected.length == 0) return;
 
     // Hide the currently visible elements
-    var visible = container.parentElement.getElementsByClassName("visible");
+    // var visible = container.parentElement.getElementsByClassName("image visible");
+    let visible = $(container.parentElement).find('.visible.image, .visible.method-label').get();
 
     // We iterate in reverse order, because removing the class also removes the element from the list
     for (i = visible.length - 1; i >= 0; --i)

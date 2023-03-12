@@ -64,3 +64,92 @@ function falseColor(mapName, min, max, value) {
         t * a[2] + (1 - t) * b[2]
     ];
 }
+
+class HDRImage {
+    constructor(pixels, canvas) {
+        this.currentTMO = (r, g, b) => [ r, g, b ];
+        this.dirty = true;
+        this.canvas = canvas;
+        this.pixels = pixels;
+
+        let trueThis = this;
+        setInterval(function() {
+            if (!trueThis.dirty) return;
+            trueThis.dirty = false;
+            createImage(trueThis.canvas, trueThis.pixels, trueThis.currentTMO);
+        }, 500)
+    }
+    apply(tmo) {
+        this.currentTMO = tmo;
+        this.dirty = true;
+    }
+}
+
+function makeImages(flipbook, rawPixels) {
+    // connect each canvas to its raw data
+    let images = []
+    for (let i = 0; i < rawPixels.length; ++i) {
+        let pixels = rawPixels[i];
+        let canvas = document.getElementsByClassName(`image-${i+1}`)[0];
+        images.push(new HDRImage(pixels, canvas));
+    }
+    function apply(fn) {
+        images.forEach(img => img.apply(fn));
+    }
+
+    // attach TMO controls for scripting
+    let scriptTxt = $(flipbook).find(".tmo-script").find('textarea').get()[0];
+    function updateScript() {
+        var fn = new Function("r", "g", "b", scriptTxt.value);
+        try {
+            let [r, g, b] = fn(0, 0, 0);
+        } catch (e) {
+            return; // input is not currently valid
+        }
+        apply(fn);
+    }
+    scriptTxt.oninput = updateScript;
+
+    // attach TMO controls for exposure value
+    let evInput = $(flipbook).find(".tmo-exposure").find('input');
+    function updateExposure() {
+        let s = 2.0**evInput.val();
+        apply((r, g, b) => [s * r, s * g, s * b]);
+    }
+    evInput.on("change", updateExposure)
+
+    // attach TMO controls for false color mapping
+    let falseClrControls = $(flipbook).find('.tmo-falsecolor');
+    function updateFalseColor() {
+        let min = falseClrControls.find('input[name=min]').val();
+        let max = falseClrControls.find('input[name=max]').val();
+        let useLog = falseClrControls.find('input[name=logscale]').is(":checked");
+        apply(function (r, g, b) {
+            let value = (r + g + b) / 3;
+            if (useLog) value = Math.log(value + 1)
+            return falseColor("inferno", min, max, value);
+        });
+    }
+    falseClrControls.find('input').on("change", updateFalseColor)
+
+    // TMO selection logic
+    $(flipbook).find('.tmo-container').find('input[type=radio]').on("change", function() {
+        let container = $(this).closest(".tmo-container");
+        if ($(this).val() == "exposure") {
+            container.find(".tmo-exposure").addClass("visible");
+            container.find(".tmo-script").removeClass("visible");
+            container.find(".tmo-falsecolor").removeClass("visible");
+            updateExposure();
+        } else if ($(this).val() == "falsecolor") {
+            container.find(".tmo-exposure").removeClass("visible");
+            container.find(".tmo-script").removeClass("visible");
+            container.find(".tmo-falsecolor").addClass("visible");
+            updateFalseColor();
+        } else if ($(this).val() == "script") {
+            container.find(".tmo-exposure").removeClass("visible");
+            container.find(".tmo-script").addClass("visible");
+            container.find(".tmo-falsecolor").removeClass("visible");
+            updateScript();
+        }
+    })
+}
