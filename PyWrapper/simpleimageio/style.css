@@ -110,5 +110,8 @@ td.magnifier {
 p.magnifier {
     margin: 0;
     font-size: 14px;
-    text-shadow: 1px 1px black;
+    font-weight: bold;
+    font-family: monospace;
+    text-rendering: optimizeLegibility;
+    text-shadow: -2px -2px 4px #000, 2px -2px 4px #000, -2px 2px 4px #000, 2px 2px 4px #000
 }

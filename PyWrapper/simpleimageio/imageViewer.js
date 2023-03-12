@@ -159,6 +159,12 @@ function approxSrgb(linear) {
     return srgb < 0 ? 0 : (srgb > 255 ? 255 : srgb);
 }
 
+function formatNumber(number) {
+    if (Math.abs(number) > 1e5 || Math.abs(number) < 1e-4) return number.toExponential();
+    if (Math.abs(number) < 1) return number.toFixed(4);
+    return number;
+}
+
 function showMagnifier(magnifierLeft, magnifierTop, magnifyCol, magnifyRow, container) {
     $("#magnifier").addClass("visible");
     $("#magnifier").css({ top: magnifierTop, left: magnifierLeft });
@@ -167,24 +173,31 @@ function showMagnifier(magnifierLeft, magnifierTop, magnifyCol, magnifyRow, cont
     table.children().remove();
 
     let activeImage = flipBookImages.get(container)[curImageIdx.get(container) - 1];
-
+    let gl = activeImage.canvas.getContext('webgl2');
+    let size = 2 * MagnifierResolution + 1
+    let buffer = new Uint8Array(size * size * 4);
+    gl.readPixels(magnifyCol - MagnifierResolution, activeImage.canvas.height - magnifyRow - MagnifierResolution - 1,
+        size, size, gl.RGBA, gl.UNSIGNED_BYTE, buffer);
+    let bufRow = size;
     for (let row = magnifyRow - MagnifierResolution; row <= magnifyRow + MagnifierResolution; ++row) {
+        bufRow--;
         if (row < 0 || row >= activeImage.height) continue;
 
         table.append("<tr></tr>");
         let tr = table.find("tr").last();
 
+        let bufCol = -1;
         for (let col = magnifyCol - MagnifierResolution; col <= magnifyCol + MagnifierResolution; ++col) {
+            bufCol++;
             if (col < 0 || col >= activeImage.width) continue;
 
             let classNames = "magnifier";
             if (row == magnifyRow && col == magnifyCol)
                 classNames += " selected";
 
-            // TODO use the canvas / tonemapped color
-            let clrR = activeImage.pixels[3 * (row * activeImage.width + col) + 0]; //tonemapped.GetPixelChannel(col, row, 0);
-            let clrG = activeImage.pixels[3 * (row * activeImage.width + col) + 1]; //tonemapped.GetPixelChannel(col, row, 1);
-            let clrB = activeImage.pixels[3 * (row * activeImage.width + col) + 2]; //tonemapped.GetPixelChannel(col, row, 2);
+            let clrR = buffer[(bufRow * size + bufCol) * 4 + 0];
+            let clrG = buffer[(bufRow * size + bufCol) * 4 + 1];
+            let clrB = buffer[(bufRow * size + bufCol) * 4 + 2];
 
             let r = activeImage.pixels[3 * (row * activeImage.width + col) + 0];
             let g = activeImage.pixels[3 * (row * activeImage.width + col) + 1];
@@ -192,10 +205,10 @@ function showMagnifier(magnifierLeft, magnifierTop, magnifyCol, magnifyRow, cont
 
             tr.append(`
             <td class='${classNames}'
-                style="background-color: rgb(${approxSrgb(clrR)}, ${approxSrgb(clrG)}, ${approxSrgb(clrB)});">
-                <p class="magnifier" style="color: rgb(255,0,0);">${r}</p>
-                <p class="magnifier" style="color: rgb(0,255,0);">${g}</p>
-                <p class="magnifier" style="color: rgb(0,0,255);">${b}</p>
+                style="background-color: rgb(${clrR}, ${clrG}, ${clrB});">
+                <p class="magnifier" style="color: rgb(255,70,30);">${formatNumber(r)}</p>
+                <p class="magnifier" style="color: rgb(77, 250, 57);">${formatNumber(g)}</p>
+                <p class="magnifier" style="color: rgb(0,180,255);">${formatNumber(b)}</p>
             </td>
             `);
         }

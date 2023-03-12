@@ -88,7 +88,7 @@ function makeImages(flipbook, rawPixels) {
 }
 
 function renderImage(canvas, pixels, toneMapCode) {
-    const gl = canvas.getContext("webgl2");
+    const gl = canvas.getContext("webgl2", {preserveDrawingBuffer: true});
     if (gl === null) {
         alert("Unable to initialize WebGL. Your browser or machine may not support it.");
         return;
