@@ -22,12 +22,10 @@
                 <p>
                     <label><input type="radio" value="exposure" name="tmo-1" checked="checked"> Exposure</label>
                     <label><input type="radio" value="falsecolor" name="tmo-1"> False color</label>
-                    <label><input type="radio" value="script" name="tmo-1"> Script</label>
+                    <label><input type="radio" value="script" name="tmo-1"> GLSL</label>
                 </p>
                 <p class='tmo-script'>
-                <textarea rows="5" cols="80" name="text">
-let s = 2**0;
-return [s * r, s * g, s * b];</textarea>
+                <textarea rows="5" cols="80" name="text">rgb = pow(2.0, 0.0) * rgb;</textarea>
                 </p>
                 <p class="tmo-exposure visible"><label>EV <input type="number" value="0" step="0.5"></label></p>
                 <p class="tmo-falsecolor">
