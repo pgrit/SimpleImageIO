@@ -3,76 +3,49 @@
     <head>
         <link rel="stylesheet" href="style.css">
         <script src="jquery-3.6.4.min.js"></script>
+        <script src="pako.min.js"></script>
         <script src="imageViewer.js"></script>
-        <script src="imageOps.js"></script>
     </head>
     <body>
         <div id="magnifier"><table class="magnifier"></table></div>
 
-        <div class='flipbook' id='flipbook-1' oncontextmenu="return false;">
-            <div class='method-list'>
-                <button class='method-label method-1 visible'><span class='method-key'>1</span> First image</button>
-                <button class='method-label method-2'><span class='method-key'>2</span> Second image</button>
-            </div>
-            <div tabindex='1' class='image-container'>
-                <div class='image-placer'>
-                    <canvas draggable='false' class='image image-1 visible' width="2000" height="1000"></canvas>
-                    <canvas draggable='false' class='image image-2' width="2000" height="1000"></canvas>
-                </div>
-            </div>
-            <div class='tmo-container'>
-                <p>
-                    <label><input type="radio" value="exposure" name="tmo-1" checked="checked"> Exposure</label>
-                    <label><input type="radio" value="falsecolor" name="tmo-1"> False color</label>
-                    <label><input type="radio" value="script" name="tmo-1"> GLSL</label>
-                </p>
-                <p class='tmo-script'>
-                <textarea rows="7" cols="80" name="text">
-// rgb: linear RGB pixel value [in / out]
-// uv: coordinate within the image (0, 0) is top left, (1, 1) bottom right
-// hdr: texture storing raw image (linear RGB, float32)
-
-rgb = pow(2.0, 0.0) * rgb;</textarea>
-                </p>
-                <p class="tmo-exposure visible"><label>EV <input type="number" value="0" step="0.5"></label></p>
-                <p class="tmo-falsecolor">
-                    <label>min <input type="number" value="0" step="0.1" name="min"></label>
-                    <label>max <input type="number" value="1" step="0.1" name="max"></label>
-                    <label>log <input type="checkbox" value="0" name="logscale"></label>
-                </p>
-            </div>
+        <div id="page" style="max-width: 1000px; margin: 0 auto;">
         </div>
+
+        <script src="./img.js"></script>
         <script>
-            ////////////////////////////////
-            // Test images
-            let width = 2000;
-            let height = 1000;
-            var pixels1 = Array(width*height*3).fill(0.0);
-            for (var row = 0; row < height; ++row) {
-                for (var col = 0; col < width; ++col) {
-                    pixels1[(row * width + col) * 3 + 0] = 0.1;
-                    pixels1[(row * width + col) * 3 + 1] = row % 10 < 2 ? 0.6 : 0.3;
-                    pixels1[(row * width + col) * 3 + 2] = 1.0 * col / width;
-                }
+            function addBase64Images() {
+                let images = Promise.all([ image1, pngimage, jpgimage]);
+                images.then(values =>
+                    AddFlipBook($("#page"), ["HDR", "PNG", "JPEG"], values, width, height)
+                );
             }
-            var pixels2 = Array(width*height*3).fill(0.0);
-            for (let row = 0; row < height; ++row) {
-                for (let col = 0; col < width; ++col) {
-                    pixels2[(row * width + col) * 3 + 0] = 0.1;
-                    pixels2[(row * width + col) * 3 + 1] = 0.3;
-                    pixels2[(row * width + col) * 3 + 2] = 1.0 * col / width;
+            addBase64Images();
+        </script>
+
+        <script>
+            function addTestImages() {
+                let width = 2000;
+                let height = 1000;
+                var pixels1 = new Float32Array(Array(width*height*3).fill(0.0));
+                for (var row = 0; row < height; ++row) {
+                    for (var col = 0; col < width; ++col) {
+                        pixels1[(row * width + col) * 3 + 0] = 0.1;
+                        pixels1[(row * width + col) * 3 + 1] = row % 10 < 2 ? 0.6 : 0.3;
+                        pixels1[(row * width + col) * 3 + 2] = 1.0 * col / width;
+                    }
                 }
+                var pixels2 = new Float32Array(Array(width*height*3).fill(0.0));
+                for (let row = 0; row < height; ++row) {
+                    for (let col = 0; col < width; ++col) {
+                        pixels2[(row * width + col) * 3 + 0] = 0.1;
+                        pixels2[(row * width + col) * 3 + 1] = 0.3;
+                        pixels2[(row * width + col) * 3 + 2] = 1.0 * col / width;
+                    }
+                }
+                AddFlipBook($("#page"), ["Artifacts", "Perfect"], [pixels1, pixels2], width, height)
             }
-            ////////////////////////////////
-
-            let flipbook = $("#flipbook-1").get()[0];
-            initImageViewers(flipbook);
-            makeImages(flipbook, [pixels1, pixels2]);
-
-
-            // TODO tying multiple flip books together
-
-            // TODO support LDR mode for file size reasons
+            addTestImages();
         </script>
     </body>
 </html>
