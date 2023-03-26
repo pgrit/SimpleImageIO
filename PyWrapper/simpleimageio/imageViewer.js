@@ -601,8 +601,8 @@ rgb = pow(2.0, -3.0) * rgb + 0.5 * vec3(gl_FragCoord / 1000.0);
             </p>
         </div>
         <div class="tools">
-            <button class="tools" onclick="copyImage(${flipIdx})">Copy image as PNG</button>
-            <button class="tools help-btn" onclick="displayHelp()">Help</button>
+            <button class="tools copybtn" onclick="copyImage(${flipIdx})">Copy image as PNG</button>
+            <button class="tools helpbtn" onclick="displayHelp()">Help</button>
         </div>
     </div>
     `);
@@ -633,43 +633,41 @@ rgb = pow(2.0, -3.0) * rgb + 0.5 * vec3(gl_FragCoord / 1000.0);
     makeImages(flipbook[0], images);
 }
 
-function copyImage() {
-    alert("not yet implemented");
+function copyImage(flipIdx) {
+    let flipbook = $(`#flipbook-${flipIdx}`);
+    let canvas = flipbook.find("canvas.visible")[0];
+    canvas.toBlob(function(blob) {
+        const item = new ClipboardItem({ "image/png": blob });
+        navigator.clipboard.write([item]);
+    });
+
+    let btn = flipbook.find("button.copybtn")[0];
+    let orgText = btn.innerHTML;
+    btn.innerHTML = "copied"
+    setTimeout(() => btn.innerHTML = orgText, 1000);
 }
 
 function displayHelp() {
     alert("Right click on the image to display pixel values.\nHold ALT while scrolling to override zoom.");
 }
 
-function readRGBE(base64) {
-    let bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-    var rgbdata = new Float32Array(width*height*3).fill(0.0);
-    const compressed = bytes;
-    try {
-        const result = pako.inflate(compressed);
-        let idx = 0;
-        for (let i = 0; i < result.length; i += 4) {
-            let factor = 2.0**(result[i + 3] - (128 + 8));
-            rgbdata[idx++] = result[i + 0] * factor;
-            rgbdata[idx++] = result[i + 1] * factor;
-            rgbdata[idx++] = result[i + 2] * factor;
-        }
-    } catch (err) {
-        console.log(err);
+async function readRGBE(url) {
+    const response = await fetch(url);
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    var rgbdata = new Float32Array(width * height * 3).fill(0);
+    let idx = 0;
+    for (let i = 0; i < bytes.length; i += 4) {
+        let factor = 2 ** (bytes[i + 3] - (128 + 8));
+        rgbdata[idx++] = bytes[i + 0] * factor;
+        rgbdata[idx++] = bytes[i + 1] * factor;
+        rgbdata[idx++] = bytes[i + 2] * factor;
     }
     return rgbdata;
 }
 
-function readRGB(base64) {
-    let bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-    const compressed = bytes;
-    try {
-        const result = pako.inflate(compressed);
-        var rgbdata = new Float32Array(result.buffer);
-    } catch (err) {
-        console.log(err);
-    }
-    return rgbdata;
+async function readRGB(url) {
+    const response = await fetch(url);
+    return new Float32Array(await response.arrayBuffer());
 }
 
 async function readLDR(base64) {
