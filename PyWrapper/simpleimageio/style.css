@@ -42,6 +42,10 @@
         display: block;
     }
 
+.method-list:focus {
+    outline: none;
+}
+
 .method-label {
     background-color: #d5e1e6;
     padding: 4px;
@@ -51,6 +55,9 @@
     .method-label.visible {
         background-color: #eebe6c;
         padding: 0.5em;
+    }
+    .method-label:focus {
+        outline: none;
     }
 
 .image-placer {

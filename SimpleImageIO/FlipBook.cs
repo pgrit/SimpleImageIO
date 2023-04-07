@@ -1,6 +1,8 @@
 ﻿using System.IO;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace SimpleImageIO;
 
@@ -19,143 +21,204 @@ public class FlipBook
         return new StreamReader(stream).ReadToEnd();
     }
 
-    static string MakeComparisonHtml(params (string Name, string EncodedData)[] images)
+    /// <summary>
+    /// Specifies the representation used for the image data. Determines accuracy and file size.
+    /// Dual purpose: positive integers specify JPEG compression level.
+    /// </summary>
+    public enum DataType {
+        /// <summary>
+        /// 4 bytes per pixel, one per channel, one for the shared exponent. Looses accuracy if the
+        /// channel values differ significantly.
+        /// </summary>
+        RGBE = -1,
+
+        /// <summary>
+        /// Raw RGB data with 32 bit per channel, i.e., 12 bytes per pixel.
+        /// </summary>
+        RGB = -2,
+
+        /// <summary>
+        /// LDR image with lossless PNG encoding. Up to 3 bytes per pixel, depending on compression impact
+        /// </summary>
+        LDR_PNG = -3,
+
+        /// <summary>
+        /// LDR image with lossy JPEG encoding (quality 90). Smallest but least accurate.
+        /// </summary>
+        LDR_JPEG = 90
+    }
+
+    /// <summary>
+    /// Specifies the initial zoom level of the images
+    /// </summary>
+    public enum InitialZoom {
+        /// <summary>
+        /// Image is scaled to fit the container in width and height
+        /// </summary>
+        Fit,
+
+        /// <summary>
+        /// Image is scaled to vertically fill the entire container
+        /// </summary>
+        FillHeight,
+
+        /// <summary>
+        /// Image is scaled to horizontally fill the entire container
+        /// </summary>
+        FillWidth
+    }
+
+    /// <summary>
+    /// Tone mapping settings that will be applied when first displayed.
+    /// </summary>
+    public class InitialTMO {
+        #pragma warning disable CS1591 // "Missing XML comment"
+        [JsonInclude] public string name;
+        [JsonInclude] public float min;
+        [JsonInclude] public float max;
+        [JsonInclude] public bool log;
+        [JsonInclude] public float exposure;
+        [JsonInclude] public string script;
+        #pragma warning restore CS1591
+
+        private InitialTMO() { }
+
+        /// <summary>
+        /// Exposure correction: each pixel is multiplied by 2^value
+        /// </summary>
+        public static InitialTMO Exposure(float value)
+        => new InitialTMO {
+            name = "exposure",
+            exposure = value
+        };
+
+        /// <summary>
+        /// False color mapping: each pixel is colored based on its average value, scaled to the specified range.
+        /// </summary>
+        public static InitialTMO FalseColor(float min, float max, bool log = false)
+        => new InitialTMO {
+            name = "falsecolor",
+            min = min,
+            max = max,
+            log = log
+        };
+
+        /// <summary>
+        /// Custom: the given GLSL code will be run inside the pixel shader
+        /// </summary>
+        public static InitialTMO GLSL(string code)
+        => new InitialTMO {
+            name = "script",
+            script = code
+        };
+    }
+
+    unsafe static string CompressImageAsRGBE(RgbImage img) {
+        List<byte> rgbeBytes = new();
+        for (int row = 0; row < img.Height; ++row) {
+            for (int col = 0; col < img.Width; ++col) {
+                RGBE clr = img[col, row];
+                rgbeBytes.AddRange(new[] { clr.R, clr.G, clr.B, clr.E });
+            }
+        }
+        return "data:;base64," + Convert.ToBase64String(rgbeBytes.ToArray());
+    }
+
+    unsafe static string CompressImageAsRGB(RgbImage img) {
+        var bytePtr = (byte*)img.DataPointer.ToPointer();
+        Span<byte> bytes = new(bytePtr, img.Width * img.Height * img.NumChannels * sizeof(float));
+        return "data:;base64," + Convert.ToBase64String(bytes.ToArray());
+    }
+
+    static string CompressImageAsPNG(RgbImage img)
+    => "data:image/png;base64," + img.AsBase64Png();
+
+    static string CompressImageAsJPEG(RgbImage img, int quality = 90)
+    => "data:image/jpeg;base64," + Convert.ToBase64String(img.WriteToMemory(".jpg", quality));
+
+    static string MakeComparisonHtml(int width, int height, int htmlWidth, int htmlHeight,
+                                     IEnumerable<(string Name, DataType type, string EncodedData)> images,
+                                     InitialZoom initialZoom, InitialTMO initialTMO)
     {
         StringBuilder html = new();
-        html.AppendLine("<div class='flipbook'>");
+        string id = "flipbook-" + Guid.NewGuid().ToString();
+        html.AppendLine($"<div class='flipbook' id='{id}' style='width:{htmlWidth}px; height:{htmlHeight}px;'>");
+        html.AppendLine("<div id='magnifier'><table class='magnifier'></table></div>");
 
         // For smoother Jupyter / VSCode experience, we add the style to every single viewer
-        html.AppendLine("<style>" + ReadResourceText("style.css") + "</style>");
+        // html.AppendLine("<style>" + ReadResourceText("style.css") + "</style>");
 
-        html.AppendLine("  <div class='method-list'>");
-        for (int i = 0; i < images.Length; ++i)
-        {
-            string visible = "";
-            if (i == 0) visible = "visible";
-            html.AppendLine($"    <button class='method-label method-{i+1} {visible}'><span class='method-key'>{i+1}</span> {images[i].Name}</button>");
+        List<string> dataStrs = new();
+        List<string> nameStrs = new();
+        foreach (var (name, type, url) in images) {
+            string t = type switch {
+                DataType.RGB => "RGB",
+                DataType.RGBE => "RGBE",
+                _ => "LDR"
+            };
+            dataStrs.Add($"read{t}('{url}')");
+            nameStrs.Add($"'{name}'");
         }
-        html.AppendLine("  </div>");
 
-        html.AppendLine("  <div tabindex='1' class='image-container'>");
-        html.AppendLine("    <div class='image-placer'>");
-        for (int i = 0; i < images.Length; ++i)
-        {
-            string visible = "";
-            if (i == 0) visible = "visible";
-            html.AppendLine($"      <img draggable='false' class='image image-{i+1} {visible}' src='{images[i].EncodedData}' />");
+        string initialZoomStr = initialZoom switch {
+            InitialZoom.FillHeight => "'fill_height'",
+            InitialZoom.FillWidth => "'fill_width'",
+            _ => "'fit'",
+        };
+
+        string initialTMOStr = "null";
+        if (initialTMO != null) {
+            initialTMOStr = JsonSerializer.Serialize(initialTMO);
         }
-        html.AppendLine("    </div>");
-        html.AppendLine("  </div>");
+
+        html.AppendLine($$"""
+        <script>
+        {
+            let images = Promise.all([{{string.Join(',', dataStrs)}}]);
+            images.then(values =>
+                AddFlipBook($("#{{id}}"), [{{string.Join(',', nameStrs)}}], values, {{width}}, {{height}},
+                            {{initialZoomStr}}, {{initialTMOStr}})
+            );
+        }
+        </script>
+        """);
+
         html.AppendLine("</div>");
-        html.AppendLine($"<script> initImageViewers({images.Length}); </script>");
         return html.ToString();
     }
 
-    /// <summary>
-    /// Tone mapping or false coloring function signature. Should create and return a new image, the pixels of
-    /// which are given by some operation performed on the input image.
-    /// </summary>
-    /// <param name="input">The original image</param>
-    /// <returns>The tone mapped or otherwise modified result</returns>
-    public delegate Image ToneMapper(Image input);
-
-    static string MakeHelper<T>(ToneMapper toneMapper, IEnumerable<(string Name, T Image)> images)
+    static string MakeHelper<T>(int htmlWidth, int htmlHeight, IEnumerable<(string Name, T Image, DataType TargetType)> images,
+                                InitialZoom initialZoom, InitialTMO initialTMO)
     where T : Image
     {
-        var data = new List<(string Name, string EncodedData)>();
+        var data = new List<(string, DataType, string)>();
+        int width = 0, height = 0;
         foreach (var img in images)
         {
-            var toneMapped = toneMapper?.Invoke(img.Image) ?? (img.Image as Image);
-            data.Add((img.Name, "data:image/png;base64," + toneMapped.AsBase64Png()));
+            if (width == 0) {
+                width = img.Image.Width;
+                height = img.Image.Height;
+            } else if (width != img.Image.Width || height != img.Image.Height)
+                throw new ArgumentException("Image resolutions differ");
+
+            RgbImage rgbImage = img.Image switch {
+                MonochromeImage mono => new RgbImage(mono),
+                RgbImage rgb => rgb,
+                Image otherImg =>
+                    otherImg.NumChannels == 3 ?
+                    RgbImage.StealData(otherImg.Copy()) :
+                    throw new ArgumentException($"Unsupported image type")
+            };
+
+            string imgData = img.TargetType switch {
+                DataType.RGB => CompressImageAsRGB(rgbImage),
+                DataType.RGBE => CompressImageAsRGBE(rgbImage),
+                DataType.LDR_PNG => CompressImageAsPNG(rgbImage),
+                DataType quality => CompressImageAsJPEG(rgbImage, (int)quality)
+            };
+            data.Add((img.Name, img.TargetType, imgData));
         }
-        return MakeComparisonHtml(data.ToArray());
-    }
-
-    /// <summary>
-    /// Creates a flip book image viewer from an array of named images
-    /// </summary>
-    /// <param name="images">Tuples of name and image data</param>
-    /// <returns>HTML code for the flip book</returns>
-    public static string Make<T>(params (string Name, T Image)[] images) where T : Image
-    => MakeHelper(null, images);
-
-    /// <summary>
-    /// Creates a flip book image viewer from an array of named images. Applies a tone mapping operation on
-    /// every image.
-    /// </summary>
-    /// <param name="toneMapper">The operation to run on every image</param>
-    /// <param name="images">Tuples of name and image data</param>
-    /// <returns>HTML code for the flip book</returns>
-    public static string Make<T>(ToneMapper toneMapper, params (string Name, T Image)[] images) where T : Image
-    => MakeHelper(toneMapper, images);
-
-    /// <summary>
-    /// Creates a flip book image viewer from an array of named images
-    /// </summary>
-    /// <param name="images">Tuples of name and image data</param>
-    /// <returns>HTML code for the flip book</returns>
-    public static string Make<T>(IEnumerable<(string Name, T Image)> images) where T : Image
-    => MakeHelper(null, images);
-
-    /// <summary>
-    /// Creates a flip book image viewer from an array of named images. Applies a tone mapping operation on
-    /// every image.
-    /// </summary>
-    /// <param name="toneMapper">The operation to run on every image</param>
-    /// <param name="images">Tuples of name and image data</param>
-    /// <returns>HTML code for the flip book</returns>
-    public static string Make<T>(ToneMapper toneMapper, IEnumerable<(string Name, T Image)> images) where T : Image
-    => MakeHelper(toneMapper, images);
-
-    /// <summary>
-    /// Creates a flip book image viewer from an array of named images
-    /// </summary>
-    /// <param name="images">Tuples of name and image data</param>
-    /// <returns>HTML code for the flip book</returns>
-    public static string Make<T>(IEnumerable<Tuple<string, T>> images) where T : Image
-    => Make(null, images);
-
-    /// <summary>
-    /// Creates a flip book image viewer from an array of named images. Applies a tone mapping operation on
-    /// every image.
-    /// </summary>
-    /// <param name="toneMapper">The operation to run on every image</param>
-    /// <param name="images">Tuples of name and image data</param>
-    /// <returns>HTML code for the flip book</returns>
-    public static string Make<T>(ToneMapper toneMapper, IEnumerable<Tuple<string, T>> images) where T : Image
-    {
-        var imageObjects = new List<(string, Image)>();
-        foreach (var (name, img) in images)
-        {
-            imageObjects.Add((name, img as Image));
-        }
-        return MakeHelper(toneMapper, imageObjects);
-    }
-
-    /// <summary>
-    /// Creates a flip book image viewer from an array of named images. Images are loaded from file based on
-    /// the given file names.
-    /// </summary>
-    /// <param name="images">Tuples of name and image filename</param>
-    /// <returns>HTML code for the flip book</returns>
-    public static string Make(params (string Name, string Filename)[] images)
-    => Make(null, images);
-
-    /// <summary>
-    /// Creates a flip book image viewer from an array of named images. Images are loaded from file based on
-    /// the given file names. Applies a tone mapping operation on every image.
-    /// </summary>
-    /// <param name="toneMapper">The operation to run on every image</param>
-    /// <param name="images">Tuples of name and image filename</param>
-    /// <returns>HTML code for the flip book</returns>
-    public static string Make(ToneMapper toneMapper, params (string Name, string Filename)[] images)
-    {
-        var imageObjects = new List<(string, Image)>();
-        foreach (var img in images)
-        {
-            imageObjects.Add((img.Name, new RgbImage(img.Filename)));
-        }
-        return MakeHelper(toneMapper, imageObjects);
+        return MakeComparisonHtml(width, height, htmlWidth, htmlHeight, data, initialZoom, initialTMO);
     }
 
     /// <summary>
@@ -168,30 +231,71 @@ public class FlipBook
     /// <returns>HTML code as a string</returns>
     public static string Header {
         get {
-            string html = "<script>" + ReadResourceText("imageViewer.js") + "</script>";
+            string html = "";
+            html += "<script>" + ReadResourceText("jquery-3.6.4.min.js") + "</script>";
+            html += "<script>" + ReadResourceText("imageViewer.js") + "</script>";
             html += "<style>" + ReadResourceText("style.css") + "</style>";
             return html;
         }
     }
 
-    List<(string Name, Image Image)> images = new();
+    List<(string Name, Image Image, DataType targetType)> images = new();
+    int htmlWidth;
+    int htmlHeight;
+    InitialZoom initialZoom;
+    InitialTMO initialTMO;
 
     /// <summary>
     /// Syntactic sugar to create a new object of this class. Makes the fluent API more readable.
     /// </summary>
-    public static FlipBook New => new FlipBook();
+    public static FlipBook New => new FlipBook(800, 800);
+
+    /// <summary>
+    /// Initializes a new flip book with the given width and height in HTML pixels
+    /// </summary>
+    public FlipBook(int width, int height) {
+        htmlWidth = width;
+        htmlHeight = height;
+    }
+
+    /// <summary>
+    /// Updates the size of the flip book in HTML pixels
+    /// </summary>
+    /// <returns>This object</returns>
+    public FlipBook Resize(int width, int height) {
+        htmlWidth = width;
+        htmlHeight = height;
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the requested initial zoom level in this flip book
+    /// </summary>
+    public FlipBook WithZoom(InitialZoom zoom) {
+        initialZoom = zoom;
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the requested initial tone mapping operator in this flip book
+    /// </summary>
+    public FlipBook WithToneMapper(InitialTMO tmo) {
+        initialTMO = tmo;
+        return this;
+    }
 
     /// <summary>
     /// Adds a new image to this flip book.
     /// </summary>
     /// <param name="name">Name of the new image</param>
     /// <param name="image">Image object, must have the same resolution as existing images</param>
+    /// <param name="targetType"></param>
     /// <returns>This object (fluent API)</returns>
-    public FlipBook Add(string name, Image image)
+    public FlipBook Add(string name, Image image, DataType targetType = DataType.RGBE)
     {
         if (images.Count > 0 && (images[0].Image.Width != image.Width || images[0].Image.Height != image.Height))
             throw new ArgumentException("Image resolution does not match", nameof(image));
-        images.Add((name, image));
+        images.Add((name, image, targetType));
         return this;
     }
 
@@ -215,7 +319,7 @@ public class FlipBook
 
     /// <returns>A deep copy of this object</returns>
     public FlipBook Copy() {
-        FlipBook other = new();
+        FlipBook other = new(htmlWidth, htmlHeight);
         other.images = new(images);
         return other;
     }
@@ -239,15 +343,5 @@ public class FlipBook
     /// Generates the HTML code for the flip book with the current set of images
     /// </summary>
     /// <returns>HTML code</returns>
-    public override string ToString() => Make(images.ToArray());
-
-    /// <summary>
-    /// Wraps the given HTML code within a div of the given size.
-    /// </summary>
-    /// <param name="width">Width in pixels</param>
-    /// <param name="height">Height in pixels</param>
-    /// <param name="html">Arbitrary HTML code. This can be an (implicitly) converted <see cref="FlipBook"/>.</param>
-    /// <returns></returns>
-    public static string Resize(int width, int height, string html)
-    => $"<div style='width: {width}px; height: {height}px;'>" + html + "</div>";
+    public override string ToString() => MakeHelper(htmlWidth, htmlHeight, images, initialZoom, initialTMO);
 }

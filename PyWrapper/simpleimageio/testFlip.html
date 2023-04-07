@@ -12,17 +12,6 @@
         <div id="page" style="max-width: 1000px; margin: 0 auto;">
         </div>
 
-        <script src="./img.js"></script>
-        <script>
-            function addBase64Images() {
-                let images = Promise.all([ image1, pngimage, jpgimage]);
-                images.then(values =>
-                    AddFlipBook($("#page"), ["HDR", "PNG", "JPEG"], values, width, height)
-                );
-            }
-            addBase64Images();
-        </script>
-
         <script>
             function addTestImages() {
                 let width = 2000;

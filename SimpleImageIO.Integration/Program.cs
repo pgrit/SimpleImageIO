@@ -1,6 +1,8 @@
 ﻿using SimpleImageIO;
 using SimpleImageIO.Integration;
 
+TestFlip.Test();
+
 TestLayerOrder.Test();
 
 Layers.LoadFromFile("Data/RenderMasks.exr");

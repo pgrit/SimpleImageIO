@@ -497,4 +497,9 @@ public unsafe class Image : IDisposable {
     /// Multiplies a constant to each pixel channel value
     /// </summary>
     public static Image operator *(float b, Image a) => ApplyOp(a, (x) => x * b);
+
+    /// <summary>
+    /// Returns a new image where each pixel channel value is the square of the value in this image.
+    /// </summary>
+    public Image Squared() => ApplyOp(this, c => c * c);
 }

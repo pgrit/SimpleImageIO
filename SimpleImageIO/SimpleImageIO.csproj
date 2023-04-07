@@ -32,11 +32,15 @@
 
   <ItemGroup>
     <None Remove="../PyWrapper/simpleimageio/imageViewer.js" />
+    <None Remove="../PyWrapper/simpleimageio/jquery-3.6.4.min.js" />
     <None Remove="../PyWrapper/simpleimageio/style.css" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="../PyWrapper/simpleimageio/imageViewer.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="../PyWrapper/simpleimageio/jquery-3.6.4.min.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="../PyWrapper/simpleimageio/style.css">

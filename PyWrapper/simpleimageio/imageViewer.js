@@ -15,8 +15,57 @@ try {
 
 function initImageViewers(flipbook, width, height, initialZoom) {
     var container = flipbook.getElementsByClassName("image-container")[0];
+    var methodList = flipbook.getElementsByClassName("method-list")[0];
 
-    container.addEventListener("keypress", onKeyDownImage);
+    function onKeyDown(evt) {
+        let newIdx = curImageIdx.get(container);
+        if (evt.key === "ArrowLeft" || evt.key === "ArrowDown")
+            newIdx--;
+        else if (evt.key === "ArrowRight" || evt.key === "ArrowUp")
+            newIdx++;
+        else {
+            newIdx = parseInt(evt.key)
+        }
+        flipImage(container, newIdx)
+
+        if (evt.key === "e" || evt.key === "E") {
+            let evInput = $(flipbook).find(".tmo-exposure").find('input');
+            let old = parseFloat(evInput.val());
+            if (evt.key === "e")
+                evInput.val(old + 0.5);
+            else
+                evInput.val(old - 0.5);
+            evInput.trigger('change');
+
+            $(flipbook).find('.tmo-container').find('input[type=radio]').val(['exposure'])
+            $(flipbook).find(".tmo-exposure").addClass("visible");
+            $(flipbook).find(".tmo-script").removeClass("visible");
+            $(flipbook).find(".tmo-falsecolor").removeClass("visible");
+        }
+
+        if (evt.key === "f" || evt.key === "F") {
+            let fcInput = $(flipbook).find(".tmo-falsecolor").find('input[name=max]');
+            let old = parseFloat(fcInput.val());
+            if (evt.key === "F")
+                fcInput.val((old + 0.1).toFixed(1));
+            else
+                fcInput.val((old - 0.1).toFixed(1));
+            fcInput.trigger('change');
+
+            $(flipbook).find('.tmo-container').find('input[type=radio]').val(['falsecolor'])
+            $(flipbook).find(".tmo-exposure").removeClass("visible");
+            $(flipbook).find(".tmo-script").removeClass("visible");
+            $(flipbook).find(".tmo-falsecolor").addClass("visible");
+        }
+
+        if (evt.ctrlKey && evt.key === 'c') {
+            copyImage(flipbook);
+        }
+    }
+
+    container.addEventListener("keydown", onKeyDown)
+    methodList.addEventListener("keydown", onKeyDown)
+
     container.addEventListener("mousemove", onMouseMove);
     container.addEventListener("mouseout", onMouseOut);
     container.addEventListener("wheel", onScrollContainer, wheelOpt);
@@ -39,7 +88,7 @@ function initImageViewers(flipbook, width, height, initialZoom) {
     placer.style.left = "0px";
     positions.set(container, [0, 0]);
 
-    // Zoom image to fill the container
+    // Set the initial zoom of the image
     let zoomW = container.clientWidth / width;
     let zoomH = container.clientHeight / height;
     if (initialZoom === "fill_width")
@@ -66,8 +115,6 @@ function initImageViewers(flipbook, width, height, initialZoom) {
 }
 
 function flipImage(container, index) {
-    curImageIdx.set(container, index);
-
     // Only proceed if the number is mapped to an existing image
     var selected = container.getElementsByClassName("image-" + index.toString());
     if (selected.length == 0) return;
@@ -83,10 +130,8 @@ function flipImage(container, index) {
     // Show the image and its label
     selected[0].classList.add("visible");
     container.parentElement.getElementsByClassName("method-" + index.toString())[0].classList.add("visible");
-}
 
-function onKeyDownImage(event) {
-    flipImage(event.currentTarget, event.key)
+    curImageIdx.set(container, index);
 }
 
 function shiftImage(container, deltaX, deltaY) {
@@ -320,7 +365,7 @@ class HDRImage {
 
 var flipBookImages = new Map();
 
-function makeImages(flipbook, rawPixels) {
+function makeImages(flipbook, rawPixels, initialTMO) {
     // connect each canvas to its raw data
     let images = []
     for (let i = 0; i < rawPixels.length; ++i) {
@@ -386,6 +431,35 @@ function makeImages(flipbook, rawPixels) {
             updateScript();
         }
     })
+
+    // If given, set the initial tone mapping
+    if (initialTMO !== null) {
+        if (initialTMO.name === "exposure") {
+            let evInput = $(flipbook).find(".tmo-exposure").find('input');
+            evInput.val(initialTMO.exposure);
+            evInput.trigger("change");
+        } else if (initialTMO.name === "falsecolor") {
+            let fc = $(flipbook).find(".tmo-falsecolor");
+            fc.find('input[name=max]').val(initialTMO.max);
+            fc.find('input[name=min]').val(initialTMO.min);
+            if (initialTMO.log) fc.find('input[name=logscale]').prop('checked', true);
+            fc.find('input[name=max]').trigger("change");
+        } else if (initialTMO.name === "script") {
+            let scriptTxt = $(flipbook).find(".tmo-script").find('textarea');
+            scriptTxt.val(initialTMO.script);
+            scriptTxt.trigger("input")
+        } else {
+            console.error(`Ignoring unknown initial TMO ${initialTMO.name}`)
+        }
+
+        $(flipbook).find('.tmo-container').find('input[type=radio]').val([initialTMO.name])
+        $(flipbook).find(".tmo-exposure").removeClass("visible");
+        $(flipbook).find(".tmo-script").removeClass("visible");
+        $(flipbook).find(".tmo-falsecolor").removeClass("visible");
+        $(flipbook).find(`.tmo-${initialTMO.name}`).addClass("visible");
+        console.log(`.tmo-${initialTMO.name}`)
+        console.log($(flipbook).find(`.tmo-${initialTMO.name}`))
+    }
 }
 
 function renderImage(canvas, pixels, toneMapCode) {
@@ -565,14 +639,15 @@ var lastFlipIdx = 0;
  * @param {*} width the width in pixels that all images in this flipbook must have
  * @param {*} height the height in pixels that all images in this flipbook must have
  * @param {*} initialZoom either "fill_height", "fill_width", "fit", or a number specifying the zoom level
+ * @param {*} initialTMO name and settings for the initial TMO configuration
  */
-function AddFlipBook(parentElement, names, images, width, height, initialZoom = "fit") {
+function AddFlipBook(parentElement, names, images, width, height, initialZoom = "fit", initialTMO = null) {
     let flipIdx = ++lastFlipIdx;
     $(parentElement).append(`
     <div class='flipbook' id='flipbook-${flipIdx}' oncontextmenu="return false;">
-        <div class='method-list'>
+        <div tabindex='1' class='method-list'>
         </div>
-        <div tabindex='1' class='image-container'>
+        <div tabindex='2' class='image-container'>
             <div class='image-placer'>
             </div>
         </div>
@@ -630,11 +705,15 @@ rgb = pow(2.0, -3.0) * rgb + 0.5 * vec3(gl_FragCoord / 1000.0);
     }
 
     initImageViewers(flipbook[0], width, height, initialZoom);
-    makeImages(flipbook[0], images);
+    makeImages(flipbook[0], images, initialTMO);
 }
 
 function copyImage(flipIdx) {
-    let flipbook = $(`#flipbook-${flipIdx}`);
+    var flipbook;
+    if (flipIdx instanceof HTMLElement)
+        flipbook = $(flipIdx);
+    else
+        flipbook = $(`#flipbook-${flipIdx}`);
     let canvas = flipbook.find("canvas.visible")[0];
     canvas.toBlob(function(blob) {
         const item = new ClipboardItem({ "image/png": blob });
@@ -654,7 +733,7 @@ function displayHelp() {
 async function readRGBE(url) {
     const response = await fetch(url);
     const bytes = new Uint8Array(await response.arrayBuffer());
-    var rgbdata = new Float32Array(width * height * 3).fill(0);
+    var rgbdata = new Float32Array(bytes.length / 4 * 3).fill(0);
     let idx = 0;
     for (let i = 0; i < bytes.length; i += 4) {
         let factor = 2 ** (bytes[i + 3] - (128 + 8));
