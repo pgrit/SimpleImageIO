@@ -746,7 +746,14 @@ function copyImage(flipIdx) {
 }
 
 function displayHelp() {
-    alert("Right click on the image to display pixel values.\nHold ALT while scrolling to override zoom.");
+    alert(`
+    Right click on the image to display pixel values.
+    Hold ALT while scrolling to override zoom.
+    Ctrl+C copies the image as png.
+    e increases exposure, Shift+e reduces it.
+    f lowers the maximum for false color mapping, Shift+f increases it.
+    Select images by pressing 1 - 9 on the keyboard.
+    Use the left/right or up/down arrow keys to flip between images.`);
 }
 
 async function readRGBE(url) {
