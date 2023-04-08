@@ -4,7 +4,7 @@
 
 #!markdown
 
-# ImageLab.Flip Example
+# FlipBook Example
 
 This .NET interactive notebook shows how the FlipBook tool can be used with a Jupyter notebook and the .NET kernel. See Example.fsx for the F\# syntax.
 
@@ -23,7 +23,7 @@ HTML(FlipBook.Header)
 
 #!markdown
 
-The code cell below generates two solid color images and displays them with `ImageLab.Flip`.
+The code cell below generates two solid color images and displays them.
 
 #!csharp
 
@@ -31,6 +31,7 @@ var red = new RgbImage(600, 400);
 red.Fill(0.3f, 0.03f, 0.05f);
 var blue = new RgbImage(600, 400);
 blue.Fill(0.03f, 0.3f, 0.7f);
+blue[50,50] = new(100,200,10);
 
 HTML(FlipBook.New + ("blue", blue) + ("red", red))
 
@@ -44,7 +45,7 @@ You can save the output to a static .html page via the `Save(filename)` utility 
 
 #!markdown
 
-The size automatically scales to the parent element in the generated HTML. In a notebook, you can use the `Resize` utility to create a parent div with a fixed size in pixels.
+The size of the FlipBook can be specified as an argument to the constructor, as done below, or via the Resize() method of the fluent API.
 
 #!csharp
 

@@ -1,19 +1,29 @@
 ﻿using SimpleImageIO;
 using SimpleImageIO.Integration;
+using System.Linq;
 
-TestFlip.Test();
+if (args.Contains("flip") || args.Length == 0)
+    TestFlip.Test();
 
-TestLayerOrder.Test();
+if (args.Contains("layers") || args.Length == 0) {
+    TestLayerOrder.Test();
+}
 
-Layers.LoadFromFile("Data/RenderMasks.exr");
+if (args.Contains("denoise") || args.Length == 0) {
+    TestDenoise.TestPathTracer();
+    TestDenoise.TestBidir();
+    TestDenoise.TestVcm();
+}
 
-TestDenoise.TestPathTracer();
-TestDenoise.TestBidir();
-TestDenoise.TestVcm();
+if (args.Contains("tmo") || args.Length == 0) {
+    TestTonemap.Reinhard();
+    TestTonemap.ACES();
+}
 
-TestTonemap.Reinhard();
-TestTonemap.ACES();
+if (args.Contains("tev") || args.Length == 0) {
+    ValidateTevIpc.TestTev();
+}
 
-ValidateTevIpc.TestTev();
-
-TestFalseColor.TestGradient();
+if (args.Contains("falsecolor") || args.Length == 0) {
+    TestFalseColor.TestGradient();
+}

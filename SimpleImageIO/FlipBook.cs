@@ -143,10 +143,6 @@ public class FlipBook
         StringBuilder html = new();
         string id = "flipbook-" + Guid.NewGuid().ToString();
         html.AppendLine($"<div class='flipbook' id='{id}' style='width:{htmlWidth}px; height:{htmlHeight}px;'>");
-        html.AppendLine("<div id='magnifier'><table class='magnifier'></table></div>");
-
-        // For smoother Jupyter / VSCode experience, we add the style to every single viewer
-        // html.AppendLine("<style>" + ReadResourceText("style.css") + "</style>");
 
         List<string> dataStrs = new();
         List<string> nameStrs = new();

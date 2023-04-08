@@ -5,6 +5,7 @@ var dragYStart = 0;
 var zoomLevels = new Map();
 var positions = new Map();
 var curImageIdx = new Map();
+var magnifierStates = new Map();
 
 var wheelOpt = false;
 try {
@@ -74,14 +75,18 @@ function initImageViewers(flipbook, width, height, initialZoom) {
     placer.addEventListener("wheel", onScrollImage, wheelOpt);
     placer.addEventListener("mousemove", args => onMouseMoveOverImage(container, args));
     placer.addEventListener("mousedown", args => onMouseMoveOverImage(container, args));
-    placer.addEventListener("mouseout", onMouseOutOverImage);
+    placer.addEventListener("mouseout", _ => onMouseOutOverImage(container));
 
     let numImages = placer.getElementsByTagName("canvas").length;
 
     // Prevent mouseout of the canvas from propagating to its parent if the selection changes
     // This keeps the magnifier visible while flipping images.
-    // TODO this only works if we also update the magnifier to the new image data
-    // $(placer).find('canvas').on("mouseout", event => event.stopPropagation());
+    $(placer).find('canvas').on("mouseout", event => {
+        redrawMagnifier(container);
+        event.stopPropagation();
+    });
+
+    magnifierStates.set(container, { "row": 0, "col": 0, "visible": false });
 
     // Set the initial position of the image
     placer.style.top = "0px";
@@ -188,19 +193,19 @@ function onMouseMoveOverImage(container, event) {
 
     if ((event.buttons & 2) == 0)
     {
-        hideMagnifier();
+        hideMagnifier(container);
         return;
     }
 
     const offset = 10;
-    let magnifierLeft = event.pageX + offset;
-    let magnifierTop = event.pageY + offset;
+    let magnifierLeft = event.clientX + offset;
+    let magnifierTop = event.clientY + offset;
 
     showMagnifier(magnifierLeft, magnifierTop, curPixelCol, curPixelRow, container);
 }
 
-function onMouseOutOverImage(event) {
-    hideMagnifier();
+function onMouseOutOverImage(container) {
+    hideMagnifier(container);
 }
 
 const MagnifierResolution = 2;
@@ -216,11 +221,12 @@ function formatNumber(number) {
     return number.toFixed(4);
 }
 
-function showMagnifier(magnifierLeft, magnifierTop, magnifyCol, magnifyRow, container) {
-    $("#magnifier").addClass("visible");
-    $("#magnifier").css({ top: magnifierTop, left: magnifierLeft });
+function redrawMagnifier(container) {
+    magnifier = $(container).find("div.magnifier");
+    let state = magnifierStates.get(container);
+    if (!state.visible) return;
 
-    let table = $("#magnifier").find("table");
+    let table = magnifier.find("table");
     table.children().remove();
 
     let activeImage = flipBookImages.get(container)[curImageIdx.get(container) - 1];
@@ -233,7 +239,7 @@ function showMagnifier(magnifierLeft, magnifierTop, magnifyCol, magnifyRow, cont
 
         let gl = canvas.getContext('webgl2');
         buffer = new Uint8Array(size * size * 4);
-        gl.readPixels(magnifyCol - MagnifierResolution, canvas.height - magnifyRow - MagnifierResolution - 1,
+        gl.readPixels(state.col - MagnifierResolution, canvas.height - state.row - MagnifierResolution - 1,
             size, size, gl.RGBA, gl.UNSIGNED_BYTE, buffer);
 
         glOrder = true;
@@ -242,14 +248,14 @@ function showMagnifier(magnifierLeft, magnifierTop, magnifyCol, magnifyRow, cont
         pixels = null;
 
         let ctx = canvas.getContext('2d');
-        buffer = ctx.getImageData(magnifyCol - MagnifierResolution, magnifyRow - MagnifierResolution,
+        buffer = ctx.getImageData(state.col - MagnifierResolution, state.row - MagnifierResolution,
             size, size).data;
 
         glOrder = false;
     }
 
     let bufRow = glOrder ? size : -1;
-    for (let row = magnifyRow - MagnifierResolution; row <= magnifyRow + MagnifierResolution; ++row) {
+    for (let row = state.row - MagnifierResolution; row <= state.row + MagnifierResolution; ++row) {
         if (glOrder) bufRow--; else bufRow++;
         if (row < 0 || row >= canvas.height) continue;
 
@@ -257,12 +263,12 @@ function showMagnifier(magnifierLeft, magnifierTop, magnifyCol, magnifyRow, cont
         let tr = table.find("tr").last();
 
         let bufCol = -1;
-        for (let col = magnifyCol - MagnifierResolution; col <= magnifyCol + MagnifierResolution; ++col) {
+        for (let col = state.col - MagnifierResolution; col <= state.col + MagnifierResolution; ++col) {
             bufCol++;
             if (col < 0 || col >= canvas.width) continue;
 
             let classNames = "magnifier";
-            if (row == magnifyRow && col == magnifyCol)
+            if (row == state.row && col == state.col)
                 classNames += " selected";
 
             let clrR = buffer[(bufRow * size + bufCol) * 4 + 0];
@@ -292,8 +298,17 @@ function showMagnifier(magnifierLeft, magnifierTop, magnifyCol, magnifyRow, cont
     }
 }
 
-function hideMagnifier() {
-    $("#magnifier").removeClass("visible");
+function showMagnifier(magnifierLeft, magnifierTop, magnifyCol, magnifyRow, container) {
+    magnifier = $(container).find("div.magnifier");
+    magnifier.addClass("visible");
+    magnifier.css({ top: magnifierTop, left: magnifierLeft });
+    magnifierStates.set(container, { "row": magnifyRow, "col": magnifyCol, "visible": true });
+    redrawMagnifier(container);
+}
+
+function hideMagnifier(container) {
+    magnifierStates.set(container, { "row": 0, "col": 0, "visible": false });
+    $(".magnifier").removeClass("visible");
 }
 
 function computeZoomScale(container, evt, left, top) {
@@ -341,7 +356,7 @@ function onScrollImage(evt) {
 const UPDATE_INTERVAL_MS = 100;
 
 class HDRImage {
-    constructor(pixels, canvas) {
+    constructor(pixels, canvas, container) {
         this.currentTMO = "";
         this.dirty = true;
         this.canvas = canvas;
@@ -355,6 +370,7 @@ class HDRImage {
             if (!trueThis.dirty) return;
             trueThis.dirty = false;
             renderImage(trueThis.canvas, trueThis.pixels, trueThis.currentTMO);
+            redrawMagnifier(container);
         }, UPDATE_INTERVAL_MS)
     }
     apply(tmo) {
@@ -366,6 +382,8 @@ class HDRImage {
 var flipBookImages = new Map();
 
 function makeImages(flipbook, rawPixels, initialTMO) {
+    let container = $(flipbook).find(".image-container")[0];
+
     // connect each canvas to its raw data
     let images = []
     for (let i = 0; i < rawPixels.length; ++i) {
@@ -376,17 +394,17 @@ function makeImages(flipbook, rawPixels, initialTMO) {
         if (canvas.hasClass('ldr')) {
             images.push(canvas[0])
         } else {
-            images.push(new HDRImage(pixels, canvas[0]));
+            images.push(new HDRImage(pixels, canvas[0], container));
         }
     }
     function apply(fn) {
         images.forEach(img => { if (img instanceof HDRImage) img.apply(fn); });
     }
 
-    flipBookImages.set($(flipbook).find(".image-container").get()[0], images);
+    flipBookImages.set(container, images);
 
     // attach TMO controls for scripting
-    let scriptTxt = $(flipbook).find(".tmo-script").find('textarea').get()[0];
+    let scriptTxt = $(flipbook).find(".tmo-script").find('textarea')[0];
     function updateScript() {
         apply(scriptTxt.value);
     }
@@ -457,8 +475,6 @@ function makeImages(flipbook, rawPixels, initialTMO) {
         $(flipbook).find(".tmo-script").removeClass("visible");
         $(flipbook).find(".tmo-falsecolor").removeClass("visible");
         $(flipbook).find(`.tmo-${initialTMO.name}`).addClass("visible");
-        console.log(`.tmo-${initialTMO.name}`)
-        console.log($(flipbook).find(`.tmo-${initialTMO.name}`))
     }
 }
 
@@ -649,6 +665,9 @@ function AddFlipBook(parentElement, names, images, width, height, initialZoom = 
         </div>
         <div tabindex='2' class='image-container'>
             <div class='image-placer'>
+            <div class='magnifier'>
+                <table class='magnifier'></table>
+            </div>
             </div>
         </div>
         <div class='tmo-container'>

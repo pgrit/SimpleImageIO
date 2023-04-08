@@ -12,7 +12,7 @@
     position: relative;
     width: 100%;
     flex: 1;
-    min-height: 600px;
+    min-height: 100px;
 }
 
     .image-container:focus {
@@ -85,14 +85,13 @@
         display: block;
     }
 
-#magnifier {
+div.magnifier {
     display: none;
-    width: 300px;
-    height: 300px;
-    position: absolute;
+    position: fixed;
     z-index: 9001;
+    background-color: red;
 }
-    #magnifier.visible {
+    div.magnifier.visible {
         display: block;
     }
 
@@ -120,5 +119,6 @@ p.magnifier {
     font-weight: bold;
     font-family: monospace;
     text-rendering: optimizeLegibility;
-    text-shadow: -2px -2px 4px #000, 2px -2px 4px #000, -2px 2px 4px #000, 2px 2px 4px #000
+    text-shadow: -2px -2px 4px #000, 2px -2px 4px #000, -2px 2px 4px #000, 2px 2px 4px #000;
+    text-align: center;
 }
