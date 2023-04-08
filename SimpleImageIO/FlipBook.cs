@@ -43,6 +43,11 @@ public class FlipBook
         LDR_PNG = -3,
 
         /// <summary>
+        /// Raw RGB data with 16 bit per channel, i.e., 6 bytes per pixel.
+        /// </summary>
+        RGB_HALF = -4,
+
+        /// <summary>
         /// LDR image with lossy JPEG encoding (quality 90). Smallest but least accurate.
         /// </summary>
         LDR_JPEG = 90
@@ -130,6 +135,23 @@ public class FlipBook
         return "data:;base64," + Convert.ToBase64String(bytes.ToArray());
     }
 
+    unsafe static string CompressImageAsRGBHalf(RgbImage img) {
+        var bytes = new List<byte>();
+        void AddHalf(float v) {
+            ushort bits = BitConverter.HalfToUInt16Bits((Half)v);
+            bytes.Add((byte)(bits & 0xFF));
+            bytes.Add((byte)(bits >> 8));
+        }
+        for (int row = 0; row < img.Height; ++row) {
+            for (int col = 0; col < img.Width; ++col) {
+                AddHalf(img[col, row].R);
+                AddHalf(img[col, row].G);
+                AddHalf(img[col, row].B);
+            }
+        }
+        return "data:;base64," + Convert.ToBase64String(bytes.ToArray());
+    }
+
     static string CompressImageAsPNG(RgbImage img)
     => "data:image/png;base64," + img.AsBase64Png();
 
@@ -150,6 +172,7 @@ public class FlipBook
             string t = type switch {
                 DataType.RGB => "RGB",
                 DataType.RGBE => "RGBE",
+                DataType.RGB_HALF => "RGBHalf",
                 _ => "LDR"
             };
             dataStrs.Add($"read{t}('{url}')");
@@ -210,6 +233,7 @@ public class FlipBook
                 DataType.RGB => CompressImageAsRGB(rgbImage),
                 DataType.RGBE => CompressImageAsRGBE(rgbImage),
                 DataType.LDR_PNG => CompressImageAsPNG(rgbImage),
+                DataType.RGB_HALF => CompressImageAsRGBHalf(rgbImage),
                 DataType quality => CompressImageAsJPEG(rgbImage, (int)quality)
             };
             data.Add((img.Name, img.TargetType, imgData));

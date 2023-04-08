@@ -216,8 +216,20 @@ function approxSrgb(linear) {
 }
 
 function formatNumber(number) {
+    // Always print zero without any extras
     if (number === 0) return number;
-    if (Math.abs(number) > 1e5 || Math.abs(number) < 1e-4) return number.toExponential(2);
+
+    // Shorter output for Infinity
+    if (number === Infinity) return "Inf";
+    if (number === -Infinity) return "-Inf";
+
+    // Scientific notation for numbers that are too big to fit the table
+    if (number > 0) {
+        if (number > 1e5 || number < 1e-4) return number.toExponential(2);
+    } else {
+        if (number < -1e4 || number > -1e-3) return number.toExponential(2);
+    }
+
     return number.toFixed(4);
 }
 
@@ -479,7 +491,9 @@ function makeImages(flipbook, rawPixels, initialTMO) {
 }
 
 function renderImage(canvas, pixels, toneMapCode) {
-    const gl = canvas.getContext("webgl2", {preserveDrawingBuffer: true});
+    const gl = canvas.getContext("webgl2", {
+        preserveDrawingBuffer: true
+    });
     if (gl === null) {
         alert("Unable to initialize WebGL. Your browser or machine may not support it.");
         return;
@@ -545,6 +559,16 @@ function renderImage(canvas, pixels, toneMapCode) {
             } else {
                 return pow((srgb + 0.055) / 1.055, 2.4);
             }
+        }
+
+        bool anynan(vec3 v) {
+            return (!(v.x < 0.0 || 0.0 < v.x || v.x == 0.0) ||
+                    !(v.y < 0.0 || 0.0 < v.y || v.y == 0.0) ||
+                    !(v.z < 0.0 || 0.0 < v.z || v.z == 0.0));
+        }
+
+        bool anyinf(vec3 v) {
+            return isinf(v.x) || isinf(v.y) || isinf(v.z);
         }
 
         void main(void) {
@@ -773,6 +797,35 @@ async function readRGBE(url) {
 async function readRGB(url) {
     const response = await fetch(url);
     return new Float32Array(await response.arrayBuffer());
+}
+
+async function readRGBHalf(url) {
+    const response = await fetch(url);
+    const f16 = new Uint16Array(await response.arrayBuffer());
+
+    // Write the bit representation to a 32 bit uint array first
+    var buffer = new Uint32Array(f16.length).fill(0);
+    for (let i = 0; i < f16.length; i++) {
+        let exponent = (f16[i] & 0b0111110000000000) >> 10;
+        let mantissa = f16[i] & 0b0000001111111111;
+        let sign = (f16[i] & 0b1000000000000000) >> 15;
+
+        if (exponent == 0) {
+            buffer[i] = 0.0; // TODO: proper mapping for subnormal numbers
+        } else if (exponent == 31) {
+            if (mantissa == 0)
+                buffer[i] = (255 << 23 | (sign << 31)) >>> 0;
+            else
+                buffer[i] = ((1 << 13) | 255 << 23 | (1 << 31)) >>> 0;
+            console.log("got a nan / inf: ");
+            console.log(mantissa)
+        } else {
+            buffer[i] = ((mantissa << 13) | (exponent - 15 + 127) << 23 | (sign << 31)) >>> 0;
+        }
+    }
+
+    // Now we create a new float32 view on the same underlying binary data
+    return new Float32Array(buffer.buffer);
 }
 
 async function readLDR(base64) {

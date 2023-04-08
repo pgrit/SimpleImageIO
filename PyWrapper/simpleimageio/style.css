@@ -89,7 +89,6 @@ div.magnifier {
     display: none;
     position: fixed;
     z-index: 9001;
-    background-color: red;
 }
     div.magnifier.visible {
         display: block;

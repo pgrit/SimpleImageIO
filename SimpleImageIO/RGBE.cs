@@ -22,7 +22,7 @@ public struct RGBE {
     /// such that the significant has absolute value between 0.5 (inclusive) and 1.0 (exclusive).
     /// I.e., computes the same decomposition as the C standard lib function "frexp".
     /// </summary>
-    static void SplitFloat32(float v, out bool isPositive, out int exponent, out float significand) {
+    public static void SplitFloat32(float v, out bool isPositive, out int exponent, out float significand) {
         // Split the f32 into sign bit, exponent, and mantissa
         uint bits = BitConverter.SingleToUInt32Bits(v);
         isPositive = (bits >> 31) == 0;
