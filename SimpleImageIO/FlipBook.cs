@@ -268,12 +268,12 @@ public class FlipBook
     /// <summary>
     /// Syntactic sugar to create a new object of this class. Makes the fluent API more readable.
     /// </summary>
-    public static FlipBook New => new FlipBook(800, 800);
+    public static FlipBook New => new FlipBook();
 
     /// <summary>
     /// Initializes a new flip book with the given width and height in HTML pixels
     /// </summary>
-    public FlipBook(int width, int height) {
+    public FlipBook(int width = 800, int height = 800) {
         htmlWidth = width;
         htmlHeight = height;
     }
@@ -364,4 +364,16 @@ public class FlipBook
     /// </summary>
     /// <returns>HTML code</returns>
     public override string ToString() => MakeHelper(htmlWidth, htmlHeight, images, initialZoom, initialTMO);
+
+    /// <summary>
+    /// Creates a flip book out of a dictionary of named images
+    /// </summary>
+    public static FlipBook Make(IEnumerable<KeyValuePair<string, Image>> images,
+                                FlipBook.DataType dataType = FlipBook.DataType.RGBE) {
+        FlipBook flip = FlipBook.New;
+        foreach (var (name, image) in images) {
+            flip.Add(name, image, dataType);
+        }
+        return flip;
+    }
 }
