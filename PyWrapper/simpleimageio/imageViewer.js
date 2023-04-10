@@ -421,6 +421,9 @@ function makeImages(flipbook, rawPixels, initialTMO) {
         apply(scriptTxt.value);
     }
     scriptTxt.oninput = updateScript;
+    scriptTxt.onkeydown = evt => evt.stopPropagation();
+    scriptTxt.onkeyup = evt => evt.stopPropagation();
+    scriptTxt.onkeypress = evt => evt.stopPropagation();
 
     // attach TMO controls for exposure value
     let evInput = $(flipbook).find(".tmo-exposure").find('input');
