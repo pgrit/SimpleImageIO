@@ -44,6 +44,9 @@ public unsafe class Image : IDisposable {
         ".tif", ".tiff",
     };
 
+    /// <summary>
+    /// </summary>
+    /// <returns>True if the filename has an extension that corresponds to a supported image format</returns>
     public static bool HasSupportedExtension(string filename) {
         foreach (var ext in Image.SupportedExtensions)
             if (filename.EndsWith(ext, ignoreCase: true, culture: CultureInfo.InvariantCulture))
