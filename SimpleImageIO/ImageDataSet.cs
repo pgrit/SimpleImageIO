@@ -80,12 +80,14 @@ public class ImageDataSet {
             .AsParallel().AsOrdered().Select(x => {
                 var layers = new Dictionary<string, Image>();
                 var looseFiles = new List<string>();
-                foreach (var filename in x.Select(x => x.Last())) {
-                    string name = Path.GetFileNameWithoutExtension(filename);
+                foreach (var (dirname, filename) in x.Select(x => (Path.Join(x.SkipLast(1).ToArray()), x.Last()))) {
+                    string name = Path.GetRelativePath(dirname, filename).Replace('\\', '/');
                     if (filename.EndsWith(".exr", ignoreCase: true, culture: CultureInfo.InvariantCulture)) {
                         var exrLayers = Layers.LoadFromFile(Path.Join(basePath, filename));
-                        foreach (var (k, v) in exrLayers)
-                            layers.Add(string.IsNullOrEmpty(k) ? name : (name + "." + k), v);
+                        foreach (var (k, v) in exrLayers) {
+                            string n = name + (string.IsNullOrEmpty(k) ? "" : $".{k}");
+                            layers.Add(n, v);
+                        }
                     } else if(Image.HasSupportedExtension(filename)) {
                         var img = new RgbImage(Path.Join(basePath, filename));
                         layers.Add(name, img);
