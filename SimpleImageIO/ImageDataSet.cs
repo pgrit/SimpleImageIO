@@ -81,12 +81,12 @@ public class ImageDataSet {
                 var layers = new Dictionary<string, Image>();
                 var looseFiles = new List<string>();
                 foreach (var filename in x.Select(x => x.Last())) {
+                    string name = Path.GetFileNameWithoutExtension(filename);
                     if (filename.EndsWith(".exr", ignoreCase: true, culture: CultureInfo.InvariantCulture)) {
                         var exrLayers = Layers.LoadFromFile(Path.Join(basePath, filename));
                         foreach (var (k, v) in exrLayers)
-                            layers.Add(k, v);
+                            layers.Add(string.IsNullOrEmpty(k) ? name : (name + "." + k), v);
                     } else if(Image.HasSupportedExtension(filename)) {
-                        string name = Path.GetFileNameWithoutExtension(filename);
                         var img = new RgbImage(Path.Join(basePath, filename));
                         layers.Add(name, img);
                     } else {
