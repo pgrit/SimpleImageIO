@@ -36,15 +36,20 @@ public class ImageDataSet {
     public static string RegexFromPattern(string pattern) {
         pattern = pattern.Replace("/", @"[\\/]");
         pattern = pattern.Replace(".", @"\.");
-        pattern = pattern.Replace("*", @"[^\\/]*");
-        pattern = pattern.Replace("**", @".*");
+
+        // Must be careful to handle ** versus * so they don't destroy each other
+        // TODO there is probably a cleaner way to do this by tracking indices - but not a bottleneck right now
+        pattern = pattern.Replace("**", "13_ANY_CHAR_HERE_42");
+        pattern = pattern.Replace("*", "13_ANY_CHAR_HERE_NOT_DIRSEP_42");
+        pattern = pattern.Replace("13_ANY_CHAR_HERE_42", @".*");
+        pattern = pattern.Replace("13_ANY_CHAR_HERE_NOT_DIRSEP_42", @"[^\\/]*");
 
         Regex placeholder = new("<[^>]*>");
         var matches = placeholder.Matches(pattern);
         foreach (Match m in matches) {
             pattern = pattern.Replace(m.Value, @$"(?{m.Value}[^\\/]*)");
         }
-        return "^" + pattern;
+        return $"^{pattern}$";
     }
 
     /// <summary>
