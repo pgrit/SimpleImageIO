@@ -1,6 +1,7 @@
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
+using System.Globalization;
 
 namespace SimpleImageIO;
 
@@ -27,6 +28,31 @@ public unsafe class Image : IDisposable {
     /// Pointer to the native memory containing the image data
     /// </summary>
     public IntPtr DataPointer;
+
+    /// <summary>
+    /// List of file name extensions for all supported file formats. (Theoretically, some other formats are
+    /// also supported through stb_image, but those not in this list have never been tested.)
+    /// </summary>
+    public static readonly string[] SupportedExtensions = {
+        ".exr",
+        ".hdr",
+        ".png",
+        ".jpg", ".jpeg",
+        ".bmp",
+        ".tga",
+        ".pfm",
+        ".tif", ".tiff",
+    };
+
+    /// <summary>
+    /// </summary>
+    /// <returns>True if the filename has an extension that corresponds to a supported image format</returns>
+    public static bool HasSupportedExtension(string filename) {
+        foreach (var ext in Image.SupportedExtensions)
+            if (filename.EndsWith(ext, ignoreCase: true, culture: CultureInfo.InvariantCulture))
+                return true;
+        return false;
+    }
 
     private float* dataPtr {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -497,4 +523,9 @@ public unsafe class Image : IDisposable {
     /// Multiplies a constant to each pixel channel value
     /// </summary>
     public static Image operator *(float b, Image a) => ApplyOp(a, (x) => x * b);
+
+    /// <summary>
+    /// Returns a new image where each pixel channel value is the square of the value in this image.
+    /// </summary>
+    public Image Squared() => ApplyOp(this, c => c * c);
 }

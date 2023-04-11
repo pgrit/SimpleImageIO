@@ -1,6 +1,10 @@
+#!meta
+
+{"kernelInfo":{"defaultKernelName":"csharp","items":[{"aliases":[],"name":"csharp"}]}}
+
 #!markdown
 
-# ImageLab.Flip Example
+# FlipBook Example
 
 This .NET interactive notebook shows how the FlipBook tool can be used with a Jupyter notebook and the .NET kernel. See Example.fsx for the F\# syntax.
 
@@ -12,14 +16,14 @@ Then, we can load the JavaScript and CSS code that controls our flip viewers. Th
 
 #!csharp
 
-#r "nuget: SimpleImageIO"
-// #r "./SimpleImageIO/bin/Debug/net7.0/SimpleImageIO.dll"
+// #r "nuget: SimpleImageIO"
+#r "./SimpleImageIO/bin/Debug/net7.0/SimpleImageIO.dll"
 using SimpleImageIO;
 HTML(FlipBook.Header)
 
 #!markdown
 
-The code cell below generates two solid color images and displays them with `ImageLab.Flip`.
+The code cell below generates two solid color images and displays them.
 
 #!csharp
 
@@ -27,6 +31,7 @@ var red = new RgbImage(600, 400);
 red.Fill(0.3f, 0.03f, 0.05f);
 var blue = new RgbImage(600, 400);
 blue.Fill(0.03f, 0.3f, 0.7f);
+blue[50,50] = new(100,200,10);
 
 HTML(FlipBook.New + ("blue", blue) + ("red", red))
 
@@ -40,40 +45,8 @@ You can save the output to a static .html page via the `Save(filename)` utility 
 
 #!markdown
 
-The size automatically scales to the parent element in the generated HTML. In a notebook, you can use the `Resize` utility to create a parent div with a fixed size in pixels.
+The size of the FlipBook can be specified as an argument to the constructor, as done below, or via the Resize() method of the fluent API.
 
 #!csharp
 
-HTML(FlipBook.Resize(800, 500, FlipBook.New + ("blue", blue) + ("red", red)))
-
-#!markdown
-
-If you have many flip books in the same notebook, it can be useful to define a utility function that sets them all to the same size:
-
-#!csharp
-
-using Microsoft.AspNetCore.Html;
-IHtmlContent Viewer(params (string, ImageBase)[] images) {
-    var flipbook = FlipBook.New;
-    foreach (var (name, img) in images)
-        flipbook.Add(name, img);
-    return new HtmlString(FlipBook.Resize(640, 480, flipbook));
-}
-
-#!csharp
-
-Viewer(("blue", blue), ("red", red))
-
-#!markdown
-
-The next example displays the same images, but with an adjusted exposure value. Every pixel value is multiplied by $2^{-1}$.
-
-#!csharp
-
-ImageBase toneMap(ImageBase img) {
-    var copy = img.Copy();
-    copy.Scale(MathF.Pow(2, -1));
-    return copy;
-}
-
-HTML(FlipBook.Make(toneMap, ("Blue", blue), ("Red", red)))
+HTML(new FlipBook(900, 800) + ("blue", blue) + ("red", red))

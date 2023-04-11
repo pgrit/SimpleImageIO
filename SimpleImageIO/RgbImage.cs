@@ -73,6 +73,17 @@ public class RgbImage : Image {
     }
 
     /// <summary>
+    /// Creates an RGB image out of a monochrome one, by triplicating each value.
+    /// </summary>
+    public RgbImage(MonochromeImage other) : base(other.Width, other.Height, 3) {
+        for (int row = 0; row < Height; ++row) {
+            for (int col = 0; col < Width; ++col) {
+                this[col, row] = RgbColor.White * other[col, row];
+            }
+        }
+    }
+
+    /// <summary>
     /// Retrieves the value of a pixel as an RgbColor object
     /// </summary>
     /// <param name="col">Horizontal pixel index, left is 0</param>
