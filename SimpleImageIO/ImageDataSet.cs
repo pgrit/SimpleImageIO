@@ -82,6 +82,10 @@ public class ImageDataSet {
                 var looseFiles = new List<string>();
                 foreach (var (dirname, filename) in x.Select(x => (Path.Join(x.SkipLast(1).ToArray()), x.Last()))) {
                     string name = Path.GetRelativePath(dirname, filename).Replace('\\', '/');
+
+                    // Handle case where the image is a single file (example pattern: "<foo>/<bar>.exr")
+                    if (name.StartsWith("../")) name = name.Substring(3);
+
                     if (filename.EndsWith(".exr", ignoreCase: true, culture: CultureInfo.InvariantCulture)) {
                         var exrLayers = Layers.LoadFromFile(Path.Join(basePath, filename));
                         foreach (var (k, v) in exrLayers) {
