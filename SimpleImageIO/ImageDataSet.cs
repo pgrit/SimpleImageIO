@@ -1,19 +1,48 @@
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 
 namespace SimpleImageIO;
 
+/// <summary>
+/// An entry in the image dataset. Corresponds to all images that matched the query regex and had identical
+/// values in their captured expressions (e.g., same subdirectory name).
+/// </summary>
+/// <param name="Path">The list of captured values (e.g., directory names) in the regex</param>
+/// <param name="Images">All images that share this <see cref="Path"/></param>
+/// <param name="AuxFiles">List of any non-image files that also match the regex and share this path</param>
 public record ImageDatasetEntry(string[] Path, Dictionary<string, Image> Images, List<string> AuxFiles) {
+    /// <summary>
+    /// </summary>
+    /// <returns>The <see cref="Path"/> entries concatenated with a slash ('/')</returns>
     public override string ToString() => string.Join('/', Path);
 }
 
+/// <summary>
+/// Loads all images (and other files) in a directory that match a regular expression. Images are grouped
+/// based on captures in the regex so they can be queried via Linq.
+/// </summary>
 public class ImageDataSet {
+    /// <summary>
+    /// List of all captured path components in any of the loaded files. Convenient way to quickly see what
+    /// has been loaded.
+    /// </summary>
     public readonly List<HashSet<string>> PathComponents;
+
+    /// <summary>
+    /// List of all image names (i.e., bottom level of the loaded file hierarchy) that have been loaded.
+    /// Convenient way to quickly see what has been loaded.
+    /// </summary>
     public readonly HashSet<string> ImageNames;
+
+    /// <summary>
+    /// The loaded image data. This is a flattened representation, i.e., each entry corresponds to one (set of)
+    /// files that matched the query regex.
+    /// Use Linq to query the images that you desire, or <see cref="GetImages(string)"/> /
+    /// <see cref="GetImages(string, string)"/>
+    /// </summary>
     public readonly List<ImageDatasetEntry> Data;
 
     static IEnumerable<string> GetGroupStrings(Match match)
@@ -65,6 +94,15 @@ public class ImageDataSet {
     /// </summary>
     public static string AnyPattern(params string[] v) => AnyRegex(v.Select(x => RegexFromPattern(x)).ToArray());
 
+    /// <summary>
+    /// Creates a dataset of images (and aux files) by scanning the given directory for all files that
+    /// match a regular expression.
+    /// Images are grouped hierarchically based on the capture groups in the expression(s). For example,
+    /// (.*)/(.*)\.exr
+    /// Adds all .exr images that are in a subdirectory of the root.
+    /// </summary>
+    /// <param name="basePath">Path to the root directory</param>
+    /// <param name="pattern">A regular expression that will be matched against each file.</param>
     public ImageDataSet(string basePath, string pattern) {
         var data = GetMatches(basePath, pattern);
 
@@ -134,9 +172,13 @@ public class ImageDataSet {
         .Where(group => group.Count() == 1)
         .ToDictionary(group => group.Key, group => group.First().Images[imageName]);
 
-    public Dictionary<string, JsonNode> GetAuxJson(string sceneName)
+    /// <summary>
+    /// Queries all auxiliary files with .json ending of image sets with identical first
+    /// path component; grouped by the second path component.
+    /// </summary>
+    public Dictionary<string, JsonNode> GetAuxJson(string firstComponent)
     => Data
-        .Where(x => x.Path[0] == sceneName && x.Path.Length > 1)
+        .Where(x => x.Path[0] == firstComponent && x.Path.Length > 1)
         .Select(x => {
             var auxJson = x.AuxFiles.Where(y => y.EndsWith(".json"));
             if (auxJson.Count() > 0)
@@ -148,9 +190,4 @@ public class ImageDataSet {
             x => x.Item1,
             x => x.Item2
         );
-
-    public IEnumerable<string> ListAuxJsonProperties(string sceneName)
-    => GetAuxJson(sceneName)
-        .SelectMany(kv => kv.Value.AsObject().Select(x => x.Key))
-        .Distinct();
 }
