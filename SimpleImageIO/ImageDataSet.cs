@@ -105,16 +105,34 @@ public class ImageDataSet {
         ImageNames = Data.SelectMany(x => x.Images.Keys).Distinct().ToHashSet();
     }
 
-    public Dictionary<string, Image> GetMethodImages(string sceneName, string imageName = "")
+    /// <summary>
+    /// Retrieves all images with the same name and identical first path component. Grouped by the second
+    /// path component. If no second path component exists, or the grouping is not unique, those images
+    /// are ignored.
+    /// </summary>
+    /// <param name="firstComponent">The common path component</param>
+    /// <param name="imageName">Name of the image</param>
+    public Dictionary<string, Image> GetImages(string firstComponent, string imageName)
     => Data
-        .Where(x => x.Path[0] == sceneName && x.Path.Length > 1)
+        .Where(x => x.Path[0] == firstComponent && x.Path.Length > 1)
         .Where(x => x.Images.ContainsKey(imageName))
-        .ToDictionary(x => x.Path[1], x => x.Images[imageName]);
+        .GroupBy(x => x.Path[1])
+        .Where(group => group.Count() == 1)
+        .ToDictionary(group => group.Key, group => group.First().Images[imageName]);
 
-    public Dictionary<string, Image> GetSceneImages(string imageName = "")
+    /// <summary>
+    /// Retrieves all images with the same name, grouped by the first path component. Returns only unique
+    /// images. If duplicates exist (i.e., same first path component and image name across multiple entries),
+    /// then ALL duplicated images are ignored.
+    /// </summary>
+    /// <param name="imageName">Name of the image</param>
+    /// <returns>A dictionary where the keys are the first path components and the values are the images.</returns>
+    public Dictionary<string, Image> GetImages(string imageName)
     => Data
         .Where(x => x.Images.ContainsKey(imageName))
-        .ToDictionary(x => x.Path[0], x => x.Images[imageName]);
+        .GroupBy(x => x.Path[0])
+        .Where(group => group.Count() == 1)
+        .ToDictionary(group => group.Key, group => group.First().Images[imageName]);
 
     public Dictionary<string, JsonNode> GetAuxJson(string sceneName)
     => Data
