@@ -939,6 +939,7 @@ SIIO_API int GetExrLayerNames(const char* filename, char*** names) {
     for (int i = 0; i < num; ++i) {
         (*names)[i] = new char[iter->size() + 1];
         std::copy(iter->begin(), iter->end(), (*names)[i]);
+        (*names)[i][iter->size()] = 0;
         iter++;
     }
     return num;
