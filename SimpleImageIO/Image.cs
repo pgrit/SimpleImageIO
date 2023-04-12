@@ -65,6 +65,13 @@ public unsafe class Image : IDisposable {
     public Image() { }
 
     /// <summary>
+    /// Loads an image with arbitrary channel count and meaning from a file.
+    /// </summary>
+    public Image(string filename) {
+        LoadFromFile(filename);
+    }
+
+    /// <summary>
     /// Creates an image buffer initialized to zero
     /// </summary>
     public Image(int w, int h, int numChannels) {
