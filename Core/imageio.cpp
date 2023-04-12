@@ -900,4 +900,55 @@ SIIO_API void CopyCachedImage(int id, float* out) {
     }
 }
 
+
+SIIO_API int GetExrLayerNames(const char* filename, char*** names) {
+    EXRVersion exrVersion;
+    int ret = ParseEXRVersionFromFile(&exrVersion, filename);
+    if (ret != 0) {
+        std::cerr << "Error loading '" << filename << "': Invalid .exr file. " << std::endl;
+        return -1;
+    }
+
+    const char* err;
+    EXRHeader header;
+    InitEXRHeader(&header);
+    ret = ParseEXRHeaderFromFile(&header, &exrVersion, filename, &err);
+    if (ret) {
+        std::cerr << "Error loading '" << filename << "': " << err << std::endl;
+        FreeEXRErrorMessage(err);
+        return -1;
+    }
+
+    // Read the number of channels in each layer
+    int freeChannels = 0;
+    std::unordered_set<std::string> layerNames;
+    for (int chan = 0; chan < header.num_channels; ++chan) {
+        // Extract the layer name by assuming a channel name of the form "layername.R", "layername.B" and so on
+        size_t len = strlen(header.channels[chan].name);
+        std::string layerName;
+        if (len <= 2) layerName = "";
+        else layerName = std::string(header.channels[chan].name, len - 2);
+        layerNames.insert(layerName);
+    }
+
+    FreeEXRHeader(&header);
+
+    int num = (int)layerNames.size();
+    *names = new char*[num];
+    auto iter = layerNames.begin();
+    for (int i = 0; i < num; ++i) {
+        (*names)[i] = new char[iter->size() + 1];
+        std::copy(iter->begin(), iter->end(), (*names)[i]);
+        iter++;
+    }
+    return num;
+}
+
+SIIO_API void DeleteExrLayerNames(int num, const char** names) {
+    for (int i = 0; i < num; ++i) {
+        delete[] names[i];
+    }
+    delete[] names;
+}
+
 } // extern "C"
