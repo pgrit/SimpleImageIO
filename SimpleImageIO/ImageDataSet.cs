@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
@@ -13,7 +12,7 @@ namespace SimpleImageIO;
 /// <param name="Path">The list of captured values (e.g., directory names) in the regex</param>
 /// <param name="Images">All images that share this <see cref="Path"/></param>
 /// <param name="AuxFiles">List of any non-image files that also match the regex and share this path</param>
-public record ImageDatasetEntry(string[] Path, Dictionary<string, Image> Images, List<string> AuxFiles) {
+public record ImageDatasetEntry(string[] Path, Dictionary<string, LazyImage> Images, List<string> AuxFiles) {
     /// <summary>
     /// </summary>
     /// <returns>The <see cref="Path"/> entries concatenated with a slash ('/')</returns>
@@ -116,26 +115,24 @@ public class ImageDataSet {
         Data = data
             .GroupBy(x => x.SkipLast(1).Aggregate((a,b) => $"{a}/{b}"))
             .AsParallel().AsOrdered().Select(x => {
-                var layers = new Dictionary<string, Image>();
+                var layers = new Dictionary<string, LazyImage>();
                 var looseFiles = new List<string>();
                 foreach (var (dirname, filename) in x.Select(x => (Path.Join(x.SkipLast(1).ToArray()), x.Last()))) {
                     string name = Path.GetRelativePath(dirname, filename).Replace('\\', '/');
+                    string fullPath = Path.Join(basePath, filename);
 
                     // Handle case where the image is a single file (example pattern: "<foo>/<bar>.exr")
                     if (name.StartsWith("../")) name = name.Substring(3);
 
                     if (filename.EndsWith(".exr", ignoreCase: true, culture: CultureInfo.InvariantCulture)) {
-                        var exrLayers = Layers.LoadFromFile(Path.Join(basePath, filename));
-                        foreach (var (k, v) in exrLayers) {
-                            string n = name + (string.IsNullOrEmpty(k) ? "" : $".{k}");
-                            layers.Add(n, v);
+                        foreach (var layerName in Layers.GetLayerNames(fullPath)) {
+                            string n = name + (string.IsNullOrEmpty(layerName) ? "" : $".{layerName}");
+                            layers.Add(n, new(fullPath, layerName));
                         }
-                    } else if(Image.HasSupportedExtension(filename)) {
-                        var img = new RgbImage(Path.Join(basePath, filename));
-                        layers.Add(name, img);
-                    } else {
-                        looseFiles.Add(Path.Join(basePath, filename));
-                    }
+                    } else if(Image.HasSupportedExtension(filename))
+                        layers.Add(name, new(fullPath));
+                    else
+                        looseFiles.Add(fullPath);
                 }
                 return new ImageDatasetEntry(x.First().SkipLast(1).ToArray(), layers, looseFiles);
             }).ToList();
@@ -156,7 +153,7 @@ public class ImageDataSet {
         .Where(x => x.Images.ContainsKey(imageName))
         .GroupBy(x => x.Path[1])
         .Where(group => group.Count() == 1)
-        .ToDictionary(group => group.Key, group => group.First().Images[imageName]);
+        .ToDictionary(group => group.Key, group => group.First().Images[imageName].Image);
 
     /// <summary>
     /// Retrieves all images with the same name, grouped by the first path component. Returns only unique
@@ -170,7 +167,7 @@ public class ImageDataSet {
         .Where(x => x.Images.ContainsKey(imageName))
         .GroupBy(x => x.Path[0])
         .Where(group => group.Count() == 1)
-        .ToDictionary(group => group.Key, group => group.First().Images[imageName]);
+        .ToDictionary(group => group.Key, group => group.First().Images[imageName].Image);
 
     /// <summary>
     /// Queries all auxiliary files with .json ending of image sets with identical first
