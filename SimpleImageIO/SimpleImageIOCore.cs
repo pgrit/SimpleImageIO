@@ -31,6 +31,12 @@ static internal partial class SimpleImageIOCore {
     [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
     public static extern void CopyCachedImage(int id, IntPtr buffer);
 
+    [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
+    public static extern int GetExrLayerNames([MarshalAs(UnmanagedType.LPUTF8Str)] string filename, out nint names);
+
+    [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
+    public static extern void DeleteExrLayerNames(int num, nint names);
+
     #endregion
 
     #region WritingImages

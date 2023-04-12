@@ -1,158 +1,178 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using Xunit;
 
-namespace SimpleImageIO.Tests {
-    public class Channels {
-        [Fact]
-        public void RgbToMono_Average() {
-            RgbImage image = new(10, 15);
-            for (int row = 0; row < 15; ++row)
-                for (int col = 0; col < 10; ++col)
-                    image.SetPixel(col, row, new(row/15.0f));
+namespace SimpleImageIO.Tests;
 
-            MonochromeImage mono = new(image, MonochromeImage.RgbConvertMode.Average);
+public class Channels {
+    [Fact]
+    public void RgbToMono_Average() {
+        RgbImage image = new(10, 15);
+        for (int row = 0; row < 15; ++row)
+            for (int col = 0; col < 10; ++col)
+                image.SetPixel(col, row, new(row / 15.0f));
 
-            for (int row = 0; row < 15; ++row)
-                for (int col = 0; col < 10; ++col)
-                    Assert.Equal(row/15.0f, mono.GetPixel(col, row), 4);
-        }
+        MonochromeImage mono = new(image, MonochromeImage.RgbConvertMode.Average);
 
-        [Fact]
-        public void LoadingRGBA_ShouldDropAlpha() {
-            var codeBaseUrl = new Uri(Assembly.GetExecutingAssembly().Location);
-            var codeBasePath = Uri.UnescapeDataString(codeBaseUrl.AbsolutePath);
-            var dirPath = Path.GetDirectoryName(codeBasePath);
-            RgbImage image = new("../../../../PyTest/ImageWithAlpha.png");
-        }
+        for (int row = 0; row < 15; ++row)
+            for (int col = 0; col < 10; ++col)
+                Assert.Equal(row / 15.0f, mono.GetPixel(col, row), 4);
+    }
 
-        [Fact]
-        public void RgbToMono_Average_AllShouldBe2() {
-            RgbImage image = new(2, 2);
-            image.SetPixel(0, 0, new(1, 2, 3));
-            image.SetPixel(0, 1, new(3, 1, 2));
-            image.SetPixel(1, 0, new(3, 2, 1));
-            image.SetPixel(1, 1, new(2, 2, 2));
+    [Fact]
+    public void LoadingRGBA_ShouldDropAlpha() {
+        var codeBaseUrl = new Uri(Assembly.GetExecutingAssembly().Location);
+        var codeBasePath = Uri.UnescapeDataString(codeBaseUrl.AbsolutePath);
+        var dirPath = Path.GetDirectoryName(codeBasePath);
+        RgbImage image = new("../../../../PyTest/ImageWithAlpha.png");
+    }
 
-            MonochromeImage mono = new(image, MonochromeImage.RgbConvertMode.Average);
+    [Fact]
+    public void RgbToMono_Average_AllShouldBe2() {
+        RgbImage image = new(2, 2);
+        image.SetPixel(0, 0, new(1, 2, 3));
+        image.SetPixel(0, 1, new(3, 1, 2));
+        image.SetPixel(1, 0, new(3, 2, 1));
+        image.SetPixel(1, 1, new(2, 2, 2));
 
-            Assert.Equal(2, mono.GetPixel(0, 0), 6);
-            Assert.Equal(2, mono.GetPixel(0, 1), 6);
-            Assert.Equal(2, mono.GetPixel(1, 0), 6);
-            Assert.Equal(2, mono.GetPixel(1, 1), 6);
-        }
+        MonochromeImage mono = new(image, MonochromeImage.RgbConvertMode.Average);
 
-        [Fact]
-        public void MultiLayerExr_IsWritten() {
-            RgbImage image = new(2, 2);
-            image.SetPixel(0, 0, new(1, 2, 3));
-            image.SetPixel(0, 1, new(3, 1, 2));
-            image.SetPixel(1, 0, new(3, 2, 1));
-            image.SetPixel(1, 1, new(2, 2, 2));
+        Assert.Equal(2, mono.GetPixel(0, 0), 6);
+        Assert.Equal(2, mono.GetPixel(0, 1), 6);
+        Assert.Equal(2, mono.GetPixel(1, 0), 6);
+        Assert.Equal(2, mono.GetPixel(1, 1), 6);
+    }
 
-            RgbImage otherImage = new(2, 2);
-            otherImage.SetPixel(0, 0, new(0, 0, 0));
-            otherImage.SetPixel(0, 1, new(0, 1, 0));
-            otherImage.SetPixel(1, 0, new(1, 0, 1));
-            otherImage.SetPixel(1, 1, new(1, 1, 1));
+    [Fact]
+    public void MultiLayerExr_IsWritten() {
+        RgbImage image = new(2, 2);
+        image.SetPixel(0, 0, new(1, 2, 3));
+        image.SetPixel(0, 1, new(3, 1, 2));
+        image.SetPixel(1, 0, new(3, 2, 1));
+        image.SetPixel(1, 1, new(2, 2, 2));
 
-            Layers.WriteToExr("layered.exr", ("albedo", image), ("normal", otherImage));
+        RgbImage otherImage = new(2, 2);
+        otherImage.SetPixel(0, 0, new(0, 0, 0));
+        otherImage.SetPixel(0, 1, new(0, 1, 0));
+        otherImage.SetPixel(1, 0, new(1, 0, 1));
+        otherImage.SetPixel(1, 1, new(1, 1, 1));
 
-            Assert.True(File.Exists("layered.exr"));
+        Layers.WriteToExr("layered.exr", ("albedo", image), ("normal", otherImage));
 
-            File.Delete("layered.exr");
-        }
+        Assert.True(File.Exists("layered.exr"));
 
-        [Fact]
-        public void MultiLayerExr_MonoAndRgb_IsWritten() {
-            RgbImage image = new(2, 2);
-            image.SetPixel(0, 0, new(1, 2, 3));
-            image.SetPixel(0, 1, new(3, 1, 2));
-            image.SetPixel(1, 0, new(3, 2, 1));
-            image.SetPixel(1, 1, new(2, 2, 2));
+        File.Delete("layered.exr");
+    }
 
-            MonochromeImage otherImage = new(2, 2);
-            otherImage.SetPixel(0, 0, 0);
-            otherImage.SetPixel(0, 1, 1);
-            otherImage.SetPixel(1, 0, 2);
-            otherImage.SetPixel(1, 1, 3);
+    [Fact]
+    public void MultiLayerExr_MonoAndRgb_IsWritten() {
+        RgbImage image = new(2, 2);
+        image.SetPixel(0, 0, new(1, 2, 3));
+        image.SetPixel(0, 1, new(3, 1, 2));
+        image.SetPixel(1, 0, new(3, 2, 1));
+        image.SetPixel(1, 1, new(2, 2, 2));
 
-            Layers.WriteToExr("layered.exr", ("albedo", image), ("normal", otherImage));
+        MonochromeImage otherImage = new(2, 2);
+        otherImage.SetPixel(0, 0, 0);
+        otherImage.SetPixel(0, 1, 1);
+        otherImage.SetPixel(1, 0, 2);
+        otherImage.SetPixel(1, 1, 3);
 
-            Assert.True(File.Exists("layered.exr"));
+        Layers.WriteToExr("layered.exr", ("albedo", image), ("normal", otherImage));
 
-            File.Delete("layered.exr");
-        }
+        Assert.True(File.Exists("layered.exr"));
 
-        [Fact]
-        public void MultiLayerExr_ReadDefault() {
-            RgbImage image = new(2, 2);
-            image.SetPixel(0, 0, new(1, 2, 3));
-            image.SetPixel(0, 1, new(3, 1, 2));
-            image.SetPixel(1, 0, new(3, 2, 1));
-            image.SetPixel(1, 1, new(2, 2, 2));
+        File.Delete("layered.exr");
+    }
 
-            RgbImage otherImage = new(2, 2);
-            otherImage.SetPixel(0, 0, new(0, 0, 0));
-            otherImage.SetPixel(0, 1, new(0, 1, 0));
-            otherImage.SetPixel(1, 0, new(1, 0, 1));
-            otherImage.SetPixel(1, 1, new(1, 1, 1));
+    [Fact]
+    public void MultiLayerExr_ReadDefault() {
+        RgbImage image = new(2, 2);
+        image.SetPixel(0, 0, new(1, 2, 3));
+        image.SetPixel(0, 1, new(3, 1, 2));
+        image.SetPixel(1, 0, new(3, 2, 1));
+        image.SetPixel(1, 1, new(2, 2, 2));
 
-            Layers.WriteToExr("layered.exr", ("", image), ("normal", otherImage));
+        RgbImage otherImage = new(2, 2);
+        otherImage.SetPixel(0, 0, new(0, 0, 0));
+        otherImage.SetPixel(0, 1, new(0, 1, 0));
+        otherImage.SetPixel(1, 0, new(1, 0, 1));
+        otherImage.SetPixel(1, 1, new(1, 1, 1));
 
-            RgbImage def = new("layered.exr");
-            Assert.Equal(image.GetPixel(0, 0), def.GetPixel(0, 0));
-            Assert.Equal(image.GetPixel(0, 1), def.GetPixel(0, 1));
-            Assert.Equal(image.GetPixel(1, 0), def.GetPixel(1, 0));
-            Assert.Equal(image.GetPixel(1, 1), def.GetPixel(1, 1));
+        Layers.WriteToExr("layered.exr", ("", image), ("normal", otherImage));
 
-            File.Delete("layered.exr");
-        }
+        RgbImage def = new("layered.exr");
+        Assert.Equal(image.GetPixel(0, 0), def.GetPixel(0, 0));
+        Assert.Equal(image.GetPixel(0, 1), def.GetPixel(0, 1));
+        Assert.Equal(image.GetPixel(1, 0), def.GetPixel(1, 0));
+        Assert.Equal(image.GetPixel(1, 1), def.GetPixel(1, 1));
 
-        [Fact]
-        public void MultiLayerExr_WriteThenRead() {
-            RgbImage image = new(2, 2);
-            image.SetPixel(0, 0, new(1, 2, 3));
-            image.SetPixel(0, 1, new(3, 1, 2));
-            image.SetPixel(1, 0, new(3, 2, 1));
-            image.SetPixel(1, 1, new(2, 2, 2));
+        File.Delete("layered.exr");
+    }
 
-            RgbImage otherImage = new(2, 2);
-            otherImage.SetPixel(0, 0, new(0, 0, 0));
-            otherImage.SetPixel(0, 1, new(0, 1, 0));
-            otherImage.SetPixel(1, 0, new(1, 0, 1));
-            otherImage.SetPixel(1, 1, new(1, 1, 1));
+    [Fact]
+    public void MultiLayerExr_WriteThenRead() {
+        RgbImage image = new(2, 2);
+        image.SetPixel(0, 0, new(1, 2, 3));
+        image.SetPixel(0, 1, new(3, 1, 2));
+        image.SetPixel(1, 0, new(3, 2, 1));
+        image.SetPixel(1, 1, new(2, 2, 2));
 
-            MonochromeImage thirdImage = new(2, 2);
-            thirdImage.SetPixel(0, 0, 1);
-            thirdImage.SetPixel(0, 1, 0.5f);
-            thirdImage.SetPixel(1, 0, 0.1f);
-            thirdImage.SetPixel(1, 1, 0.01f);
+        RgbImage otherImage = new(2, 2);
+        otherImage.SetPixel(0, 0, new(0, 0, 0));
+        otherImage.SetPixel(0, 1, new(0, 1, 0));
+        otherImage.SetPixel(1, 0, new(1, 0, 1));
+        otherImage.SetPixel(1, 1, new(1, 1, 1));
 
-            Layers.WriteToExr("layered.exr",
-                ("normal", otherImage), ("depth", thirdImage), ("", image));
-            var layers = Layers.LoadFromFile("layered.exr");
+        MonochromeImage thirdImage = new(2, 2);
+        thirdImage.SetPixel(0, 0, 1);
+        thirdImage.SetPixel(0, 1, 0.5f);
+        thirdImage.SetPixel(1, 0, 0.1f);
+        thirdImage.SetPixel(1, 1, 0.01f);
 
-            RgbImage def = RgbImage.StealData(layers[""]);
-            Assert.Equal(image.GetPixel(0, 0), def.GetPixel(0, 0));
-            Assert.Equal(image.GetPixel(0, 1), def.GetPixel(0, 1));
-            Assert.Equal(image.GetPixel(1, 0), def.GetPixel(1, 0));
-            Assert.Equal(image.GetPixel(1, 1), def.GetPixel(1, 1));
+        Layers.WriteToExr("layered.exr",
+            ("normal", otherImage), ("depth", thirdImage), ("", image));
+        var layers = Layers.LoadFromFile("layered.exr");
 
-            RgbImage other = RgbImage.StealData(layers["normal"]);
-            Assert.Equal(otherImage.GetPixel(0, 0), other.GetPixel(0, 0));
-            Assert.Equal(otherImage.GetPixel(0, 1), other.GetPixel(0, 1));
-            Assert.Equal(otherImage.GetPixel(1, 0), other.GetPixel(1, 0));
-            Assert.Equal(otherImage.GetPixel(1, 1), other.GetPixel(1, 1));
+        RgbImage def = RgbImage.StealData(layers[""]);
+        Assert.Equal(image.GetPixel(0, 0), def.GetPixel(0, 0));
+        Assert.Equal(image.GetPixel(0, 1), def.GetPixel(0, 1));
+        Assert.Equal(image.GetPixel(1, 0), def.GetPixel(1, 0));
+        Assert.Equal(image.GetPixel(1, 1), def.GetPixel(1, 1));
 
-            MonochromeImage yetAnother = MonochromeImage.StealData(layers["depth"]);
-            Assert.Equal(thirdImage.GetPixel(0, 0), yetAnother.GetPixel(0, 0));
-            Assert.Equal(thirdImage.GetPixel(0, 1), yetAnother.GetPixel(0, 1));
-            Assert.Equal(thirdImage.GetPixel(1, 0), yetAnother.GetPixel(1, 0));
-            Assert.Equal(thirdImage.GetPixel(1, 1), yetAnother.GetPixel(1, 1));
+        RgbImage other = RgbImage.StealData(layers["normal"]);
+        Assert.Equal(otherImage.GetPixel(0, 0), other.GetPixel(0, 0));
+        Assert.Equal(otherImage.GetPixel(0, 1), other.GetPixel(0, 1));
+        Assert.Equal(otherImage.GetPixel(1, 0), other.GetPixel(1, 0));
+        Assert.Equal(otherImage.GetPixel(1, 1), other.GetPixel(1, 1));
 
-            File.Delete("layered.exr");
-        }
+        MonochromeImage yetAnother = MonochromeImage.StealData(layers["depth"]);
+        Assert.Equal(thirdImage.GetPixel(0, 0), yetAnother.GetPixel(0, 0));
+        Assert.Equal(thirdImage.GetPixel(0, 1), yetAnother.GetPixel(0, 1));
+        Assert.Equal(thirdImage.GetPixel(1, 0), yetAnother.GetPixel(1, 0));
+        Assert.Equal(thirdImage.GetPixel(1, 1), yetAnother.GetPixel(1, 1));
+
+        File.Delete("layered.exr");
+    }
+
+    [Fact]
+    public void MultiLayerExr_NamesReadCorrectly() {
+        RgbImage image = new(2, 2);
+        MonochromeImage otherImage = new(2, 2);
+
+        Layers.WriteToExr("namedlayers.exr", ("first", image), ("second", otherImage), ("third", image));
+
+        Assert.True(File.Exists("namedlayers.exr"));
+
+        var names = Layers.GetLayerNames("namedlayers.exr");
+
+        Assert.Equal(3, names.Count());
+        Assert.Contains("first", names);
+        Assert.Contains("second", names);
+        Assert.Contains("third", names);
+
+        File.Delete("namedlayers.exr");
     }
 }
