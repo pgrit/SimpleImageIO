@@ -242,33 +242,17 @@ function redrawMagnifier(container) {
     table.children().remove();
 
     let activeImage = flipBookImages.get(container)[curImageIdx.get(container) - 1];
-
-    var canvas, pixels, buffer, glOrder;
     let size = 2 * MagnifierResolution + 1;
-    if (activeImage instanceof HDRImage) {
-        canvas = activeImage.canvas;
-        pixels = activeImage.pixels instanceof Float32Array ? activeImage.pixels : null;
 
-        let gl = canvas.getContext('webgl2');
-        buffer = new Uint8Array(size * size * 4);
-        gl.readPixels(state.col - MagnifierResolution, canvas.height - state.row - MagnifierResolution - 1,
-            size, size, gl.RGBA, gl.UNSIGNED_BYTE, buffer);
+    let canvas = activeImage.canvas;
+    let pixels = activeImage.pixels instanceof Float32Array ? activeImage.pixels : null;
+    let ctx = canvas.getContext('2d');
+    let buffer = ctx.getImageData(state.col - MagnifierResolution, state.row - MagnifierResolution,
+        size, size).data;
 
-        glOrder = true;
-    } else {
-        canvas = activeImage;
-        pixels = null;
-
-        let ctx = canvas.getContext('2d');
-        buffer = ctx.getImageData(state.col - MagnifierResolution, state.row - MagnifierResolution,
-            size, size).data;
-
-        glOrder = false;
-    }
-
-    let bufRow = glOrder ? size : -1;
+    let bufRow = -1;
     for (let row = state.row - MagnifierResolution; row <= state.row + MagnifierResolution; ++row) {
-        if (glOrder) bufRow--; else bufRow++;
+        bufRow++;
         if (row < 0 || row >= canvas.height) continue;
 
         table.append("<tr></tr>");
@@ -494,9 +478,9 @@ function makeImages(flipbook, rawPixels, initialTMO) {
 }
 
 function renderImage(canvas, pixels, toneMapCode) {
-    const gl = canvas.getContext("webgl2", {
-        preserveDrawingBuffer: true
-    });
+    const offscreen = new OffscreenCanvas(canvas.width, canvas.height);
+    const gl = offscreen.getContext("webgl2");
+
     if (gl === null) {
         alert("Unable to initialize WebGL. Your browser or machine may not support it.");
         return;
@@ -671,6 +655,9 @@ function renderImage(canvas, pixels, toneMapCode) {
     gl.enableVertexAttribArray(attribLocations.textureCoord);
 
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(offscreen.transferToImageBitmap(), 0, 0);
 }
 
 var lastFlipIdx = 0;
@@ -820,8 +807,6 @@ async function readRGBHalf(url) {
                 buffer[i] = (255 << 23 | (sign << 31)) >>> 0;
             else
                 buffer[i] = ((1 << 13) | 255 << 23 | (1 << 31)) >>> 0;
-            console.log("got a nan / inf: ");
-            console.log(mantissa)
         } else {
             buffer[i] = ((mantissa << 13) | (exponent - 15 + 127) << 23 | (sign << 31)) >>> 0;
         }
