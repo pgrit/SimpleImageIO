@@ -156,6 +156,21 @@ public class ImageDataSet {
         .ToDictionary(group => group.Key, group => group.First().Images[imageName].Image);
 
     /// <summary>
+    /// Retrieves all images with the same name and identical first and second path component. Grouped by the third
+    /// path component. If no third path component exists, or the grouping is not unique, those images
+    /// are ignored.
+    /// </summary>
+    /// <param name="firstComponent">The common path component</param>
+    /// <param name="imageName">Name of the image</param>
+    public Dictionary<string, Image> GetImages(string firstComponent, string secondComponent, string imageName)
+    => Data
+        .Where(x => x.Path.Length > 2 && x.Path[0] == firstComponent && x.Path[1] == secondComponent)
+        .Where(x => x.Images.ContainsKey(imageName))
+        .GroupBy(x => x.Path[2])
+        .Where(group => group.Count() == 1)
+        .ToDictionary(group => group.Key, group => group.First().Images[imageName].Image);
+
+    /// <summary>
     /// Retrieves all images with the same name, grouped by the first path component. Returns only unique
     /// images. If duplicates exist (i.e., same first path component and image name across multiple entries),
     /// then ALL duplicated images are ignored.
