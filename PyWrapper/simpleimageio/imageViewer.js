@@ -272,14 +272,18 @@ function redrawMagnifier(container) {
             let clrB = buffer[(bufRow * size + bufCol) * 4 + 2];
 
             let r, g, b;
-            if (pixels === null) {
-                r = clrR / 255;
-                g = clrG / 255;
-                b = clrB / 255;
-            } else {
+            if (activeImage.pixels instanceof ImageData) {
+                r = activeImage.pixels.data[4 * (row * canvas.width + col) + 0] / 255;
+                g = activeImage.pixels.data[4 * (row * canvas.width + col) + 1] / 255;
+                b = activeImage.pixels.data[4 * (row * canvas.width + col) + 2] / 255;
+            } else if (activeImage.pixels instanceof Float32Array) {
                 r = activeImage.pixels[3 * (row * canvas.width + col) + 0];
                 g = activeImage.pixels[3 * (row * canvas.width + col) + 1];
                 b = activeImage.pixels[3 * (row * canvas.width + col) + 2];
+            } else {
+                r = clrR / 255;
+                g = clrG / 255;
+                b = clrB / 255;
             }
 
             tr.append(`
@@ -384,17 +388,20 @@ function makeImages(flipbook, rawPixels, initialTMO) {
     let images = []
     for (let i = 0; i < rawPixels.length; ++i) {
         let pixels = rawPixels[i];
-
         let canvas = $(flipbook).find(`.image-${i + 1}`)
 
-        if (canvas.hasClass('ldr')) {
-            images.push(canvas[0])
-        } else {
-            images.push(new HDRImage(pixels, canvas[0], container));
+        // Convert image element to ImageData object so we can access its pixel values directly
+        if (pixels instanceof HTMLImageElement) {
+            const offscreen = new OffscreenCanvas(pixels.naturalWidth, pixels.naturalHeight);
+            const ctx = offscreen.getContext('2d');
+            ctx.drawImage(pixels, 0, 0);
+            pixels = ctx.getImageData(0, 0, pixels.naturalWidth, pixels.naturalHeight);
         }
+
+        images.push(new HDRImage(pixels, canvas[0], container));
     }
     function apply(fn) {
-        images.forEach(img => { if (img instanceof HDRImage) img.apply(fn); });
+        images.forEach(img => img.apply(fn));
     }
 
     flipBookImages.set(container, images);
@@ -629,7 +636,7 @@ function renderImage(canvas, pixels, toneMapCode) {
     if (pixels instanceof Float32Array) {
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, canvas.width, canvas.height, 0, gl.RGB, gl.FLOAT, new Float32Array(pixels));
         isLdr = false;
-    } else if (pixels instanceof Image) {
+    } else if (pixels instanceof ImageData) {
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, canvas.width, canvas.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
         isLdr = true;
     } else {
@@ -723,18 +730,9 @@ rgb = pow(2.0, -3.0) * rgb + 0.5 * vec3(gl_FragCoord / 1000.0);
         methodList.append(`
             <button class='method-label method-${i+1}'><span class='method-key'>${i+1}</span> ${names[i]}</button>
         `);
-        // if (images[i] instanceof Image) { // LDR image in the form of a src string
-        //     imageList.append(`
-        //         <canvas draggable='false' class='image image-${i+1} ldr' width="${width}" height="${height}"></canvas>
-        //     `);
-        //     let canvas = imageList.find(`.image-${i + 1}`)[0];
-        //     let ctx = canvas.getContext('2d', { willReadFrequently: true });
-        //     ctx.drawImage(images[i], 0, 0);
-        // } else {
-            imageList.append(`
-                <canvas draggable='false' class='image image-${i+1}' width="${width}" height="${height}"></canvas>
-            `);
-        // }
+        imageList.append(`
+            <canvas draggable='false' class='image image-${i+1}' width="${width}" height="${height}"></canvas>
+        `);
     }
 
     initImageViewers(flipbook[0], width, height, initialZoom);
