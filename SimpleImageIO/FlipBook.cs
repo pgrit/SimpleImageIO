@@ -223,10 +223,9 @@ public class FlipBook
             RgbImage rgbImage = img.Image switch {
                 MonochromeImage mono => new RgbImage(mono),
                 RgbImage rgb => rgb,
-                Image otherImg =>
-                    otherImg.NumChannels == 3 ?
-                    RgbImage.StealData(otherImg.Copy()) :
-                    throw new ArgumentException($"Unsupported image type")
+                { NumChannels: 3 } => RgbImage.StealData(img.Image),
+                { NumChannels: 1 } => new RgbImage(MonochromeImage.StealData(img.Image)),
+                _ => throw new ArgumentException($"Unsupported image type")
             };
 
             string imgData = img.TargetType switch {
