@@ -323,20 +323,14 @@ function hideMagnifier(container) {
 
 function computeZoomScale(container, evt, left, top) {
     const ScrollSpeed = 0.25;
-    const MaxScale = 1000;
+    const MaxScale = 20;
     const MinScale = 0.05;
 
-    var direction = evt.wheelDeltaY < 0 ? 1 : -1;
-    var factor = 1.0 - direction * ScrollSpeed;
+    const oldScale = zoomLevels.get(container);
+    const scale = oldScale * (1 + Math.sign(evt.wheelDeltaY) * ScrollSpeed);
+    const factor = scale / oldScale;
 
-    var scale = zoomLevels.get(container);
-    if (scale * factor > MaxScale) {
-        return;
-    }
-    else if (scale * factor < MinScale) {
-        return;
-    }
-    scale *= factor;
+    if (scale > MaxScale || scale < MinScale) return;
 
     // Adjust the position of the top left corner, so we get a scale pivot at the mouse cursor.
     var relX = evt.offsetX - left;
