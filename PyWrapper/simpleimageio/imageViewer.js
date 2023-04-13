@@ -1,4 +1,4 @@
-// globals that track the position and zoom operations
+// globals that track states and data of all images and views
 var dragTarget = null;
 var dragXStart = 0;
 var dragYStart = 0;
@@ -6,6 +6,7 @@ var zoomLevels = new Map();
 var positions = new Map();
 var curImageIdx = new Map();
 var magnifierStates = new Map();
+var flipBookImages = new Map();
 
 var wheelOpt = false;
 try {
@@ -383,8 +384,6 @@ class HDRImage {
     }
 }
 
-var flipBookImages = new Map();
-
 function makeImages(flipbook, rawPixels, initialTMO) {
     let container = $(flipbook).find(".image-container")[0];
 
@@ -752,6 +751,20 @@ rgb = pow(2.0, -3.0) * rgb + 0.5 * vec3(gl_FragCoord / 1000.0);
 
     initImageViewers(flipbook[0], width, height, initialZoom);
     makeImages(flipbook[0], images, initialTMO);
+    freeOnRemoval(flipbook[0]);
+}
+
+function freeOnRemoval(flipbook) {
+    var container = flipbook.getElementsByClassName("image-container")[0];
+    new MutationObserver(_ => {
+        if (!document.body.contains(flipbook) || !document.body.contains(container)) {
+            zoomLevels.delete(container);
+            positions.delete(container);
+            curImageIdx.delete(container);
+            magnifierStates.delete(container);
+            flipBookImages.delete(container);
+        }
+    }).observe(document.body, {childList: true, subtree: true});
 }
 
 function copyImage(flipIdx) {
