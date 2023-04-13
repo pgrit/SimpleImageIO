@@ -31,16 +31,13 @@ public class LazyImage {
     /// </summary>
     public Image Image {
         get {
-            if (image != null) return image;
-
             if (layerName != null) {
-                image = Layers.LoadFromFile(path)[layerName];
+                image ??= Layers.LoadFromFile(path)[layerName];
             } else {
-                Image img = new(path);
-                image = img.NumChannels switch {
-                    3 => RgbImage.StealData(img),
-                    1 => MonochromeImage.StealData(img),
-                    _ => img
+                image ??= new Image(path) switch {
+                    Image { NumChannels: 3} img => RgbImage.StealData(img),
+                    Image { NumChannels: 1} img => MonochromeImage.StealData(img),
+                    Image img => img
                 };
             }
 
