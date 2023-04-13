@@ -54,7 +54,7 @@ public unsafe class Image : IDisposable {
         return false;
     }
 
-    private float* dataPtr {
+    internal float* dataPtr {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => (float*)DataPointer.ToPointer();
     }

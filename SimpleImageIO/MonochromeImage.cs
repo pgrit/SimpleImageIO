@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace SimpleImageIO;
 
 /// <summary>
@@ -90,6 +92,16 @@ public class MonochromeImage : Image {
         else
             SimpleImageIOCore.RgbToMonoLuminance(image.DataPointer, 3 * image.Width, DataPointer, Width,
                 Width, Height, 3);
+    }
+
+    public unsafe MonochromeImage(Image image) : base(image.Width, image.Height, 1) {
+        if (image.NumChannels == 1)
+            Unsafe.CopyBlock(dataPtr, image.dataPtr, (uint)(Width * Height * NumChannels * sizeof(float)));
+        else if (image.NumChannels == 3)
+            SimpleImageIOCore.RgbToMonoAverage(image.DataPointer, 3 * image.Width, DataPointer, Width,
+                Width, Height, 3);
+        else
+            throw new ArgumentException($"Unsupported number of channels in image: {image.NumChannels}");
     }
 
     /// <summary>

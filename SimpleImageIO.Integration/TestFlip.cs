@@ -34,7 +34,7 @@ static class TestFlip {
         RgbImage reference = new("Data/Reference.exr");
         RgbImage denom = reference * reference + 0.01f;
         var f3 = new FlipBook(900, 800)
-            .Add("PT", (pt - reference).Squared() / denom)
+            .Add("PT", new MonochromeImage((pt - reference).Squared() / denom))
             .Add("BDPT", (bdpt - reference).Squared() / denom, FlipBook.DataType.LDR_JPEG)
             .Add("VCM", (vcm - reference).Squared() / denom)
             .WithToneMapper(FlipBook.InitialTMO.FalseColor(0.0f, 0.1f));
