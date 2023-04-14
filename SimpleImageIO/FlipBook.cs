@@ -159,13 +159,12 @@ public class FlipBook
     static string CompressImageAsJPEG(Image img, int quality = 90)
     => "data:image/jpeg;base64," + Convert.ToBase64String(img.WriteToMemory(".jpg", quality));
 
-    static string MakeComparisonHtml(int width, int height, int htmlWidth, int htmlHeight,
-                                     IEnumerable<(string Name, DataType type, string EncodedData)> images,
-                                     InitialZoom initialZoom, InitialTMO initialTMO)
+    static (string Html, string Script) MakeComparisonHtml(int width, int height, int htmlWidth, int htmlHeight,
+                                                           IEnumerable<(string Name, DataType type, string EncodedData)> images,
+                                                           InitialZoom initialZoom, InitialTMO initialTMO)
     {
-        StringBuilder html = new();
         string id = "flipbook-" + Guid.NewGuid().ToString();
-        html.AppendLine($"<div class='flipbook' id='{id}' style='width:{htmlWidth}px; height:{htmlHeight}px;'>");
+        string html = $"<div class='flipbook' id='{id}' style='width:{htmlWidth}px; height:{htmlHeight}px;'></div>";
 
         List<string> dataStrs = new();
         List<string> nameStrs = new();
@@ -191,8 +190,7 @@ public class FlipBook
             initialTMOStr = JsonSerializer.Serialize(initialTMO);
         }
 
-        html.AppendLine($$"""
-        <script>
+        string js = $$"""
         {
             let images = Promise.all([{{string.Join(',', dataStrs)}}]);
             images.then(values =>
@@ -200,15 +198,14 @@ public class FlipBook
                             {{initialZoomStr}}, {{initialTMOStr}})
             );
         }
-        </script>
-        """);
+        """;
 
-        html.AppendLine("</div>");
-        return html.ToString();
+        return (html, js);
     }
 
-    static string MakeHelper<T>(int htmlWidth, int htmlHeight, IEnumerable<(string Name, T Image, DataType TargetType)> images,
-                                InitialZoom initialZoom, InitialTMO initialTMO)
+    static (string Html, string Script) MakeHelper<T>(int htmlWidth, int htmlHeight,
+                                                      IEnumerable<(string Name, T Image, DataType TargetType)> images,
+                                                      InitialZoom initialZoom, InitialTMO initialTMO)
     where T : Image
     {
         var data = new List<(string, DataType, string)>();
@@ -244,15 +241,20 @@ public class FlipBook
     /// if this is added multiple times or in arbitrary locations (i.e., inside the &lt;body&gt; works fine, too).
     /// </summary>
     /// <returns>HTML code as a string</returns>
-    public static string Header {
-        get {
-            string html = "";
-            html += "<script>" + ReadResourceText("jquery-3.6.4.min.js") + "</script>";
-            html += "<script>" + ReadResourceText("imageViewer.js") + "</script>";
-            html += "<style>" + ReadResourceText("style.css") + "</style>";
-            return html;
-        }
-    }
+    public static string Header
+    => $"<script>{HeaderScript}</script><style>{HeaderStyle}</style>";
+
+    /// <summary>
+    /// The JavaScript that should be in the header of the generated HTML code.
+    /// </summary>
+    public static string HeaderScript
+    => ReadResourceText("jquery-3.6.4.min.js") + "\n" + ReadResourceText("imageViewer.js");
+
+    /// <summary>
+    /// The CSS style for the flip book
+    /// </summary>
+    public static string HeaderStyle
+    => ReadResourceText("style.css");
 
     List<(string Name, Image Image, DataType targetType)> images = new();
     int htmlWidth;
@@ -355,10 +357,19 @@ public class FlipBook
     public static implicit operator string(FlipBook flipbook) => flipbook.ToString();
 
     /// <summary>
-    /// Generates the HTML code for the flip book with the current set of images
+    /// Generates the flipbook (<see cref="Generate()"/>) and combines the HTML and JS code into one HTML string.
     /// </summary>
     /// <returns>HTML code</returns>
-    public override string ToString() => MakeHelper(htmlWidth, htmlHeight, images, initialZoom, initialTMO);
+    public override string ToString() {
+        var (html, js) = Generate();
+        return html + $"<script>{js}</script>";
+    }
+
+    /// <summary>
+    /// Generates the HTML and JS for the flip book and returns them separately.
+    /// </summary>
+    public (string Html, string Script) Generate()
+    => MakeHelper(htmlWidth, htmlHeight, images, initialZoom, initialTMO);
 
     /// <summary>
     /// Creates a flip book out of a dictionary of named images

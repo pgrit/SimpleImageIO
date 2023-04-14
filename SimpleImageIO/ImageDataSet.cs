@@ -160,7 +160,8 @@ public class ImageDataSet {
     /// path component. If no third path component exists, or the grouping is not unique, those images
     /// are ignored.
     /// </summary>
-    /// <param name="firstComponent">The common path component</param>
+    /// <param name="firstComponent">The common first path component</param>
+    /// <param name="secondComponent">The common second path component</param>
     /// <param name="imageName">Name of the image</param>
     public Dictionary<string, Image> GetImages(string firstComponent, string secondComponent, string imageName)
     => Data
