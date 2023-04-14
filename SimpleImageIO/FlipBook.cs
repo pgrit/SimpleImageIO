@@ -118,24 +118,26 @@ public class FlipBook
         };
     }
 
-    unsafe static string CompressImageAsRGBE(RgbImage img) {
+    unsafe static string CompressImageAsRGBE(Image img) {
+        Debug.Assert(img.NumChannels == 3);
+
         List<byte> rgbeBytes = new();
         for (int row = 0; row < img.Height; ++row) {
             for (int col = 0; col < img.Width; ++col) {
-                RGBE clr = img[col, row];
+                RGBE clr = new RgbColor(img[col, row, 0], img[col, row, 1], img[col, row, 2]);
                 rgbeBytes.AddRange(new[] { clr.R, clr.G, clr.B, clr.E });
             }
         }
         return "data:;base64," + Convert.ToBase64String(rgbeBytes.ToArray());
     }
 
-    unsafe static string CompressImageAsRGB(RgbImage img) {
+    unsafe static string WriteImageAsFloat32(Image img) {
         var bytePtr = (byte*)img.DataPointer.ToPointer();
         Span<byte> bytes = new(bytePtr, img.Width * img.Height * img.NumChannels * sizeof(float));
         return "data:;base64," + Convert.ToBase64String(bytes.ToArray());
     }
 
-    unsafe static string CompressImageAsRGBHalf(RgbImage img) {
+    unsafe static string WriteImageAsFloat16(Image img) {
         var bytes = new List<byte>();
         void AddHalf(float v) {
             ushort bits = BitConverter.HalfToUInt16Bits((Half)v);
@@ -144,27 +146,25 @@ public class FlipBook
         }
         for (int row = 0; row < img.Height; ++row) {
             for (int col = 0; col < img.Width; ++col) {
-                AddHalf(img[col, row].R);
-                AddHalf(img[col, row].G);
-                AddHalf(img[col, row].B);
+                for (int chan = 0; chan < img.NumChannels; ++chan)
+                    AddHalf(img[col, row, chan]);
             }
         }
         return "data:;base64," + Convert.ToBase64String(bytes.ToArray());
     }
 
-    static string CompressImageAsPNG(RgbImage img)
+    static string CompressImageAsPNG(Image img)
     => "data:image/png;base64," + img.AsBase64Png();
 
-    static string CompressImageAsJPEG(RgbImage img, int quality = 90)
+    static string CompressImageAsJPEG(Image img, int quality = 90)
     => "data:image/jpeg;base64," + Convert.ToBase64String(img.WriteToMemory(".jpg", quality));
 
-    static string MakeComparisonHtml(int width, int height, int htmlWidth, int htmlHeight,
-                                     IEnumerable<(string Name, DataType type, string EncodedData)> images,
-                                     InitialZoom initialZoom, InitialTMO initialTMO)
+    static (string Html, string Script) MakeComparisonHtml(int width, int height, int htmlWidth, int htmlHeight,
+                                                           IEnumerable<(string Name, DataType type, string EncodedData)> images,
+                                                           InitialZoom initialZoom, InitialTMO initialTMO)
     {
-        StringBuilder html = new();
         string id = "flipbook-" + Guid.NewGuid().ToString();
-        html.AppendLine($"<div class='flipbook' id='{id}' style='width:{htmlWidth}px; height:{htmlHeight}px;'>");
+        string html = $"<div class='flipbook' id='{id}' style='width:{htmlWidth}px; height:{htmlHeight}px;'></div>";
 
         List<string> dataStrs = new();
         List<string> nameStrs = new();
@@ -190,8 +190,7 @@ public class FlipBook
             initialTMOStr = JsonSerializer.Serialize(initialTMO);
         }
 
-        html.AppendLine($$"""
-        <script>
+        string js = $$"""
         {
             let images = Promise.all([{{string.Join(',', dataStrs)}}]);
             images.then(values =>
@@ -199,15 +198,14 @@ public class FlipBook
                             {{initialZoomStr}}, {{initialTMOStr}})
             );
         }
-        </script>
-        """);
+        """;
 
-        html.AppendLine("</div>");
-        return html.ToString();
+        return (html, js);
     }
 
-    static string MakeHelper<T>(int htmlWidth, int htmlHeight, IEnumerable<(string Name, T Image, DataType TargetType)> images,
-                                InitialZoom initialZoom, InitialTMO initialTMO)
+    static (string Html, string Script) MakeHelper<T>(int htmlWidth, int htmlHeight,
+                                                      IEnumerable<(string Name, T Image, DataType TargetType)> images,
+                                                      InitialZoom initialZoom, InitialTMO initialTMO)
     where T : Image
     {
         var data = new List<(string, DataType, string)>();
@@ -220,23 +218,17 @@ public class FlipBook
             } else if (width != img.Image.Width || height != img.Image.Height)
                 throw new ArgumentException("Image resolutions differ");
 
-            RgbImage rgbImage = img.Image switch {
-                MonochromeImage mono => new RgbImage(mono),
-                RgbImage rgb => rgb,
-                Image otherImg =>
-                    otherImg.NumChannels == 3 ?
-                    RgbImage.StealData(otherImg.Copy()) :
-                    throw new ArgumentException($"Unsupported image type")
-            };
+            var targetType = img.TargetType;
+            if (targetType == DataType.RGBE && img.Image.NumChannels != 3) targetType = DataType.RGB;
 
-            string imgData = img.TargetType switch {
-                DataType.RGB => CompressImageAsRGB(rgbImage),
-                DataType.RGBE => CompressImageAsRGBE(rgbImage),
-                DataType.LDR_PNG => CompressImageAsPNG(rgbImage),
-                DataType.RGB_HALF => CompressImageAsRGBHalf(rgbImage),
-                DataType quality => CompressImageAsJPEG(rgbImage, (int)quality)
+            string imgData = targetType switch {
+                DataType.RGB => WriteImageAsFloat32(img.Image),
+                DataType.RGBE => img.Image.NumChannels == 3 ? CompressImageAsRGBE(img.Image) : WriteImageAsFloat32(img.Image),
+                DataType.LDR_PNG => CompressImageAsPNG(img.Image),
+                DataType.RGB_HALF => WriteImageAsFloat16(img.Image),
+                DataType quality => CompressImageAsJPEG(img.Image, (int)quality)
             };
-            data.Add((img.Name, img.TargetType, imgData));
+            data.Add((img.Name, targetType, imgData));
         }
         return MakeComparisonHtml(width, height, htmlWidth, htmlHeight, data, initialZoom, initialTMO);
     }
@@ -249,15 +241,20 @@ public class FlipBook
     /// if this is added multiple times or in arbitrary locations (i.e., inside the &lt;body&gt; works fine, too).
     /// </summary>
     /// <returns>HTML code as a string</returns>
-    public static string Header {
-        get {
-            string html = "";
-            html += "<script>" + ReadResourceText("jquery-3.6.4.min.js") + "</script>";
-            html += "<script>" + ReadResourceText("imageViewer.js") + "</script>";
-            html += "<style>" + ReadResourceText("style.css") + "</style>";
-            return html;
-        }
-    }
+    public static string Header
+    => $"<script>{HeaderScript}</script><style>{HeaderStyle}</style>";
+
+    /// <summary>
+    /// The JavaScript that should be in the header of the generated HTML code.
+    /// </summary>
+    public static string HeaderScript
+    => ReadResourceText("jquery-3.6.4.min.js") + "\n" + ReadResourceText("imageViewer.js");
+
+    /// <summary>
+    /// The CSS style for the flip book
+    /// </summary>
+    public static string HeaderStyle
+    => ReadResourceText("style.css");
 
     List<(string Name, Image Image, DataType targetType)> images = new();
     int htmlWidth;
@@ -360,10 +357,19 @@ public class FlipBook
     public static implicit operator string(FlipBook flipbook) => flipbook.ToString();
 
     /// <summary>
-    /// Generates the HTML code for the flip book with the current set of images
+    /// Generates the flipbook (<see cref="Generate()"/>) and combines the HTML and JS code into one HTML string.
     /// </summary>
     /// <returns>HTML code</returns>
-    public override string ToString() => MakeHelper(htmlWidth, htmlHeight, images, initialZoom, initialTMO);
+    public override string ToString() {
+        var (html, js) = Generate();
+        return html + $"<script>{js}</script>";
+    }
+
+    /// <summary>
+    /// Generates the HTML and JS for the flip book and returns them separately.
+    /// </summary>
+    public (string Html, string Script) Generate()
+    => MakeHelper(htmlWidth, htmlHeight, images, initialZoom, initialTMO);
 
     /// <summary>
     /// Creates a flip book out of a dictionary of named images

@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace SimpleImageIO;
 
 /// <summary>
@@ -90,6 +92,30 @@ public class MonochromeImage : Image {
         else
             SimpleImageIOCore.RgbToMonoLuminance(image.DataPointer, 3 * image.Width, DataPointer, Width,
                 Width, Height, 3);
+    }
+
+    /// <summary>
+    /// Initializes a new monochrome image that is a copy of the given image with all color channels
+    /// averaged into one.
+    /// </summary>
+    /// <param name="image">An image with arbitrarily many channels</param>
+    public unsafe MonochromeImage(Image image) : base(image.Width, image.Height, 1) {
+        if (image.NumChannels == 1)
+            Unsafe.CopyBlock(dataPtr, image.dataPtr, (uint)(Width * Height * NumChannels * sizeof(float)));
+        else if (image.NumChannels == 3)
+            SimpleImageIOCore.RgbToMonoAverage(image.DataPointer, 3 * image.Width, DataPointer, Width,
+                Width, Height, 3);
+        else {
+            for (int row = 0; row < Height; ++row) {
+                for (int col = 0; col < Width; ++col) {
+                    float avg = 0.0f;
+                    for (int chan = 0; chan < image.NumChannels; ++chan) {
+                        avg += image[col, row, chan] / image.NumChannels;
+                    }
+                    this[col, row] = avg;
+                }
+            }
+        }
     }
 
     /// <summary>
