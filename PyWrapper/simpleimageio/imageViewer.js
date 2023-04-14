@@ -8,6 +8,26 @@ var curImageIdx = new Map();
 var magnifierStates = new Map();
 var flipBookImages = new Map();
 
+// Auto-delete the global state if a corresponding HTMLElement was removed from the DOM
+function addRemovalObserver() {
+    new MutationObserver(_ => {
+        flipBookImages.forEach((_1, container, _2) => {
+            if (!document.body.contains(container)) {
+                zoomLevels.delete(container);
+                positions.delete(container);
+                curImageIdx.delete(container);
+                magnifierStates.delete(container);
+                flipBookImages.delete(container);
+            }
+        });
+    }).observe(document.body, {childList: true, subtree: true});
+}
+
+if (document.readyState === "complete")
+    addRemovalObserver();
+else
+    addEventListener("load", (_) => addRemovalObserver());
+
 var wheelOpt = false;
 try {
     window.addEventListener("test", null, Object.defineProperty({}, 'passive', {
@@ -324,7 +344,7 @@ function hideMagnifier(container) {
 
 function computeZoomScale(container, evt, left, top) {
     const ScrollSpeed = 0.25;
-    const MaxScale = 20;
+    const MaxScale = 100;
     const MinScale = 0.05;
 
     const oldScale = zoomLevels.get(container);
@@ -751,20 +771,6 @@ rgb = pow(2.0, -3.0) * rgb + 0.5 * vec3(gl_FragCoord / 1000.0);
 
     initImageViewers(flipbook[0], width, height, initialZoom);
     makeImages(flipbook[0], images, initialTMO);
-    freeOnRemoval(flipbook[0]);
-}
-
-function freeOnRemoval(flipbook) {
-    var container = flipbook.getElementsByClassName("image-container")[0];
-    new MutationObserver(_ => {
-        if (!document.body.contains(flipbook) || !document.body.contains(container)) {
-            zoomLevels.delete(container);
-            positions.delete(container);
-            curImageIdx.delete(container);
-            magnifierStates.delete(container);
-            flipBookImages.delete(container);
-        }
-    }).observe(document.body, {childList: true, subtree: true});
 }
 
 function copyImage(flipIdx) {
