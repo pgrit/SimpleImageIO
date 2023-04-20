@@ -816,12 +816,12 @@ async function readRGBE(url) {
     return rgbdata;
 }
 
-async function readRGB(url) {
+async function readFloat(url) {
     const response = await fetch(url);
     return new Float32Array(await response.arrayBuffer());
 }
 
-async function readRGBHalf(url) {
+async function readHalf(url) {
     const response = await fetch(url);
     const f16 = new Uint16Array(await response.arrayBuffer());
 
@@ -848,8 +848,32 @@ async function readRGBHalf(url) {
     return new Float32Array(buffer.buffer);
 }
 
-async function readLDR(base64) {
+async function readLDR(url) {
     let img = new Image();
-    img.src = base64;
+    img.src = url;
     return img;
+}
+
+async function makeFlipFromUrls(flipData) {
+    var data = flipData;
+    if (typeof flipData === "string") {
+        data = JSON.parse(flipData);
+    }
+
+    work = [];
+    for (let i = 0; i < data.dataUrls.length; ++i) {
+        let loadFn;
+        if (data.types[i] === "float") loadFn = readFloat;
+        else if (data.types[i] === "half") loadFn = readHalf;
+        else if (data.types[i] === "rgbe") loadFn = readRGBE;
+        else if (data.types[i] === "ldr") loadFn = readLDR;
+        else console.error(`unsupported type: ${data.types[i]}`);
+
+        work.push(loadFn(data.dataUrls[i]));
+    }
+
+    await Promise.all(work).then(values =>
+        AddFlipBook($(`#${data.elementId}`), data.names, values, data.width, data.height,
+                    data.initialZoom, data.initialTMO)
+    );
 }

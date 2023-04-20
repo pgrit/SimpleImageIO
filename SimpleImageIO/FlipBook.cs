@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
@@ -118,6 +119,8 @@ public class FlipBook
         };
     }
 
+    public record struct GeneratedCode(string Html, string Data, string ScriptFn, string Id) { }
+
     unsafe static string CompressImageAsRGBE(Image img) {
         Debug.Assert(img.NumChannels == 3);
 
@@ -159,30 +162,32 @@ public class FlipBook
     static string CompressImageAsJPEG(Image img, int quality = 90)
     => "data:image/jpeg;base64," + Convert.ToBase64String(img.WriteToMemory(".jpg", quality));
 
-    static (string Html, string Script) MakeComparisonHtml(int width, int height, int htmlWidth, int htmlHeight,
-                                                           IEnumerable<(string Name, DataType type, string EncodedData)> images,
-                                                           InitialZoom initialZoom, InitialTMO initialTMO)
+    static GeneratedCode MakeComparisonHtml(int width, int height, int htmlWidth, int htmlHeight,
+                                            IEnumerable<(string Name, DataType type, string EncodedData)> images,
+                                            InitialZoom initialZoom, InitialTMO initialTMO)
     {
         string id = "flipbook-" + Guid.NewGuid().ToString();
         string html = $"<div class='flipbook' id='{id}' style='width:{htmlWidth}px; height:{htmlHeight}px;'></div>";
 
         List<string> dataStrs = new();
+        List<string> typeStrs = new();
         List<string> nameStrs = new();
         foreach (var (name, type, url) in images) {
             string t = type switch {
-                DataType.RGB => "RGB",
-                DataType.RGBE => "RGBE",
-                DataType.RGB_HALF => "RGBHalf",
-                _ => "LDR"
+                DataType.RGB => "float",
+                DataType.RGBE => "rgbe",
+                DataType.RGB_HALF => "half",
+                _ => "ldr"
             };
-            dataStrs.Add($"read{t}('{url}')");
-            nameStrs.Add($"'{name}'");
+            dataStrs.Add(url);
+            typeStrs.Add(t);
+            nameStrs.Add(name);
         }
 
         string initialZoomStr = initialZoom switch {
-            InitialZoom.FillHeight => "'fill_height'",
-            InitialZoom.FillWidth => "'fill_width'",
-            _ => "'fit'",
+            InitialZoom.FillHeight => "fill_height",
+            InitialZoom.FillWidth => "fill_width",
+            _ => "fit",
         };
 
         string initialTMOStr = "null";
@@ -190,22 +195,25 @@ public class FlipBook
             initialTMOStr = JsonSerializer.Serialize(initialTMO);
         }
 
-        string js = $$"""
+        string json = $$"""
         {
-            let images = Promise.all([{{string.Join(',', dataStrs)}}]);
-            images.then(values =>
-                AddFlipBook($("#{{id}}"), [{{string.Join(',', nameStrs)}}], values, {{width}}, {{height}},
-                            {{initialZoomStr}}, {{initialTMOStr}})
-            );
+            "width": {{width}},
+            "height": {{height}},
+            "elementId": "{{id}}",
+            "initialZoom": "{{initialZoomStr}}",
+            "initialTMO": {{initialTMOStr}},
+            "names": [{{string.Join(',', nameStrs.Select(n => $"\"{n}\""))}}],
+            "dataUrls": [{{string.Join(',', dataStrs.Select(n => $"\"{n}\""))}}],
+            "types": [{{string.Join(',', typeStrs.Select(n => $"\"{n}\""))}}]
         }
         """;
 
-        return (html, js);
+        return new(html, json, "makeFlipFromUrls", id);
     }
 
-    static (string Html, string Script) MakeHelper<T>(int htmlWidth, int htmlHeight,
-                                                      IEnumerable<(string Name, T Image, DataType TargetType)> images,
-                                                      InitialZoom initialZoom, InitialTMO initialTMO)
+    static GeneratedCode MakeHelper<T>(int htmlWidth, int htmlHeight,
+                                       IEnumerable<(string Name, T Image, DataType TargetType)> images,
+                                       InitialZoom initialZoom, InitialTMO initialTMO)
     where T : Image
     {
         var data = new List<(string, DataType, string)>();
@@ -361,15 +369,14 @@ public class FlipBook
     /// </summary>
     /// <returns>HTML code</returns>
     public override string ToString() {
-        var (html, js) = Generate();
-        return html + $"<script>{js}</script>";
+        var code = Generate();
+        return code.Html + $"<script>{code.ScriptFn}({code.Data});</script>";
     }
 
     /// <summary>
     /// Generates the HTML and JS for the flip book and returns them separately.
     /// </summary>
-    public (string Html, string Script) Generate()
-    => MakeHelper(htmlWidth, htmlHeight, images, initialZoom, initialTMO);
+    public GeneratedCode Generate() => MakeHelper(htmlWidth, htmlHeight, images, initialZoom, initialTMO);
 
     /// <summary>
     /// Creates a flip book out of a dictionary of named images
