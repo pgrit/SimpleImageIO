@@ -119,6 +119,13 @@ public class FlipBook
         };
     }
 
+    /// <summary>
+    /// Stores the generated HTML and JS code and data for a flip viewer
+    /// </summary>
+    /// <param name="Html">The HTML element that will host the flip book</param>
+    /// <param name="Data">JSON / JavaScript object with the image data</param>
+    /// <param name="ScriptFn">Name of the JS script that should be run with <see cref="Data"/> as argument</param>
+    /// <param name="Id">ID of the HTML element defined in <see cref="Html"/></param>
     public record struct GeneratedCode(string Html, string Data, string ScriptFn, string Id) { }
 
     unsafe static string CompressImageAsRGBE(Image img) {
