@@ -122,3 +122,32 @@ p.magnifier {
     text-shadow: -2px -2px 4px #000, 2px -2px 4px #000, -2px 2px 4px #000, 2px 2px 4px #000;
     text-align: center;
 }
+
+.zoominput {
+    width: 4em;
+}
+
+.popup {
+    position: absolute;
+    z-index: 901;
+    color: #26626d;
+    font-size: xxx-large;
+    text-align: center;
+    width: 100%;
+    height: 100%;
+    align-content: center;
+    display: grid;
+    justify-content: center;
+    align-items: center;
+    justify-items: center;
+    text-shadow: 1px 1px 8px #ffffff;
+    visibility: hidden;
+}
+    .popup.visible {
+        visibility: visible;
+    }
+
+div.tools {
+    display: flex;
+    justify-content: flex-end;
+}
