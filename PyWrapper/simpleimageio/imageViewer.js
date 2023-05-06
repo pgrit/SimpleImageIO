@@ -7,6 +7,7 @@ var positions = new Map();
 var curImageIdx = new Map();
 var magnifierStates = new Map();
 var flipBookImages = new Map();
+var lastFlipIdx = 0;
 
 // Auto-delete the global state if a corresponding HTMLElement was removed from the DOM
 function addRemovalObserver() {
@@ -34,6 +35,26 @@ try {
         get: function () { wheelOpt = { passive: false }; }
     }));
 } catch (exc) { }
+
+function resetView(container, zoom) {
+    const someImg = container.getElementsByTagName("canvas")[0];
+    let zoomW = container.clientWidth / someImg.width;
+    let zoomH = container.clientHeight / someImg.height;
+    if (zoom === "fill_width")
+        zoom = zoomW;
+    else if (zoom === "fill_height")
+        zoom = zoomH;
+    else if (zoom === "fit")
+        zoom = Math.min(zoomW, zoomH);
+    else // for zoom specified in numbers: zoom based on the physical pixel size
+        zoom = zoom / window.devicePixelRatio;
+    scaleImage(container, zoom);
+
+    var placer = container.getElementsByClassName("image-placer")[0];
+    placer.style.top = "0px";
+    placer.style.left = "0px";
+    positions.set(container, [0, 0]);
+}
 
 function initImageViewers(flipbook, width, height, initialZoom) {
     var container = flipbook.getElementsByClassName("image-container")[0];
@@ -109,21 +130,9 @@ function initImageViewers(flipbook, width, height, initialZoom) {
 
     magnifierStates.set(container, { "row": 0, "col": 0, "visible": false });
 
-    // Set the initial position of the image
-    placer.style.top = "0px";
-    placer.style.left = "0px";
-    positions.set(container, [0, 0]);
-
-    // Set the initial zoom of the image
-    let zoomW = container.clientWidth / width;
-    let zoomH = container.clientHeight / height;
-    if (initialZoom === "fill_width")
-        initialZoom = zoomW;
-    else if (initialZoom === "fill_height")
-        initialZoom = zoomH;
-    else if (initialZoom === "fit")
-        initialZoom = Math.min(zoomW, zoomH);
-    scaleImage(container, initialZoom)
+    resetView(container, initialZoom);
+    let zoominput = $(flipbook).find(".zoominput")[0];
+    zoominput.value = zoomLevels.get(container) * window.devicePixelRatio;
 
     // Add logic to the buttons
     var labels = document.getElementsByClassName("method-label");
@@ -361,6 +370,10 @@ function computeZoomScale(container, evt, left, top) {
 
     shiftImage(container, deltaX, deltaY);
     scaleImage(container, scale);
+
+    // keep the manual input in sync
+    let zoominput = $(container).parent().find(".zoominput")[0];
+    zoominput.value = scale * window.devicePixelRatio;
 }
 
 function onScrollContainer(evt) {
@@ -701,7 +714,28 @@ function renderImage(canvas, pixels, toneMapCode) {
     ctx.drawImage(offscreen.transferToImageBitmap(), 0, 0);
 }
 
-var lastFlipIdx = 0;
+function resetZoom(flipIdx, zoom) {
+    let flipbook = $(`#flipbook-${flipIdx}`);
+    let container = flipbook.find(".image-container")[0];
+    resetView(container, zoom);
+
+    let zoominput = flipbook.find(".zoominput")[0];
+    zoominput.value = zoomLevels.get(container) * window.devicePixelRatio;
+}
+
+function setZoom(flipIdx, zoom) {
+    let flipbook = $(`#flipbook-${flipIdx}`);
+    resetView(flipbook.find(".image-container")[0], zoom);
+}
+
+function displayPopup(flipbook, durationMs, text) {
+    let popup = $(flipbook).find(".popup");
+    popup.addClass("visible");
+    popup[0].innerHTML = text;
+    if (typeof(durationMs) === 'number')
+        setTimeout(() => popup.removeClass("visible"), durationMs);
+}
+
 /**
  *
  * @param {*} parentElement the DOM node to add this flipbook to
@@ -714,16 +748,33 @@ var lastFlipIdx = 0;
  */
 function AddFlipBook(parentElement, names, images, width, height, initialZoom = "fit", initialTMO = null) {
     let flipIdx = ++lastFlipIdx;
+
     $(parentElement).append(`
     <div class='flipbook' id='flipbook-${flipIdx}' oncontextmenu="return false;">
         <div tabindex='1' class='method-list'>
         </div>
         <div tabindex='2' class='image-container'>
+            <div class='popup' onclick="$(this).removeClass('visible')">Copied</div>
             <div class='image-placer'>
             <div class='magnifier'>
                 <table class='magnifier'></table>
             </div>
             </div>
+        </div>
+        <div class="tools">
+            <span style="margin-right: auto;">
+                <button class="tools copybtn" onclick="copyImage(${flipIdx})">Copy image as PNG</button>
+            </span>
+            <span style="display: flex; justify-content: flex-end; padding-right: 2em;">
+                <label><input type="number" class="tools zoominput" value="1" step="0.1" oninput="setZoom(${flipIdx}, this.value)"></label>
+                <button class="tools zoom100" onclick="resetZoom(${flipIdx}, 1)">100%</button>
+                <button class="tools zoomfitwidth" onclick="resetZoom(${flipIdx}, 'fill_width')">|&lt;-&gt;|</button>
+                <button class="tools zoomfitheight" onclick="resetZoom(${flipIdx}, 'fill_height')">Fit Height</button>
+                <button class="tools zoomfit" onclick="resetZoom(${flipIdx}, 'fit')">Fit</button>
+            </span>
+            <span>
+                <button class="tools helpbtn" onclick="displayHelp(${flipIdx})">Help</button>
+            </span>
         </div>
         <div class='tmo-container'>
             <p>
@@ -748,10 +799,6 @@ rgb = pow(2.0, -3.0) * rgb + 0.5 * vec3(gl_FragCoord / 1000.0);
                 <label>max <input type="number" value="1" step="0.1" name="max"></label>
                 <label>log <input type="checkbox" value="0" name="logscale"></label>
             </p>
-        </div>
-        <div class="tools">
-            <button class="tools copybtn" onclick="copyImage(${flipIdx})">Copy image as PNG</button>
-            <button class="tools helpbtn" onclick="displayHelp()">Help</button>
         </div>
     </div>
     `);
@@ -785,21 +832,26 @@ function copyImage(flipIdx) {
         navigator.clipboard.write([item]);
     });
 
-    let btn = flipbook.find("button.copybtn")[0];
-    let orgText = btn.innerHTML;
-    btn.innerHTML = "copied"
-    setTimeout(() => btn.innerHTML = orgText, 1000);
+    displayPopup(flipbook, 500, "Copied to clipboard");
 }
 
-function displayHelp() {
-    alert(`
-    Right click on the image to display pixel values.
-    Hold ALT while scrolling to override zoom.
-    Ctrl+C copies the image as png.
-    e increases exposure, Shift+e reduces it.
-    f lowers the maximum for false color mapping, Shift+f increases it.
-    Select images by pressing 1 - 9 on the keyboard.
-    Use the left/right or up/down arrow keys to flip between images.`);
+function displayHelp(flipIdx) {
+    let flipbook = $(`#flipbook-${flipIdx}`);
+    displayPopup(flipbook, null,
+    `
+    <div style="text-align: left; color: white; font-size: large; background: #26626d; padding: 2em; text-shadow: none; ">
+    <p>Shortcuts:</p>
+    <ul>
+    <li>Right click on the image to display pixel values.</li>
+    <li>Hold ALT while scrolling to override zoom.</li>
+    <li>Ctrl+C copies the image as png.</li>
+    <li>e increases exposure, Shift+e reduces it.</li>
+    <li>f lowers the maximum for false color mapping, Shift+f increases it.</li>
+    <li>Select images by pressing 1 - 9 on the keyboard.</li>
+    <li>Use the left/right or up/down arrow keys to flip between images.</li>
+    </ul>
+    <p>Click anywhere to close this message</p>
+    </div>`);
 }
 
 async function readRGBE(url) {
