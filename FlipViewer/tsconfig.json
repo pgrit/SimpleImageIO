@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+      "noImplicitAny": false,
+      "noEmitOnError": true,
+      "removeComments": false,
+      "sourceMap": true,
+      "target": "ES5",
+      "outDir": "dist",
+      "esModuleInterop": true,
+      "jsx": "react-jsx",
+      "plugins": [{ "name": "typescript-plugin-css-modules" }]
+    },
+    "include": [
+      "src/*"
+    ]
+  }
