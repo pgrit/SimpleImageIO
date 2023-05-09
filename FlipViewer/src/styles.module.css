@@ -1,0 +1,129 @@
+.flipbook {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+}
+
+.image-container {
+    overflow: hidden;
+    background-color: #1e2323;
+    user-select: none;
+    position: relative;
+    width: 100%;
+    flex: 1;
+    min-height: 100px;
+}
+
+    .image-container:focus {
+        outline: none;
+    }
+
+.method-key {
+    border-radius: 2px;
+    border-color: #b1a2a2;
+    border-style: solid;
+    border-width: 1px;
+    padding: 2px;
+    background-color: lightgray;
+    box-shadow: 1px 1px;
+}
+
+.image {
+    display: none;
+    position: relative;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+}
+    .image.visible {
+        display: block;
+    }
+
+.method-list:focus {
+    outline: none;
+}
+
+.method-label {
+    background-color: #d5e1e6;
+    padding: 4px;
+    border: none;
+    padding: 0.4em;
+}
+    .method-label.visible {
+        background-color: #eebe6c;
+        padding: 0.5em;
+    }
+    .method-label:focus {
+        outline: none;
+    }
+
+.image-placer {
+    position: absolute;
+}
+
+.tmo-script {
+    height: 8em;
+}
+
+div.magnifier {
+    display: block;
+    position: fixed;
+    z-index: 9001;
+}
+
+table.magnifier {
+    border-spacing: 0;
+}
+
+td.magnifier {
+    width: 70px;
+    min-width: 70px;
+    max-width: 70px;
+    height: 70px;
+    min-height: 70px;
+    max-height: 70px;
+    text-align: center;
+    padding: 0;
+    vertical-align: middle;
+}
+    td.magnifier.selected {
+        box-shadow: inset 0px 0px 0px 2px black;
+    }
+
+p.magnifier {
+    margin: 0;
+    font-size: 14px;
+    font-weight: bold;
+    font-family: monospace;
+    text-rendering: optimizeLegibility;
+    text-shadow: -2px -2px 4px #000, 2px -2px 4px #000, -2px 2px 4px #000, 2px 2px 4px #000;
+    text-align: center;
+}
+
+.zoominput {
+    width: 4em;
+}
+
+.popup {
+    position: absolute;
+    z-index: 901;
+    color: #26626d;
+    font-size: xxx-large;
+    text-align: center;
+    width: 100%;
+    height: 100%;
+    align-content: center;
+    display: grid;
+    justify-content: center;
+    align-items: center;
+    justify-items: center;
+    text-shadow: 1px 1px 8px #ffffff;
+}
+
+div.tools {
+    display: flex;
+    justify-content: flex-end;
+}

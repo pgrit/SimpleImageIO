@@ -4,6 +4,8 @@
 .idea
 .ionide
 
+package-lock.json
+
 # OS related
 .DS_Store
 
@@ -16,6 +18,8 @@ __pycache__
 /dist
 /SimpleImageIO.egg-info
 launchSettings.json
+/FlipViewer/dist
+/FlipViewer/node_modules
 
 # Profiler output
 *.nettrace
