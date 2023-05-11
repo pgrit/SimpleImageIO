@@ -11,7 +11,8 @@ static class TestFlip {
             .Add("PT", pt)
             .Add("BDPT", bdpt)
             .Add("VCM", vcm, (FlipBook.DataType)50)
-            .WithToneMapper(FlipBook.InitialTMO.Exposure(2.0f));
+            .WithToneMapper(FlipBook.InitialTMO.Exposure(2.0f))
+            .WithZoom(1.5f);
 
         var corrupt = pt.Copy() as RgbImage;
         corrupt[10, 10] = new(float.PositiveInfinity, float.NegativeInfinity, float.NaN);
@@ -28,7 +29,8 @@ static class TestFlip {
                 rgb += vec3(1.0, 0.0, 0.0);
             if (anynan(v))
                 rgb += vec3(0.0, 1.0, 1.0);
-            """));
+            """))
+            .WithZoom(FlipBook.InitialZoom.Fit);
 
         // Relative squared error images
         RgbImage reference = new("Data/Reference.exr");
@@ -37,7 +39,8 @@ static class TestFlip {
             .Add("PT", new MonochromeImage((pt - reference).Squared() / denom))
             .Add("BDPT", (bdpt - reference).Squared() / denom, FlipBook.DataType.LDR_JPEG)
             .Add("VCM", (vcm - reference).Squared() / denom)
-            .WithToneMapper(FlipBook.InitialTMO.FalseColor(0.0f, 0.1f));
+            .WithToneMapper(FlipBook.InitialTMO.FalseColor(0.0f, 0.1f))
+            .WithZoom(FlipBook.InitialZoom.FillHeight);
 
         string content = "<!DOCTYPE html><html><head>" + FlipBook.Header + "</head><body>" + f1 + f2 + f3 + "</body>";
         System.IO.File.WriteAllText("testFlip.html", content);

@@ -95,9 +95,9 @@ export enum ToneMapType {
 
 export interface ToneMapSettings {
     activeTMO: ToneMapType;
-    exposure: number;
-    min: number;
-    max: number;
+    exposure: number | string;
+    min: number | string;
+    max: number | string;
     script: string;
     useLog: boolean;
 }

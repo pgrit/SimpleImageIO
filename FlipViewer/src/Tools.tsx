@@ -32,17 +32,22 @@ export class Tools extends React.Component<ToolsProps, ToolsState> {
         return (
             <div className={styles["tools"]}>
                 <span style={{ marginRight: "auto" }}>
-                    <button onClick={this.props.copyImage}>Copy image as PNG</button>
+                    <button className={styles.toolsBtn} onClick={this.props.copyImage}>
+                        Copy image as PNG <span className={styles['key']}>Ctrl</span> + <span className={styles['key']}>c</span>
+                    </button>
                 </span>
                 <span style={{ marginRight: "2em" }}>
-                    <button onClick={this.props.reset}>Reset</button>
+                    <button className={styles.toolsBtn} onClick={this.props.reset}>
+                        Reset <span className={styles['key']}>r</span>
+                    </button>
                 </span>
                 <span style={{ marginRight: "2em" }}>
-                    <button onClick={() => this.props.centerView()}>Center</button>
+                    <button className={styles.toolsBtn} onClick={() => this.props.centerView()}>Center</button>
                 </span>
                 <span style={{ display: "flex", justifyContent: "flex-end", paddingRight: "2em", }}>
-                    <label>
-                        <input type="number" className={styles.zoominput} value={this.state.zoom} step="0.1"
+                    <label className={styles.label}>
+                        Zoom:
+                        <input type="number" className={styles.numberInput} value={this.state.zoom} step="0.1"
                             onInput={evt => {
                                 let val = evt.currentTarget.valueAsNumber;
                                 this.setState({zoom: val});
@@ -50,13 +55,13 @@ export class Tools extends React.Component<ToolsProps, ToolsState> {
                             }}
                         ></input>
                     </label>
-                    <button onClick={() => this.props.setZoom(1 as ZoomLevel)}>100%</button>
-                    <button onClick={() => this.props.setZoom(ZoomLevel.FitWidth)}>|&lt;-&gt;|</button>
-                    <button onClick={() => this.props.setZoom(ZoomLevel.FitHeight)}>Fit Height</button>
-                    <button onClick={() => this.props.setZoom(ZoomLevel.Fit)}>Fit</button>
+                    <button className={styles.toolsBtn} onClick={() => this.props.setZoom(1 as ZoomLevel)}>100%</button>
+                    <button className={styles.toolsBtn} onClick={() => this.props.setZoom(ZoomLevel.FitWidth)}>Fit width</button>
+                    <button className={styles.toolsBtn} onClick={() => this.props.setZoom(ZoomLevel.FitHeight)}>Fit height</button>
+                    <button className={styles.toolsBtn} onClick={() => this.props.setZoom(ZoomLevel.Fit)}>Fit</button>
                 </span>
                 <span>
-                    <button onClick={() => this.props.displayHelp()}>Help</button>
+                    <button className={styles.toolsBtn} onClick={() => this.props.displayHelp()}>Help</button>
                 </span>
             </div>
         )

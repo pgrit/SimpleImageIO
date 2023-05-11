@@ -60,12 +60,12 @@ export class ToneMapControls extends React.Component<ToneMapControlsProps, ToneM
     }
 
     stepExposure(reduce: boolean) {
-        let e = this.state.exposure + (reduce ? -0.5 : 0.5);
+        let e = +this.state.exposure + (reduce ? -0.5 : 0.5);
         this.setState({exposure: e, activeTMO: ToneMapType.Exposure}, this.apply);
     }
 
     stepFalseColor(reduce: boolean) {
-        let m = parseFloat((this.state.max + (reduce ? -0.1 : 0.1)).toFixed(1));
+        let m = +this.state.max * (reduce ? 0.9 : 1.0 / 0.9);
         this.setState({max: m, activeTMO: ToneMapType.FalseColor}, this.apply);
     }
 
@@ -73,39 +73,47 @@ export class ToneMapControls extends React.Component<ToneMapControlsProps, ToneM
         let tmoCtrls: JSX.Element;
         switch (this.state.activeTMO) {
             case ToneMapType.Exposure:
-                tmoCtrls = <p className={styles['tmo-exposure']}>
-                    <label>EV
-                        <input type="number" step="0.5"
+                tmoCtrls = <div className={styles.inputGroup}>
+                    <label className={styles.label}>EV
+                        <input type="number" className={styles.numberInput} step="0.5"
                             value={this.state.exposure}
-                            onChange={(evt) => this.setState({ exposure: evt.target.valueAsNumber }, this.apply) }
+                            onChange={(evt) => this.setState({ exposure: evt.target.value }, this.apply) }
                         />
                     </label>
-                </p>
+                    <p className={styles.hint}>
+                        use <span className={styles['key']}>e</span> to increase, <span className={styles['key']}>Shift</span> + <span className={styles['key']}>e</span> to reduce.
+                    </p>
+                </div>
                 break;
 
             case ToneMapType.FalseColor:
-                tmoCtrls = <p className={styles["tmo-falsecolor"]}>
-                    <label>min
-                        <input type="number" value={this.state.min} step="0.1" name="min"
-                            onChange={(evt) => this.setState({ min: evt.target.valueAsNumber }, this.apply) }
-                        />
-                    </label>
-                    <label>max
-                        <input type="number" value={this.state.max} step="0.1" name="max"
-                            onChange={(evt) => this.setState({ max: evt.target.valueAsNumber }, this.apply) }
-                        />
-                    </label>
-                    <label>log
+                tmoCtrls = <div className={styles.inputGroup}>
+                    <label className={styles.checkLabel}>
                         <input type="checkbox" checked={this.state.useLog} name="logscale"
                             onChange={(evt) => this.setState({ useLog: evt.target.checked }, this.apply) }
                         />
+                        log
+                        <span className={styles.checkmark}></span>
                     </label>
-                </p>
+                    <label className={styles.label}>min
+                        <input type="number" className={styles.numberInput} value={this.state.min} name="min" step="0.1"
+                            onChange={(evt) => this.setState({ min: evt.target.value }, this.apply) }
+                        />
+                    </label>
+                    <label className={styles.label}>max
+                        <input type="number" className={styles.numberInput} value={this.state.max} name="max" step="0.1"
+                            onChange={(evt) => this.setState({ max: evt.target.value }, this.apply) }
+                        />
+                    </label>
+                    <p className={styles.hint}>
+                        use <span className={styles['key']}>f</span> to reduce maximum, <span className={styles['key']}>Shift</span> + <span className={styles['key']}>f</span> to increase.
+                    </p>
+                </div>
                 break;
 
             case ToneMapType.Script:
                 tmoCtrls = <div className={styles["tmo-script"]}>
-                    <textarea rows={8} cols={80} name="text"
+                    <textarea className={styles.scriptArea} rows={8} cols={80} name="text"
                         value={this.state.script}
                         onChange={(evt) => this.setState({ script: evt.target.value }, this.apply) }
                     ></textarea>
@@ -113,31 +121,33 @@ export class ToneMapControls extends React.Component<ToneMapControlsProps, ToneM
                 break;
         }
 
+        let activeCls = ` ${styles.active}`;
+
         return (
-            <div className={styles['tmo-container']}>
-                <p>
-                    <label>
-                        <input type="radio" value="exposure" name="tmo-${flipIdx}"
-                            checked={this.state.activeTMO == ToneMapType.Exposure}
-                            onChange={() => this.setState({activeTMO: ToneMapType.Exposure}, this.apply)}
-                        />
+            <div className={styles.tmoContainer}>
+                <div className={styles.tmoSelectGroup}>
+                    <button
+                        className={styles.tmoSelectBtn + (this.state.activeTMO == ToneMapType.Exposure ? activeCls : "")}
+                        onClick={() => this.setState({activeTMO: ToneMapType.Exposure}, this.apply)}
+                    >
                         Exposure
-                    </label>
-                    <label>
-                        <input type="radio" value="falsecolor" name="tmo-${flipIdx}"
-                            checked={this.state.activeTMO == ToneMapType.FalseColor}
-                            onChange={() => this.setState({activeTMO: ToneMapType.FalseColor}, this.apply)}
-                        />
+                    </button>
+                    <button
+                        className={styles.tmoSelectBtn + (this.state.activeTMO == ToneMapType.FalseColor ? activeCls : "")}
+                        onClick={() => this.setState({activeTMO: ToneMapType.FalseColor}, this.apply)}
+                    >
                         False color
-                    </label>
-                    <label>
-                        <input type="radio" value="script" name="tmo-${flipIdx}"
-                            checked={this.state.activeTMO == ToneMapType.Script}
-                            onChange={() => this.setState({activeTMO: ToneMapType.Script}, this.apply)}
-                        />
+                    </button>
+                    <button
+                        className={styles.tmoSelectBtn + (this.state.activeTMO == ToneMapType.Script ? activeCls : "")}
+                        onClick={() => this.setState({activeTMO: ToneMapType.Script}, this.apply)}
+                    >
                         GLSL
-                    </label>
-                </p>
+                    </button>
+                    <span className={styles.tmoCaption}>
+                        Tone mapping
+                    </span>
+                </div>
                 {tmoCtrls}
             </div>
         );

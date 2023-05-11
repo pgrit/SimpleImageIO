@@ -57,21 +57,31 @@ public class FlipBook
     /// <summary>
     /// Specifies the initial zoom level of the images
     /// </summary>
-    public enum InitialZoom {
+    public struct InitialZoom {
         /// <summary>
         /// Image is scaled to fit the container in width and height
         /// </summary>
-        Fit,
+        public static readonly InitialZoom Fit = new(-1);
 
         /// <summary>
         /// Image is scaled to vertically fill the entire container
         /// </summary>
-        FillHeight,
+        public static readonly InitialZoom FillHeight = new(-3);
 
         /// <summary>
         /// Image is scaled to horizontally fill the entire container
         /// </summary>
-        FillWidth
+        public static readonly InitialZoom FillWidth = new(-2);
+
+        float value = 1;
+
+        public InitialZoom(float v) => value = v;
+        public static implicit operator InitialZoom(float v) => new(v);
+        public static implicit operator float(InitialZoom v) => v.value;
+
+        public override string ToString() {
+            return value.ToString();
+        }
     }
 
     /// <summary>
@@ -79,7 +89,7 @@ public class FlipBook
     /// </summary>
     public class InitialTMO {
         #pragma warning disable CS1591 // "Missing XML comment"
-        [JsonInclude] public string name;
+        [JsonInclude] public string activeTMO;
         [JsonInclude] public float min;
         [JsonInclude] public float max;
         [JsonInclude] public bool log;
@@ -94,7 +104,7 @@ public class FlipBook
         /// </summary>
         public static InitialTMO Exposure(float value)
         => new InitialTMO {
-            name = "exposure",
+            activeTMO = "exposure",
             exposure = value
         };
 
@@ -103,7 +113,7 @@ public class FlipBook
         /// </summary>
         public static InitialTMO FalseColor(float min, float max, bool log = false)
         => new InitialTMO {
-            name = "falsecolor",
+            activeTMO = "falsecolor",
             min = min,
             max = max,
             log = log
@@ -114,7 +124,7 @@ public class FlipBook
         /// </summary>
         public static InitialTMO GLSL(string code)
         => new InitialTMO {
-            name = "script",
+            activeTMO = "script",
             script = code
         };
     }
@@ -174,14 +184,14 @@ public class FlipBook
                                             InitialZoom initialZoom, InitialTMO initialTMO)
     {
         string id = "flipbook-" + Guid.NewGuid().ToString();
-        string html = $"<div class='flipbook' id='{id}' style='width:{htmlWidth}px; height:{htmlHeight}px;'></div>";
+        string html = $"<div id='{id}' style='width:{htmlWidth}px; height:{htmlHeight}px;'></div>";
 
         List<string> dataStrs = new();
         List<string> typeStrs = new();
         List<string> nameStrs = new();
         foreach (var (name, type, url) in images) {
             string t = type switch {
-                DataType.RGB => "float",
+                DataType.RGB => "single",
                 DataType.RGBE => "rgbe",
                 DataType.RGB_HALF => "half",
                 _ => "ldr"
@@ -190,12 +200,6 @@ public class FlipBook
             typeStrs.Add(t);
             nameStrs.Add(name);
         }
-
-        string initialZoomStr = initialZoom switch {
-            InitialZoom.FillHeight => "fill_height",
-            InitialZoom.FillWidth => "fill_width",
-            _ => "fit",
-        };
 
         string initialTMOStr = "null";
         if (initialTMO != null) {
@@ -206,8 +210,8 @@ public class FlipBook
         {
             "width": {{width}},
             "height": {{height}},
-            "elementId": "{{id}}",
-            "initialZoom": "{{initialZoomStr}}",
+            "containerId": "{{id}}",
+            "initialZoom": {{initialZoom.ToString()}},
             "initialTMO": {{initialTMOStr}},
             "names": [{{string.Join(',', nameStrs.Select(n => $"\"{n}\""))}}],
             "dataUrls": [{{string.Join(',', dataStrs.Select(n => $"\"{n}\""))}}],
@@ -215,7 +219,7 @@ public class FlipBook
         }
         """;
 
-        return new(html, json, "makeFlipFromUrls", id);
+        return new(html, json, "flipbook.MakeFlipBook", id);
     }
 
     static GeneratedCode MakeHelper<T>(int htmlWidth, int htmlHeight,
@@ -257,19 +261,13 @@ public class FlipBook
     /// </summary>
     /// <returns>HTML code as a string</returns>
     public static string Header
-    => $"<script>{HeaderScript}</script><style>{HeaderStyle}</style>";
+    => $"<script>{HeaderScript}</script>";
 
     /// <summary>
     /// The JavaScript that should be in the header of the generated HTML code.
     /// </summary>
     public static string HeaderScript
-    => ReadResourceText("jquery-3.6.4.min.js") + "\n" + ReadResourceText("imageViewer.js");
-
-    /// <summary>
-    /// The CSS style for the flip book
-    /// </summary>
-    public static string HeaderStyle
-    => ReadResourceText("style.css");
+    => ReadResourceText("flipbook.js");
 
     List<(string Name, Image Image, DataType targetType)> images = new();
     int htmlWidth;

@@ -61,6 +61,17 @@ else
 
 cd ..
 
+echo "Bundling react viewer..."
+
+cd ./FlipViewer
+npm run build
+if (-not $?) { throw "node / webpack build failed - core tools operational, but flip books will not function" }
+
+cd ..
+
+echo "Copying .js to python package..."
+cp ./FlipViewer/dist/flipbook.js PyWrapper/simpleimageio/flipbook.js
+
 # Test the C# wrapper
 dotnet build
 dotnet test

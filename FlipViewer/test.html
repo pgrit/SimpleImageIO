@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>Test flip book</title>
+    <script src="./dist/flipbook.js"></script>
+</head>
+<body>
+    <div id="page" style="max-width: 1000px; margin: 0 auto;height: 900px;">
+    </div>
+
+    <script>
+        {
+            let width = 2000;
+            let height = 1000;
+            var pixels1 = new Float32Array(Array(width*height*3).fill(0.0));
+            for (var row = 0; row < height; ++row) {
+                for (var col = 0; col < width; ++col) {
+                    pixels1[(row * width + col) * 3 + 0] = 0.1;
+                    pixels1[(row * width + col) * 3 + 1] = row % 10 < 2 ? 500.0 : 0.3;
+                    pixels1[(row * width + col) * 3 + 2] = 1.0 * col / width;
+                }
+            }
+            var pixels2 = new Float32Array(Array(width*height*3).fill(0.0));
+            for (let row = 0; row < height; ++row) {
+                for (let col = 0; col < width; ++col) {
+                    pixels2[(row * width + col) * 3 + 0] = 0.1;
+                    pixels2[(row * width + col) * 3 + 1] = 0.3;
+                    pixels2[(row * width + col) * 3 + 2] = 1.0 * col / width;
+                }
+            }
+
+            let data = {
+                dataUrls: [pixels1, pixels2],
+                types: ["float32array", "float32array"],
+                names: ["Artifacts", "Perfect"],
+                width: width,
+                height: height,
+                initialZoom: 0.5,
+                initialTMO: {
+                    activeTMO: flipbook.ToneMapType.Exposure,
+                    exposure: 1.0
+                },
+                containerId: "page",
+            }
+
+            flipbook.MakeFlipBook(data);
+        }
+    </script>
+</body>
+</html>

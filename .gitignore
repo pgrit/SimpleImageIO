@@ -47,4 +47,5 @@ SimpleImageIO.Integration/*.exr
 /denoised*.exr
 /tonemapped*.exr
 example.html
-test.html
+/test.html
+/PyWrapper/simpleimageio/flipbook.js
