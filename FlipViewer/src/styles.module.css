@@ -84,9 +84,8 @@
 }
 
 .tmo-script {
-    height: 8em;
-    margin-left: 1em;
-    margin-right: 1.5em;
+    margin-left: 4px;
+    margin-right: 4px;
     margin-top: 4px;
 }
 
@@ -227,7 +226,7 @@ div.tools {
     font-family: monospace;
     font-size: 12px;
     width: 100%;
-    height: 8em;
+    box-sizing: border-box;
     resize: none;
 }
 
@@ -329,6 +328,9 @@ div.tools {
 .tmoSelectGroup {
     display: flex;
     justify-content: flex-start;
+    border-bottom-style: solid;
+    border-bottom-width: 1pt;
+    border-color: #5d7475;
 }
 
 .tmoCaption {
