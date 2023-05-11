@@ -99,7 +99,7 @@ public class FlipBook
         #pragma warning disable CS1591 // "Missing XML comment"
         [JsonInclude] public string activeTMO;
         [JsonInclude] public float min;
-        [JsonInclude] public float max;
+        [JsonInclude] public float max = 1;
         [JsonInclude] public bool log;
         [JsonInclude] public float exposure;
         [JsonInclude] public string script;
