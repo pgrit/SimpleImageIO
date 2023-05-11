@@ -42,6 +42,7 @@ export interface FlipProps {
     width: number;
     height: number;
     rawPixels: (Float32Array | ImageData)[];
+    means: number[];
     toneMappers: ToneMappingImage[];
     initialZoom?: ZoomLevel;
     initialTMO?: ToneMapSettings;
@@ -190,6 +191,7 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
                         width = {this.props.width}
                         height = {this.props.height}
                         rawPixels={this.props.rawPixels}
+                        means={this.props.means}
                         toneMappers={this.props.toneMappers}
                         selectedIdx={this.state.selectedIdx}
                         onZoom={(zoom) => this.tools.current.onZoom(zoom)}
@@ -239,6 +241,14 @@ function GetImageData(images: (Float32Array | HTMLImageElement)[]) : (Float32Arr
     return imgData;
 }
 
+function SrgbToLinear(srgb: number) {
+    if (srgb <= 0.04045) {
+        return srgb / 12.92;
+    } else {
+        return Math.pow((srgb + 0.055) / 1.055, 2.4);
+    }
+}
+
 /**
  *
  * @param {*} parentElement the DOM node to add this flipbook to
@@ -251,13 +261,39 @@ function GetImageData(images: (Float32Array | HTMLImageElement)[]) : (Float32Arr
  */
 export function AddFlipBook(parentElement: HTMLElement, names: string[], images: (Float32Array | HTMLImageElement)[],
                             width: number, height: number, initialZoom: ZoomLevel, initialTMO: ToneMapSettings) {
+    let rawPixels = GetImageData(images);
+    let means: number[] = [];
+    for (let img of rawPixels) {
+        let m = 0;
+        for (let col = 0; col < width; ++col) {
+            for (let row = 0; row < height; ++row) {
+                let r = 0, g = 0, b = 0;
+                let numChan = 3;
+                if (img instanceof ImageData) {
+                    r = SrgbToLinear(img.data[4 * (row * width + col) + 0] / 255);
+                    g = SrgbToLinear(img.data[4 * (row * width + col) + 1] / 255);
+                    b = SrgbToLinear(img.data[4 * (row * width + col) + 2] / 255);
+                } else if (img instanceof Float32Array) {
+                    numChan = img.length / width / height;
+                    r = img[numChan * (row * width + col) + 0 % numChan];
+                    g = img[numChan * (row * width + col) + 1 % numChan];
+                    b = img[numChan * (row * width + col) + 2 % numChan];
+                }
+                m += numChan == 3 ? (r + g + b) / 3 : r;
+            }
+        }
+        m /= width * height;
+        means.push(m);
+    }
+
     const root = createRoot(parentElement);
     root.render(
         <FlipBook
             names={names}
             width={width}
             height={height}
-            rawPixels={GetImageData(images)}
+            rawPixels={rawPixels}
+            means={means}
             toneMappers={Array(names.length)}
             initialZoom={initialZoom}
             initialTMO={initialTMO}

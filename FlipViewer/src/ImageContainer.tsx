@@ -1,7 +1,7 @@
 import styles from './styles.module.css';
 import React from 'react';
 import { ToneMappingImage } from './FlipBook';
-import { Magnifier } from './Magnifier';
+import { Magnifier, formatNumber } from './Magnifier';
 import { ZoomLevel } from './flipviewer';
 
 export interface ImageContainerProps {
@@ -12,6 +12,7 @@ export interface ImageContainerProps {
     selectedIdx: number;
     onZoom: (zoom: number) => void;
     children: React.ReactNode;
+    means: number[];
 }
 
 interface ImageContainerState {
@@ -208,6 +209,9 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
                 >
                     {canvases}
                     {magnifier}
+                </div>
+                <div className={styles.meanValue}>
+                    Mean: {formatNumber(this.props.means[this.props.selectedIdx])}
                 </div>
             </div>
         );

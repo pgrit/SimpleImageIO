@@ -14,6 +14,10 @@ static class TestFlip {
             .WithToneMapper(FlipBook.InitialTMO.Exposure(2.0f))
             .WithZoom(1.5f);
 
+        string colorHist =
+            HistogramRenderer.RenderHtml(pt, 300, 100) +
+            HistogramRenderer.RenderHtml(bdpt, 300, 100);
+
         var corrupt = pt.Copy() as RgbImage;
         corrupt[10, 10] = new(float.PositiveInfinity, float.NegativeInfinity, float.NaN);
         corrupt[11, 11] = new(float.PositiveInfinity, 0, 0);
@@ -42,7 +46,11 @@ static class TestFlip {
             .WithToneMapper(FlipBook.InitialTMO.FalseColor(0.0f, 0.1f))
             .WithZoom(FlipBook.InitialZoom.FillHeight);
 
-        string content = "<!DOCTYPE html><html><head>" + FlipBook.Header + "</head><body>" + f1 + f2 + f3 + "</body>";
+        string hist =
+            HistogramRenderer.RenderHtml(new MonochromeImage((bdpt - reference).Squared() / denom), 300, 100) +
+            HistogramRenderer.RenderHtml(new MonochromeImage((pt - reference).Squared() / denom), 300, 100);
+
+        string content = "<!DOCTYPE html><html><head>" + FlipBook.Header + "</head><body>" + f1 + colorHist + f2 + f3 + hist + "</body>";
         System.IO.File.WriteAllText("testFlip.html", content);
     }
 }
