@@ -64,6 +64,7 @@ cd ..
 echo "Bundling react viewer..."
 
 cd ./FlipViewer
+npm install
 npm run build
 if (-not $?) { throw "node / webpack build failed - core tools operational, but flip books will not function" }
 

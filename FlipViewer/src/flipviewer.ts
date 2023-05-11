@@ -1,4 +1,3 @@
-import $ from "jquery";
 import { AddFlipBook } from "./FlipBook";
 
 async function readRGBE(url: string) {
@@ -122,6 +121,6 @@ export async function MakeFlipBook(data: FlipData) : Promise<any> {
     }
 
     let values = await Promise.all(work);
-    AddFlipBook($(`#${data.containerId}`)[0], data.names, values, data.width, data.height,
+    AddFlipBook(document.getElementById(data.containerId), data.names, values, data.width, data.height,
                 data.initialZoom, data.initialTMO)
 }
