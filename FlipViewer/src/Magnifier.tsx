@@ -15,28 +15,28 @@ interface MagnifierState {
 
 }
 
+export function formatNumber(number : number) {
+    // Always print zero without any extras
+    if (number === 0) return number;
+
+    // Shorter output for Infinity
+    if (number === Infinity) return "Inf";
+    if (number === -Infinity) return "-Inf";
+
+    // Scientific notation for numbers that are too big to fit the table
+    if (number > 0) {
+        if (number > 1e5 || number < 1e-4) return number.toExponential(2);
+    } else {
+        if (number < -1e4 || number > -1e-3) return number.toExponential(2);
+    }
+
+    return number.toFixed(4);
+}
+
 export class Magnifier extends React.Component<MagnifierProps, MagnifierState> {
     approxSrgb(linear) {
         let srgb = Math.pow(linear, 1.0 / 2.2) * 255;
         return srgb < 0 ? 0 : (srgb > 255 ? 255 : srgb);
-    }
-
-    formatNumber(number) {
-        // Always print zero without any extras
-        if (number === 0) return number;
-
-        // Shorter output for Infinity
-        if (number === Infinity) return "Inf";
-        if (number === -Infinity) return "-Inf";
-
-        // Scientific notation for numbers that are too big to fit the table
-        if (number > 0) {
-            if (number > 1e5 || number < 1e-4) return number.toExponential(2);
-        } else {
-            if (number < -1e4 || number > -1e-3) return number.toExponential(2);
-        }
-
-        return number.toFixed(4);
     }
 
     render(): React.ReactNode {
@@ -90,16 +90,16 @@ export class Magnifier extends React.Component<MagnifierProps, MagnifierState> {
                     cols.push(
                         <td className={classNames} key={col}
                             style={{backgroundColor: `rgb(${clrR}, ${clrG}, ${clrB})`}}>
-                            <p className={styles.magnifier} style={{color: "rgb(255,70,30)"}}>{this.formatNumber(r)}</p>
-                            <p className={styles.magnifier} style={{color: "rgb(77, 250, 57)"}}>{this.formatNumber(g)}</p>
-                            <p className={styles.magnifier} style={{color: "rgb(0,180,255)"}}>{this.formatNumber(b)}</p>
+                            <p className={styles.magnifier} style={{color: "rgb(255,70,30)"}}>{formatNumber(r)}</p>
+                            <p className={styles.magnifier} style={{color: "rgb(77, 250, 57)"}}>{formatNumber(g)}</p>
+                            <p className={styles.magnifier} style={{color: "rgb(0,180,255)"}}>{formatNumber(b)}</p>
                         </td>
                     );
                 } else {
                     cols.push(
                         <td className={classNames} key={col}
                             style={{backgroundColor: `rgb(${clrR}, ${clrG}, ${clrB})`}}>
-                            <p className={styles.magnifier} style={{color: "rgb(255,255,255)"}}>{this.formatNumber(r)}</p>
+                            <p className={styles.magnifier} style={{color: "rgb(255,255,255)"}}>{formatNumber(r)}</p>
                         </td>
                     );
                 }
