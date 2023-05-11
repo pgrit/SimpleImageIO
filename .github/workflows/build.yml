@@ -46,6 +46,17 @@ jobs:
         name: artifact
         path: ${{github.workspace}}/runtimes
 
+    - name: Setup node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 19
+        cache: 'npm'
+        cache-dependency-path: '**/package-lock.json'
+
+    - name: Build React viewer
+      working-directory: ${{github.workspace}}/FlipViewer
+      run: npm install && npm run build
+
     - name: Setup .NET Core SDK
       uses: actions/setup-dotnet@v3
       with:
