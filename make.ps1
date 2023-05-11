@@ -5,17 +5,24 @@ param(
     [boolean] $skipRuntimes = $false
 )
 
+function Ensure-Dir {
+    param(
+        [string] $path
+    )
+    New-Item -ItemType Directory -Force $path > $null
+}
+
 # Make sure the required directories exist (but silently)
-New-Item -ItemType Directory -Force runtimes > $null
-New-Item -ItemType Directory -Force runtimes/linux-x64 > $null
-New-Item -ItemType Directory -Force runtimes/linux-x64/native > $null
-New-Item -ItemType Directory -Force runtimes/win-x64 > $null
-New-Item -ItemType Directory -Force runtimes/win-x64/native > $null
-New-Item -ItemType Directory -Force runtimes/osx-x64 > $null
-New-Item -ItemType Directory -Force runtimes/osx-x64/native > $null
-New-Item -ItemType Directory -Force runtimes/osx-arm64 > $null
-New-Item -ItemType Directory -Force runtimes/osx-arm64/native > $null
-New-Item -ItemType Directory -Force build > $null
+Ensure-Dir runtimes
+Ensure-Dir runtimes/linux-x64
+Ensure-Dir runtimes/linux-x64/native
+Ensure-Dir runtimes/win-x64
+Ensure-Dir runtimes/win-x64/native
+Ensure-Dir runtimes/osx-x64
+Ensure-Dir runtimes/osx-x64/native
+Ensure-Dir runtimes/osx-arm64
+Ensure-Dir runtimes/osx-arm64/native
+Ensure-Dir build
 
 if (-not $skipRuntimes)
 {
@@ -76,7 +83,7 @@ if (-not $skipRuntimes)
 if ($prebuiltFrontend)
 {
     cp $prebuiltFrontend PyWrapper/simpleimageio/flipbook.js
-    mkdir -Force ./FlipViewer/dist
+    Ensure-Dir ./FlipViewer/dist
     cp $prebuiltFrontend ./FlipViewer/dist/flipbook.js
 }
 else
