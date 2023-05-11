@@ -4,8 +4,6 @@
 .idea
 .ionide
 
-package-lock.json
-
 # OS related
 .DS_Store
 
