@@ -102,6 +102,9 @@ jobs:
         PROJECT_FILE_PATH: SimpleImageIO/SimpleImageIO.csproj
         NUGET_KEY: ${{secrets.NUGET_API_KEY}}
 
+    - name: Remove wheel
+      run: rm ./dist/*.whl
+
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
