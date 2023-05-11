@@ -75,13 +75,16 @@ public class FlipBook
 
         float value = 1;
 
+        /// <summary>
+        /// Specifies a floating point zoom level. Zoom is done in terms of device pixels, i.e., at a zoom level
+        /// of 1, the image occupies exactly the number of hardware pixels that it contains.
+        /// Therefore, the size on screen is device / dpi dependant.
+        /// </summary>
+        /// <param name="v">Zoom level, 1 = native size</param>
         public InitialZoom(float v) => value = v;
-        public static implicit operator InitialZoom(float v) => new(v);
-        public static implicit operator float(InitialZoom v) => v.value;
 
-        public override string ToString() {
-            return value.ToString();
-        }
+        /// <returns>Zoom level (floating point value) as a string with default formatting</returns>
+        public override string ToString() => value.ToString();
     }
 
     /// <summary>
