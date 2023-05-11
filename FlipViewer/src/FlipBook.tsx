@@ -17,7 +17,7 @@ export class ToneMappingImage {
     canvas: HTMLCanvasElement;
     pixels: Float32Array | ImageData;
 
-    constructor(pixels: Float32Array | ImageData, canvas: HTMLCanvasElement) {
+    constructor(pixels: Float32Array | ImageData, canvas: HTMLCanvasElement, onAfterRender: () => void) {
         this.currentTMO = "";
         this.dirty = true;
         this.canvas = canvas;
@@ -28,8 +28,7 @@ export class ToneMappingImage {
             if (!hdrImg.dirty) return;
             hdrImg.dirty = false;
             renderImage(hdrImg.canvas, hdrImg.pixels, hdrImg.currentTMO);
-            // TODO
-            // redrawMagnifier(container);
+            onAfterRender();
         }, UPDATE_INTERVAL_MS)
     }
     apply(tmo: string) {
@@ -106,6 +105,7 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
         if (this.props.initialZoom)
             this.imageContainer.current.setZoom(this.props.initialZoom);
         this.tmoCtrls.current.reset();
+        this.imageContainer.current.centerView();
     }
 
     displayPopup(content: React.ReactNode, durationMs?: number) {
@@ -118,8 +118,15 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
     copyImage() {
         let onDone = () => this.displayPopup(<p>Copied to clipboard</p>, 500);
         this.props.toneMappers[this.state.selectedIdx].canvas.toBlob(function(blob) {
-            const item = new ClipboardItem({ "image/png": blob });
-            navigator.clipboard.write([item]).then(onDone);
+            try {
+                const item = new ClipboardItem({ "image/png": blob });
+                navigator.clipboard.write([item]).then(onDone);
+            } catch (exc) {
+                alert(
+                    "Copy to clipboard failed. Most likely, you are using Firefox. " +
+                    "Set 'dom.events.asyncClipboard.clipboardItem' to 'true' in 'about:config' to enable copy support."
+                );
+            }
         });
     }
 
@@ -127,21 +134,25 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
         this.displayPopup(
             <div style={{
                 textAlign: "left",
-                color: "white",
-                fontSize: "large",
-                background: "#26626d",
+                color: "black",
+                fontSize: "medium",
+                background: "white",
                 padding: "2em",
-                textShadow: "none"
+                textShadow: "none",
+                border: "black",
+                borderWidth: "2px",
+                borderStyle: "solid",
+                borderRadius: "10px",
             }}>
                 <p>Shortcuts:</p>
                 <ul>
-                <li>Right click on the image to display pixel values.</li>
-                <li>Hold ALT while scrolling to override zoom.</li>
-                <li>Ctrl+C copies the image as png.</li>
-                <li>e increases exposure, Shift+e reduces it.</li>
-                <li>f lowers the maximum for false color mapping, Shift+f increases it.</li>
-                <li>Select images by pressing 1 - 9 on the keyboard.</li>
-                <li>Use the left/right or up/down arrow keys to flip between images.</li>
+                    <li>Right click on the image to display pixel values.</li>
+                    <li>Hold ALT while scrolling to override zoom.</li>
+                    <li>Ctrl+C copies the image as png.</li>
+                    <li>e increases exposure, Shift+e reduces it.</li>
+                    <li>f lowers the maximum for false color mapping, Shift+f increases it.</li>
+                    <li>Select images by pressing 1 - 9 on the keyboard.</li>
+                    <li>Use the left/right or up/down arrow keys to flip between images.</li>
                 </ul>
                 <p>Click anywhere to close this message</p>
             </div>,

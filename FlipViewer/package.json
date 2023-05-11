@@ -4,10 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "b2": "tsc --build && webpack ./dist/flipviewer.js",
-    "build": "tsc --build && browserify ./dist/flipviewer.js -t browserify-css --s flipviewer > dist/flipviewerbundle.js",
-    "release": "minify dist/flipviewerbundle.js > dist/flipviwer.min.js",
-    "clean": "tsc --build --clean"
+    "build": "npx webpack --mode production"
   },
   "author": "Pascal Grittmann",
   "license": "MIT",

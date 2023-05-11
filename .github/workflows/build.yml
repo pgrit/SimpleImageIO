@@ -18,6 +18,12 @@ jobs:
       with:
         dotnet-version: '7.0.x'
 
+    - name: Setup node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 19
+        cache: 'npm'
+
     - name: Build
       run: ./make.ps1
       shell: pwsh
