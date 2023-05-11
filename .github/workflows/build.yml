@@ -77,7 +77,23 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Setup node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 19
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
+
+      - name: Build React viewer
+        working-directory: ${{github.workspace}}/FlipViewer
+        run: npm install
+        run: npm run build
+
+      - name: Copy viewer JS
+        run: cp ${{github.workspace}}/FlipViewer/dist/flipbook.js ${{github.workspace}}/PyWrapper/simpleimageio/flipbook.js
+
       - name: Fetch Python build dependencies
+        working-directory: ${{github.workspace}}
         run: python -m pip install --user wheel
 
       - name: Build and install
