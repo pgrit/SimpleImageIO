@@ -116,6 +116,7 @@ export class ToneMapControls extends React.Component<ToneMapControlsProps, ToneM
                     <textarea className={styles.scriptArea} rows={8} cols={80} name="text"
                         value={this.state.script}
                         onChange={(evt) => this.setState({ script: evt.target.value }, this.apply) }
+                        onKeyDown={(evt) => evt.stopPropagation()}
                     ></textarea>
                 </div>
                 break;

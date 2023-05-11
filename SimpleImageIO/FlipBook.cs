@@ -283,7 +283,7 @@ public class FlipBook
     /// <summary>
     /// Initializes a new flip book with the given width and height in HTML pixels
     /// </summary>
-    public FlipBook(int width = 800, int height = 800) {
+    public FlipBook(int width = 900, int height = 800) {
         htmlWidth = width;
         htmlHeight = height;
     }

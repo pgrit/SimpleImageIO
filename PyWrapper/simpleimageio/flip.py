@@ -5,15 +5,8 @@ import base64
 from . import corelib
 
 def make_header():
-    js = pkgutil.get_data(__package__, 'jquery-3.6.4.min.js').decode('utf-8')
-    html = "<script>" + js + "</script>"
-
-    js = pkgutil.get_data(__package__, 'imageViewer.js').decode('utf-8')
-    html += "<script>" + js + "</script>"
-
-    css = pkgutil.get_data(__package__, 'style.css').decode('utf-8')
-    html += "<style>" + css + "</style>"
-    return html
+    js = pkgutil.get_data(__package__, 'flipbook.js').decode('utf-8')
+    return "<script>" + js + "</script>"
 
 def _rgb_to_rgbe(rgb):
     rgb = np.array(rgb, dtype=np.float32)
@@ -39,34 +32,39 @@ def _rgbe_to_rgb(rgbe):
 
 def make_flip_book(images, html_width=900, html_height=800):
     id = "flipbook-" + str(uuid.uuid4())
-    html = f"<div id={id} style='width:{html_width}px;height:{html_height}px;'></div>"
-    html += "<div id='magnifier'><table class='magnifier'></table></div>"
 
     _, (_, width, height, _) = corelib.get_numpy_data(images[0][1])
     encoded_images = []
     names = []
+    types = []
     for name, img in images:
         img, (_, _, _, num_channels) = corelib.get_numpy_data(img)
         if num_channels == 1:
             img = np.tile(img, (1, 1, 3))
         rgbe = _rgb_to_rgbe(img)
-        encoded_images.append("readRGBE('data:;base64," + base64.b64encode(rgbe).decode() + "')")
-        names.append(f"'{name}'")
+        encoded_images.append("data:;base64," + base64.b64encode(rgbe).decode())
+        names.append(name)
+        types.append("rgbe")
 
-    initial_zoom_str = "'fit'"
-    initial_tmo_str = "null"
+    data = {
+        "dataUrls": encoded_images,
+        "types": types,
+        "names": names,
+        "width": width,
+        "height": height,
+        "initialZoom": 1.0,
+        "initialTMO": {
+            "activeTMO:": "exposure",
+            "exposure:": 0.0
+        },
+        "containerId": id,
+    }
 
-    html += f"""
-    <script>
-    {{
-        let images = Promise.all([{",".join(encoded_images)}]);
-        images.then(values =>
-            AddFlipBook($("#{id}"), [{",".join(names)}], values, {width}, {height},
-                        {initial_zoom_str}, {initial_tmo_str})
-        );
-    }}
-    </script>
-    """
+    import json
+    json = json.dumps(data)
+
+    html = f"<div id={id} style='width:{html_width}px;height:{html_height}px;'></div>"
+    html += f"<script> {{ flipbook.MakeFlipBook({json}); }} </script>"
     return html
 
 def flip_header():

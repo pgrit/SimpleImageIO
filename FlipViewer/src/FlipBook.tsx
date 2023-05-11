@@ -81,23 +81,29 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
             newIdx = parseInt(evt.key) - 1;
         }
         newIdx = Math.min(this.props.rawPixels.length - 1, Math.max(0, newIdx));
-        if (!isNaN(newIdx) && newIdx != this.state.selectedIdx)
+        if (!isNaN(newIdx) && newIdx != this.state.selectedIdx) {
             this.setState({selectedIdx: newIdx});
+            evt.stopPropagation();
+        }
 
         if (evt.key === "e" || evt.key === "E") {
             this.tmoCtrls.current.stepExposure(evt.key === "E");
+            evt.stopPropagation();
         }
 
         if (evt.key === "f" || evt.key === "F") {
             this.tmoCtrls.current.stepFalseColor(evt.key === "f");
+            evt.stopPropagation();
         }
 
         if (evt.ctrlKey && evt.key === 'c') {
             this.copyImage();
+            evt.stopPropagation();
         }
 
         if (evt.key === "r") {
             this.reset();
+            evt.stopPropagation();
         }
     }
 
