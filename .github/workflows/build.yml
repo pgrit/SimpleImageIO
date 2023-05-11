@@ -30,6 +30,8 @@ jobs:
       matrix:
         os: [ macos-latest, ubuntu-latest, windows-latest ]
 
+    needs: [ build-frontend ]
+
     steps:
     - uses: actions/checkout@v3
 
