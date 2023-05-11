@@ -86,8 +86,7 @@ jobs:
 
       - name: Build React viewer
         working-directory: ${{github.workspace}}/FlipViewer
-        run: npm install
-        run: npm run build
+        run: npm install && npm run build
 
       - name: Copy viewer JS
         run: cp ${{github.workspace}}/FlipViewer/dist/flipbook.js ${{github.workspace}}/PyWrapper/simpleimageio/flipbook.js
