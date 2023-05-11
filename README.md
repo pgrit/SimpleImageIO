@@ -145,21 +145,27 @@ Then, you should be able to follow the steps above and proceed as usual.
 
 ### Building the Python wrapper
 
-Simply running:
+The simplest route is to run the build script
 
 ```
+pwsh ./make.ps1
+```
+
+which builds and installs the Python lib with pip, using whatever `python` executable is currently in the path.
+
+If you need manual control, e.g., specific Python version, here are the required steps:
+```
+cd ./FlipViewer
+npm install
+npm run build
+cd ..
+cp ./FlipViewer/dist/flipbook.js PyWrapper/simpleimageio/flipbook.js
+
 python -m build
+python -m pip install ./dist/simpleimageio-*.whl
 ```
 
-will automatically fetch an adequate version of CMake, compile the shared library, and build
-the Python package.
-You can then simply install the result via:
-
-```
-pip install ./dist/simpleimageio-*.whl
-```
-
-Where the * has to be substituted by the version number and the compiler and platform identifier (use auto-complete).
+The first commands build, bundle, and pack the frontend code. Then, we build the Python package itself and install it via pip. The `*` must be substituted by the correct version number and runtime identifier.
 
 The tests can be run via:
 
