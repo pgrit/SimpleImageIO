@@ -33,7 +33,8 @@ class build_ext(build_ext_orig):
         config = 'Release'
         cmake_args = [
             '-DPYLIB=' + str(extdir.parent.absolute()), # destination for the shared library
-            '-DCMAKE_BUILD_TYPE=' + config
+            '-DCMAKE_BUILD_TYPE=' + config,
+            '-DCMAKE_OSX_DEPLOYMENT_TARGET=10.15'
         ]
         build_args = [ '--config', config ]
 
