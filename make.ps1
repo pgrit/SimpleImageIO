@@ -5,6 +5,18 @@ param(
     [boolean] $skipRuntimes = $false
 )
 
+# Make sure the required directories exist (but silently)
+New-Item -ItemType Directory -Force runtimes > $null
+New-Item -ItemType Directory -Force runtimes/linux-x64 > $null
+New-Item -ItemType Directory -Force runtimes/linux-x64/native > $null
+New-Item -ItemType Directory -Force runtimes/win-x64 > $null
+New-Item -ItemType Directory -Force runtimes/win-x64/native > $null
+New-Item -ItemType Directory -Force runtimes/osx-x64 > $null
+New-Item -ItemType Directory -Force runtimes/osx-x64/native > $null
+New-Item -ItemType Directory -Force runtimes/osx-arm64 > $null
+New-Item -ItemType Directory -Force runtimes/osx-arm64/native > $null
+New-Item -ItemType Directory -Force build > $null
+
 if (-not $skipRuntimes)
 {
 
@@ -15,18 +27,6 @@ if (-not $skipRuntimes)
         Expand-Archive "prebuilt.zip" -DestinationPath ./prebuilt
         rm prebuilt.zip
     }
-
-    # Make sure the required directories exist (but silently)
-    mkdir -Force runtimes > $null
-    mkdir -Force runtimes/linux-x64 > $null
-    mkdir -Force runtimes/linux-x64/native > $null
-    mkdir -Force runtimes/win-x64 > $null
-    mkdir -Force runtimes/win-x64/native > $null
-    mkdir -Force runtimes/osx-x64 > $null
-    mkdir -Force runtimes/osx-x64/native > $null
-    mkdir -Force runtimes/osx-arm64 > $null
-    mkdir -Force runtimes/osx-arm64/native > $null
-    mkdir -Force build > $null
 
     echo "Copying files for OIDN..."
 
