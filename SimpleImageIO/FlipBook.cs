@@ -85,6 +85,11 @@ public class FlipBook
 
         /// <returns>Zoom level (floating point value) as a string with default formatting</returns>
         public override string ToString() => value.ToString();
+
+        #pragma warning disable CS1591
+        public static implicit operator InitialZoom(float v) => new(v);
+        public static implicit operator float(InitialZoom v) => v.value;
+        #pragma warning restore CS1591
     }
 
     /// <summary>
