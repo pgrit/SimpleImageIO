@@ -103,6 +103,8 @@ else
 
 echo "Building the python wrapper"
 
+python -m pip install build wheel
+
 python -m build
 if (-not $?) { throw "Build failed" }
 
