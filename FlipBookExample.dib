@@ -6,24 +6,20 @@
 
 # FlipBook Example
 
-This .NET interactive notebook shows how the FlipBook tool can be used with a Jupyter notebook and the .NET kernel. See Example.fsx for the F\# syntax.
+This [polyglot notebook](https://github.com/dotnet/interactive) demonstrates how a FlipBook viewer can be generated from C# and displayed in a Jupyter notebook within VS Code.
 
-First, a reference to SimpleImageIO is required, either locally or via nuget.
-
-Then, we can load the JavaScript and CSS code that controls our flip viewers. This needs only to be done once.
-
-(In a perfect world, the result should be written exactly once to the `<head>` element. But not a single browser seems to actually care where and how often this is written.)
+First, we load the SimpleImageIO package and output the required JavaScript code.
 
 #!csharp
 
-// #r "nuget: SimpleImageIO"
-#r "./SimpleImageIO/bin/Debug/net7.0/SimpleImageIO.dll"
+#r "nuget: SimpleImageIO"
+// #r "./SimpleImageIO/bin/Debug/net7.0/SimpleImageIO.dll"
 using SimpleImageIO;
 HTML(FlipBook.Header)
 
 #!markdown
 
-The code cell below generates two solid color images and displays them.
+Next, we generate some test images and display them with default settings.
 
 #!csharp
 
