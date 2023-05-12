@@ -145,9 +145,6 @@ export class ToneMapControls extends React.Component<ToneMapControlsProps, ToneM
                     >
                         GLSL
                     </button>
-                    <span className={styles.tmoCaption}>
-                        Tone mapping
-                    </span>
                 </div>
                 {tmoCtrls}
             </div>

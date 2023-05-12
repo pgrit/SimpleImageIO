@@ -1,8 +1,34 @@
+:root {
+    /* Light theme */
+    /* --background: #ffffff;
+    --accent: #7ccae0;
+    --accent2: #96daed;
+    --foreground: #eeeeee;
+    --foreground2: #ffffff;
+    --border: #ffffff;
+    --border2: black;
+    --text: black; */
+
+    /* Dark theme */
+    --background: #1f2323;
+    --accent: #3896b0;
+    --accent2: #47aeca;
+    --foreground: #424749;
+    --foreground2: #525a5d;
+    --border: #000000;
+    --border2: black;
+    --text: white;
+}
+
 .flipbook {
     display: flex;
     flex-direction: column;
     width: 100%;
     height: 100%;
+    background-color: var(--background);
+    border: solid;
+    border-color: var(--border2);
+    border-width: 1px;
 }
 
 .image-container {
@@ -21,22 +47,22 @@
 
 .method-key {
     border-radius: 2px;
-    border-color: #b1a2a2;
-    border-style: solid;
-    border-width: 1px;
-    padding: 2px;
-    background-color: lightgray;
-    box-shadow: 1px 1px;
+    background-color: var(--foreground2);
+    box-shadow: 1px 1px #545c62;
+    padding-left: 3px;
+    padding-right: 3px;
 }
 
 .key {
-    border-radius: 2px;
-    border-color: #bbc2c5;
+    border-radius: 4px;
+    border-color: var(--border);
     border-style: solid;
     border-width: 1px;
-    padding: 1pt;
-    background-color: #ecf2f5;
-    box-shadow: 1px 1px #bababa;
+    padding: 1px;
+    padding-left: 4px;
+    padding-right: 4px;
+    background-color: var(--foreground2);
+    /* box-shadow: 1px 1px var(--foreground); */
 }
 
 .image {
@@ -52,31 +78,35 @@
         display: block;
     }
 
+.method-list {
+    background-color: var(--foreground);
+}
+
 .method-list:focus {
     outline: none;
 }
 
 .method-label {
-    background-color: #d5e1e6;
+    background-color: var(--foreground);
     border: none;
     padding: 0.5em;
     cursor: pointer;
     font-family: monospace;
-    color: black;
+    color: var(--text);
     font-size: 12px;
     margin-right: 4px;
 }
     .method-label.visible {
-        background-color: #eebe6c;
+        background-color: var(--accent);
     }
     .method-label.visible:hover {
-        background-color: #e0b15f;
+        background-color: var(--accent2);
     }
     .method-label:focus {
         outline: none;
     }
     .method-label:hover {
-        background-color: #bec8cc;
+        background-color: var(--foreground2);
     }
 
 .image-placer {
@@ -145,17 +175,17 @@ p.magnifier {
 div.tools {
     display: flex;
     justify-content: flex-end;
-    background-color: white;
+    margin: 4px;
 }
 
 .toolsBtn {
     appearance: none;
-    background-color: #FAFBFC;
+    background-color: var(--foreground);
     border: 1px solid rgba(27, 31, 35, 0.15);
     border-radius: 0px;
-    box-shadow: rgba(27, 31, 35, 0.04) 0 1px 0, rgba(255, 255, 255, 0.25) 0 1px 0 inset;
+    /* box-shadow: rgba(27, 31, 35, 0.04) 0 1px 0, rgba(255, 255, 255, 0.25) 0 1px 0 inset; */
     box-sizing: border-box;
-    color: #24292E;
+    color: var(--text);
     cursor: pointer;
     display: inline-block;
     font-family: monospace;
@@ -173,7 +203,7 @@ div.tools {
 }
 
 .toolsBtn:hover {
-    background-color: #F3F4F6;
+    background-color: var(--foreground2);
     text-decoration: none;
     transition-duration: 0.1s;
 }
@@ -233,7 +263,7 @@ div.tools {
 .label {
     font-family: monospace;
     font-size: 12px;
-    color: black;
+    color: var(--text);
 }
 
 .checkmark {
@@ -241,28 +271,33 @@ div.tools {
     top: 0;
     left: 0;
     height: 14px;
-    width: 12px;
-    background-color: #eee;
+    width: 14px;
+    background-color: white;
 }
 
 .checkLabel {
     position: relative;
-    padding-left: 16px;
+    padding-left: 18px;
     cursor: pointer;
     font-size: 12px;
     font-family: monospace;
     user-select: none;
-    color: black;
+    color: var(--text);
 }
     .checkLabel input {
         display: none;
     }
     .checkLabel:hover input ~ .checkmark {
-        background-color: #ccc;
+        border-style: solid;
+        border-color: #607475;
+        box-sizing: border-box;
     }
 
     .checkLabel input:checked~.checkmark {
-        background-color: #5cb8d6;
+        background-color: #2f6b7e;
+    }
+    .checkLabel:hover input:checked~.checkmark {
+        border-style: none;
     }
 
     .checkmark:after {
@@ -276,7 +311,7 @@ div.tools {
     }
 
     .checkLabel .checkmark:after {
-        left: 3.5px;
+        left: 4.5px;
         top: 1px;
         width: 3px;
         height: 7px;
@@ -295,34 +330,30 @@ div.tools {
 }
 
 .tmoSelectBtn {
-    background-color: #d5e1e6;
+    background-color: var(--foreground);
     border: none;
     padding: 0.5em;
     cursor: pointer;
     font-family: monospace;
     font-size: 12px;
     margin-right: 4px;
+    color: var(--text);
 }
     .tmoSelectBtn.active {
-        background-color: #eebe6c;
+        background-color: var(--accent);
     }
     .tmoSelectBtn.active:hover {
-        background-color: #e0b15f;
+        background-color: var(--accent2);
     }
     .tmoSelectBtn:focus {
         outline: none;
     }
     .tmoSelectBtn:hover {
-        background-color: #bec8cc;
+        background-color: var(--foreground2);
     }
 
 .tmoContainer  {
-    background-color: #d6e1e6;
-    border-color: #909a9d;
-    border-style: solid;
-    border-width: 2px;
-    margin-top: 8px;
-    border-radius: 1px;
+    background-color: var(--foreground);
 }
 
 .tmoSelectGroup {
@@ -330,21 +361,15 @@ div.tools {
     justify-content: flex-start;
     border-bottom-style: solid;
     border-bottom-width: 1pt;
-    border-color: #5d7475;
-}
-
-.tmoCaption {
-    font-size: 12px;
-    margin-left: auto;
-    font-family: monospace;
-    margin-right: 4px;
-    color: black;
+    border-color: var(--border);
+    border-top-style: solid;
+    border-top-width: 1pt;
 }
 
 .hint {
     font-size: 12px;
     font-family: monospace;
-    color: black;
+    color: var(--text);
 }
 
 .meanValue {
