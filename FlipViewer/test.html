@@ -44,7 +44,10 @@
                 containerId: "page",
             }
 
-            flipbook.MakeFlipBook(data);
+            flipbook.MakeFlipBook(data, (col, row, evt) => {
+                if (evt.ctrlKey)
+                    console.log(`pixel: ${col}, ${row}`)
+            });
         }
     </script>
 </body>
