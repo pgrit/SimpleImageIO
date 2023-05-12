@@ -112,6 +112,7 @@ export class Magnifier extends React.Component<MagnifierProps, MagnifierState> {
 
         return (
             <div className={styles.magnifier} style={{ left: this.props.x, top: this.props.y }}>
+                <p className={styles.pixelCoords}>{this.props.col}, {this.props.row}</p>
                 <table className={styles.magnifier}>
                     <tbody>
                         {rows}

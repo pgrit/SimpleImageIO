@@ -4,6 +4,8 @@ import { ToneMappingImage } from './FlipBook';
 import { Magnifier, formatNumber } from './Magnifier';
 import { ZoomLevel } from './flipviewer';
 
+export type OnClickHandler = (col: number, row: number, event: MouseEvent) => void
+
 export interface ImageContainerProps {
     width: number;
     height: number;
@@ -11,6 +13,7 @@ export interface ImageContainerProps {
     toneMappers: ToneMappingImage[];
     selectedIdx: number;
     onZoom: (zoom: number) => void;
+    onClick?: OnClickHandler;
     children: React.ReactNode;
     means: number[];
 }
@@ -52,6 +55,7 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
         this.onMouseMoveOverImage = this.onMouseMoveOverImage.bind(this);
         this.onMouseOutOverImage = this.onMouseOutOverImage.bind(this);
         this.onWheel = this.onWheel.bind(this);
+        this.onClick = this.onClick.bind(this);
     }
 
     shiftImage(dx: number, dy: number) {
@@ -95,6 +99,22 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
 
     onMouseOutOverImage(event: React.MouseEvent<HTMLDivElement>) {
         this.setState({magnifierVisible: false});
+    }
+
+    onClick(event: React.MouseEvent<HTMLDivElement>) {
+        let bounds = this.imgPlacer.current.getBoundingClientRect();
+        let x = event.clientX - bounds.left;
+        let y = event.clientY - bounds.top;
+
+        let curPixelCol = Math.floor(x / this.state.scale);
+        let curPixelRow = Math.floor(y / this.state.scale);
+        curPixelCol = Math.min(Math.max(curPixelCol, 0), this.props.width - 1);
+        curPixelRow = Math.min(Math.max(curPixelRow, 0), this.props.height - 1);
+
+        if (this.props.onClick)
+        {
+            this.props.onClick(curPixelCol, curPixelRow, event.nativeEvent);
+        }
     }
 
     onMouseMove(event: React.MouseEvent<HTMLDivElement>) {
@@ -206,6 +226,7 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
                     onMouseMove={this.onMouseMoveOverImage}
                     onMouseOut={this.onMouseOutOverImage}
                     onMouseDown={this.onMouseMoveOverImage}
+                    onClick={this.onClick}
                 >
                     {canvases}
                     {magnifier}

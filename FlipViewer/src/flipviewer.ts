@@ -1,4 +1,5 @@
 import { AddFlipBook } from "./FlipBook";
+import { OnClickHandler } from "./ImageContainer";
 
 async function readRGBE(url: string) {
     const response = await fetch(url);
@@ -101,11 +102,11 @@ export interface ToneMapSettings {
     useLog: boolean;
 }
 
-export async function MakeFlipBookFromJson(jsonData: string) : Promise<any> {
-    return MakeFlipBook(JSON.parse(jsonData));
+export async function MakeFlipBookFromJson(jsonData: string, onClick?: OnClickHandler) : Promise<any> {
+    return MakeFlipBook(JSON.parse(jsonData), onClick);
 }
 
-export async function MakeFlipBook(data: FlipData) : Promise<any> {
+export async function MakeFlipBook(data: FlipData, onClick?: OnClickHandler) : Promise<any> {
     let work: Promise<Float32Array | HTMLImageElement>[] = [];
     for (let i = 0; i < data.dataUrls.length; ++i) {
         let loadFn;
@@ -122,5 +123,5 @@ export async function MakeFlipBook(data: FlipData) : Promise<any> {
 
     let values = await Promise.all(work);
     AddFlipBook(document.getElementById(data.containerId), data.names, values, data.width, data.height,
-                data.initialZoom, data.initialTMO)
+                data.initialZoom, data.initialTMO, onClick)
 }

@@ -362,3 +362,15 @@ div.tools {
     text-shadow: -2px -2px 4px #000, 2px -2px 4px #000, -2px 2px 4px #000, 2px 2px 4px #000;
     text-align: center;
 }
+
+.pixelCoords {
+    margin-top: 0px;
+    margin-bottom: 4px;
+    font-size: 14px;
+    font-weight: bold;
+    font-family: monospace;
+    color: rgb(255, 255, 255);
+    text-rendering: optimizeLegibility;
+    text-shadow: -2px -2px 4px #000, 2px -2px 4px #000, -2px 2px 4px #000, 2px 2px 4px #000;
+    text-align: center;
+}

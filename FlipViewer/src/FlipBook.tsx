@@ -2,7 +2,7 @@ import { createRoot } from 'react-dom/client';
 import styles from './styles.module.css';
 import React, { createRef } from 'react';
 import { renderImage } from "./Render";
-import { ImageContainer } from './ImageContainer';
+import { ImageContainer, OnClickHandler } from './ImageContainer';
 import { ToneMapControls } from './ToneMapControls';
 import { MethodList } from './MethodList';
 import { Tools } from './Tools';
@@ -46,6 +46,7 @@ export interface FlipProps {
     toneMappers: ToneMappingImage[];
     initialZoom?: ZoomLevel;
     initialTMO?: ToneMapSettings;
+    onClick?: OnClickHandler;
 }
 
 interface FlipState {
@@ -195,6 +196,7 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
                         toneMappers={this.props.toneMappers}
                         selectedIdx={this.state.selectedIdx}
                         onZoom={(zoom) => this.tools.current.onZoom(zoom)}
+                        onClick={this.props.onClick}
                     >
                         {popup}
                     </ImageContainer>
@@ -260,7 +262,8 @@ function SrgbToLinear(srgb: number) {
  * @param {*} initialTMO name and settings for the initial TMO configuration
  */
 export function AddFlipBook(parentElement: HTMLElement, names: string[], images: (Float32Array | HTMLImageElement)[],
-                            width: number, height: number, initialZoom: ZoomLevel, initialTMO: ToneMapSettings) {
+                            width: number, height: number, initialZoom: ZoomLevel, initialTMO: ToneMapSettings,
+                            onClick?: OnClickHandler) {
     let rawPixels = GetImageData(images);
     let means: number[] = [];
     for (let img of rawPixels) {
@@ -297,6 +300,7 @@ export function AddFlipBook(parentElement: HTMLElement, names: string[], images:
             toneMappers={Array(names.length)}
             initialZoom={initialZoom}
             initialTMO={initialTMO}
+            onClick={onClick}
         />
     );
 }
