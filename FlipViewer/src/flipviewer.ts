@@ -85,6 +85,7 @@ export type FlipData = {
     initialZoom: ZoomLevel;
     initialTMO: ToneMapSettings;
     containerId: string;
+    colorTheme?: string;
 }
 
 export enum ToneMapType {
@@ -102,11 +103,16 @@ export interface ToneMapSettings {
     useLog: boolean;
 }
 
-export async function MakeFlipBookFromJson(jsonData: string, onClick?: OnClickHandler) : Promise<any> {
-    return MakeFlipBook(JSON.parse(jsonData), onClick);
+function AsFlipData(data: FlipData | string): FlipData {
+    if (typeof data === 'string')
+        return JSON.parse(data);
+    else
+        return data;
 }
 
-export async function MakeFlipBook(data: FlipData, onClick?: OnClickHandler) : Promise<any> {
+export async function MakeFlipBook(data: FlipData | string, onClick?: OnClickHandler) {
+    data = AsFlipData(data);
+
     let work: Promise<Float32Array | HTMLImageElement>[] = [];
     for (let i = 0; i < data.dataUrls.length; ++i) {
         let loadFn;
@@ -122,6 +128,21 @@ export async function MakeFlipBook(data: FlipData, onClick?: OnClickHandler) : P
     }
 
     let values = await Promise.all(work);
-    AddFlipBook(document.getElementById(data.containerId), data.names, values, data.width, data.height,
-                data.initialZoom, data.initialTMO, onClick)
+    return AddFlipBook({
+        parentElement: document.getElementById(data.containerId),
+        names: data.names,
+        images: values,
+        width: data.width,
+        height: data.height,
+        initialZoom: data.initialZoom,
+        initialTMO: data.initialTMO,
+        onClick: onClick,
+        colorTheme: data.colorTheme
+    });
+}
+
+export async function MakeFlipGroup(data: (FlipData | string)[], onClick?: OnClickHandler[]) {
+    let f1 = await MakeFlipBook(data[0], onClick[0]);
+    let f2 = await MakeFlipBook(data[1], onClick[1]);
+    // f1.current.connect(f2)
 }

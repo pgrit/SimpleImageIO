@@ -28,30 +28,32 @@ public class FlipBook
     /// </summary>
     public enum DataType {
         /// <summary>
-        /// 4 bytes per pixel, one per channel, one for the shared exponent. Looses accuracy if the
-        /// channel values differ significantly.
+        /// Encodes HDR colors with a shared 1 byte exponent and one 1 byte mantissa per channel.
+        /// I.e., the format used by Radiance .hdr files.
+        /// Looses accuracy if the channel values differ significantly.
+        /// Not able to represent negative values, Inf, or NaN.
         /// </summary>
         RGBE = -1,
 
         /// <summary>
-        /// Raw RGB data with 32 bit per channel, i.e., 12 bytes per pixel.
+        /// Raw float data with 32 bit per channel, i.e., 12 bytes per pixel for RGB.
         /// </summary>
-        RGB = -2,
+        Float32 = -2,
 
         /// <summary>
-        /// LDR image with lossless PNG encoding. Up to 3 bytes per pixel, depending on compression impact
+        /// LDR image with lossless PNG encoding.
         /// </summary>
-        LDR_PNG = -3,
+        PNG = -3,
 
         /// <summary>
-        /// Raw RGB data with 16 bit per channel, i.e., 6 bytes per pixel.
+        /// Raw float data with 16 bit per channel (aka half precision), i.e., 6 bytes per pixel for RGB.
         /// </summary>
-        RGB_HALF = -4,
+        Float16 = -4,
 
         /// <summary>
         /// LDR image with lossy JPEG encoding (quality 90). Smallest but least accurate.
         /// </summary>
-        LDR_JPEG = 90
+        JPEG = 90
     }
 
     /// <summary>
@@ -182,83 +184,10 @@ public class FlipBook
     }
 
     static string CompressImageAsPNG(Image img)
-    => "data:image/png;base64," + img.AsBase64Png();
+    => "data:image/png;base64," + img.AsBase64();
 
     static string CompressImageAsJPEG(Image img, int quality = 90)
-    => "data:image/jpeg;base64," + Convert.ToBase64String(img.WriteToMemory(".jpg", quality));
-
-    static GeneratedCode MakeComparisonHtml(int width, int height, int htmlWidth, int htmlHeight,
-                                            IEnumerable<(string Name, DataType type, string EncodedData)> images,
-                                            InitialZoom initialZoom, InitialTMO initialTMO)
-    {
-        string id = "flipbook-" + Guid.NewGuid().ToString();
-        string html = $"<div id='{id}' style='width:{htmlWidth}px; height:{htmlHeight}px;'></div>";
-
-        List<string> dataStrs = new();
-        List<string> typeStrs = new();
-        List<string> nameStrs = new();
-        foreach (var (name, type, url) in images) {
-            string t = type switch {
-                DataType.RGB => "single",
-                DataType.RGBE => "rgbe",
-                DataType.RGB_HALF => "half",
-                _ => "ldr"
-            };
-            dataStrs.Add(url);
-            typeStrs.Add(t);
-            nameStrs.Add(name);
-        }
-
-        string initialTMOStr = "null";
-        if (initialTMO != null) {
-            initialTMOStr = JsonSerializer.Serialize(initialTMO);
-        }
-
-        string json = $$"""
-        {
-            "width": {{width}},
-            "height": {{height}},
-            "containerId": "{{id}}",
-            "initialZoom": {{initialZoom.ToString()}},
-            "initialTMO": {{initialTMOStr}},
-            "names": [{{string.Join(',', nameStrs.Select(n => $"\"{n}\""))}}],
-            "dataUrls": [{{string.Join(',', dataStrs.Select(n => $"\"{n}\""))}}],
-            "types": [{{string.Join(',', typeStrs.Select(n => $"\"{n}\""))}}]
-        }
-        """;
-
-        return new(html, json, "flipbook.MakeFlipBook", id);
-    }
-
-    static GeneratedCode MakeHelper<T>(int htmlWidth, int htmlHeight,
-                                       IEnumerable<(string Name, T Image, DataType TargetType)> images,
-                                       InitialZoom initialZoom, InitialTMO initialTMO)
-    where T : Image
-    {
-        var data = new List<(string, DataType, string)>();
-        int width = 0, height = 0;
-        foreach (var img in images)
-        {
-            if (width == 0) {
-                width = img.Image.Width;
-                height = img.Image.Height;
-            } else if (width != img.Image.Width || height != img.Image.Height)
-                throw new ArgumentException("Image resolutions differ");
-
-            var targetType = img.TargetType;
-            if (targetType == DataType.RGBE && img.Image.NumChannels != 3) targetType = DataType.RGB;
-
-            string imgData = targetType switch {
-                DataType.RGB => WriteImageAsFloat32(img.Image),
-                DataType.RGBE => img.Image.NumChannels == 3 ? CompressImageAsRGBE(img.Image) : WriteImageAsFloat32(img.Image),
-                DataType.LDR_PNG => CompressImageAsPNG(img.Image),
-                DataType.RGB_HALF => WriteImageAsFloat16(img.Image),
-                DataType quality => CompressImageAsJPEG(img.Image, (int)quality)
-            };
-            data.Add((img.Name, targetType, imgData));
-        }
-        return MakeComparisonHtml(width, height, htmlWidth, htmlHeight, data, initialZoom, initialTMO);
-    }
+    => "data:image/jpeg;base64," + img.AsBase64(".jpg", quality);
 
     /// <summary>
     /// Creates the HTML, JS, and CSS code controlling the flip viewer logic. Needs to be added once in
@@ -277,11 +206,12 @@ public class FlipBook
     public static string HeaderScript
     => ReadResourceText("flipbook.js");
 
-    List<(string Name, Image Image, DataType targetType)> images = new();
+    List<(string Name, Image Image, DataType TargetType)> images = new();
     int htmlWidth;
     int htmlHeight;
     InitialZoom initialZoom;
     InitialTMO initialTMO;
+    string theme;
 
     /// <summary>
     /// Syntactic sugar to create a new object of this class. Makes the fluent API more readable.
@@ -319,6 +249,15 @@ public class FlipBook
     /// </summary>
     public FlipBook WithToneMapper(InitialTMO tmo) {
         initialTMO = tmo;
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the color theme for this flip book
+    /// </summary>
+    /// <param name="theme">Of of the supported themes: "dark" or "light"</param>
+    public FlipBook WithColorTheme(string theme) {
+        this.theme = theme;
         return this;
     }
 
@@ -389,7 +328,67 @@ public class FlipBook
     /// <summary>
     /// Generates the HTML and JS for the flip book and returns them separately.
     /// </summary>
-    public GeneratedCode Generate() => MakeHelper(htmlWidth, htmlHeight, images, initialZoom, initialTMO);
+    public GeneratedCode Generate() {
+        if (images.Count == 0)
+            throw new InvalidOperationException("No images in the flip book");
+
+        List<string> dataStrs = new();
+        List<string> typeStrs = new();
+        List<string> nameStrs = new();
+        int width = images[0].Image.Width;
+        int height = images[0].Image.Height;
+        foreach (var img in images)
+        {
+            if (width != img.Image.Width || height != img.Image.Height)
+                throw new InvalidOperationException("Image resolutions differ");
+
+            // The RGBE only supports exactly 3 color channels, so we fall back to half
+            var targetType = img.TargetType;
+            if (targetType == DataType.RGBE && img.Image.NumChannels != 3)
+                targetType = DataType.Float16;
+
+            dataStrs.Add(targetType switch {
+                DataType.Float32 => WriteImageAsFloat32(img.Image),
+                DataType.RGBE => CompressImageAsRGBE(img.Image),
+                DataType.PNG => CompressImageAsPNG(img.Image),
+                DataType.Float16 => WriteImageAsFloat16(img.Image),
+                DataType quality => CompressImageAsJPEG(img.Image, (int)quality)
+            });
+
+            typeStrs.Add(targetType switch {
+                DataType.Float32 => "single",
+                DataType.RGBE => "rgbe",
+                DataType.Float16 => "half",
+                _ => "ldr"
+            });
+
+            nameStrs.Add(img.Name);
+        }
+
+        string id = "flipbook-" + Guid.NewGuid().ToString();
+        string html = $"<div id='{id}' style='width:{htmlWidth}px; height:{htmlHeight}px;'></div>";
+
+        string initialTMOStr = "null";
+        if (initialTMO != null) {
+            initialTMOStr = JsonSerializer.Serialize(initialTMO);
+        }
+
+        string json = $$"""
+        {
+            "width": {{width}},
+            "height": {{height}},
+            "containerId": "{{id}}",
+            "initialZoom": {{initialZoom.ToString()}},
+            "initialTMO": {{initialTMOStr}},
+            "names": [{{string.Join(',', nameStrs.Select(n => $"\"{n}\""))}}],
+            "dataUrls": [{{string.Join(',', dataStrs.Select(n => $"\"{n}\""))}}],
+            "types": [{{string.Join(',', typeStrs.Select(n => $"\"{n}\""))}}],
+            "colorTheme": "{{theme}}"
+        }
+        """;
+
+        return new(html, json, "flipbook.MakeFlipBook", id);
+    }
 
     /// <summary>
     /// Creates a flip book out of a dictionary of named images

@@ -9,6 +9,9 @@
     <div id="page" style="max-width: 1000px; margin: 0 auto;height: 900px;">
     </div>
 
+    <div id="page2" style="max-width: 1000px; margin: 0 auto;height: 900px; margin-top: 10pt;">
+    </div>
+
     <script>
         {
             let width = 2000;
@@ -44,10 +47,33 @@
                 containerId: "page",
             }
 
-            flipbook.MakeFlipBook(data, (col, row, evt) => {
-                if (evt.ctrlKey)
-                    console.log(`pixel: ${col}, ${row}`)
-            });
+            let data2 = {
+                dataUrls: [pixels1, pixels2],
+                types: ["float32array", "float32array"],
+                names: ["Artifacts", "Perfect"],
+                width: width,
+                height: height,
+                initialZoom: 0.5,
+                initialTMO: {
+                    activeTMO: flipbook.ToneMapType.Exposure,
+                    exposure: 1.0
+                },
+                containerId: "page2",
+                colorTheme: "light"
+            }
+
+            // flipbook.MakeFlipBook(data, (col, row, evt) => {
+            //     if (evt.ctrlKey)
+            //         console.log(`pixel: ${col}, ${row}`)
+            // });
+
+            flipbook.MakeFlipGroup([data, data2], [
+                (col, row, evt) => {
+                    if (evt.ctrlKey)
+                        console.log(`pixel: ${col}, ${row}`)
+                },
+                null
+            ])
         }
     </script>
 </body>

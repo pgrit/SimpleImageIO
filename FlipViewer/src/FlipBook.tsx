@@ -7,7 +7,7 @@ import { ToneMapControls } from './ToneMapControls';
 import { MethodList } from './MethodList';
 import { Tools } from './Tools';
 import { Popup } from './Popup';
-import { ToneMapSettings, ZoomLevel } from './flipviewer';
+import { ImageType, ToneMapSettings, ZoomLevel } from './flipviewer';
 
 const UPDATE_INTERVAL_MS = 100;
 
@@ -46,6 +46,7 @@ export interface FlipProps {
     toneMappers: ToneMappingImage[];
     initialZoom?: ZoomLevel;
     initialTMO?: ToneMapSettings;
+    style?: React.CSSProperties;
     onClick?: OnClickHandler;
 }
 
@@ -181,7 +182,7 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
         }
 
         return (
-            <div className={styles['flipbook']}>
+            <div className={styles['flipbook']} style={this.props.style}>
                 <div style={{display: "contents"}} onKeyDown={this.onKeyDown}>
                     <MethodList
                         names={this.props.names}
@@ -220,6 +221,10 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
         if (this.props.initialZoom)
             this.imageContainer.current.setZoom(this.props.initialZoom);
     }
+
+    connect(other: React.RefObject<FlipBook>) {
+        console.log(other.current);
+    }
 }
 
 /**
@@ -251,6 +256,41 @@ function SrgbToLinear(srgb: number) {
     }
 }
 
+const colorThemes: Record<string, any> = {
+    dark: {
+        "--background": "#1f2323",
+        "--accent": "#3896b0",
+        "--accent2": "#47aeca",
+        "--foreground": "#424749",
+        "--foreground2": "#525a5d",
+        "--border": "#000000",
+        "--border2": "black",
+        "--text": "white"
+    },
+    light: {
+        "--background": "#ffffff",
+        "--accent": "#7ccae0",
+        "--accent2": "#96daed",
+        "--foreground": "#eeeeee",
+        "--foreground2": "#ffffff",
+        "--border": "#ffffff",
+        "--border2": "black",
+        "--text": "black",
+    }
+}
+
+export type FlipBookParams = {
+    parentElement: HTMLElement,
+    names: string[],
+    images: (Float32Array | HTMLImageElement)[],
+    width: number,
+    height: number,
+    initialZoom: ZoomLevel,
+    initialTMO: ToneMapSettings,
+    onClick?: OnClickHandler,
+    colorTheme?: string
+}
+
 /**
  *
  * @param {*} parentElement the DOM node to add this flipbook to
@@ -261,46 +301,52 @@ function SrgbToLinear(srgb: number) {
  * @param {*} initialZoom either "fill_height", "fill_width", "fit", or a number specifying the zoom level
  * @param {*} initialTMO name and settings for the initial TMO configuration
  */
-export function AddFlipBook(parentElement: HTMLElement, names: string[], images: (Float32Array | HTMLImageElement)[],
-                            width: number, height: number, initialZoom: ZoomLevel, initialTMO: ToneMapSettings,
-                            onClick?: OnClickHandler) {
-    let rawPixels = GetImageData(images);
+export function AddFlipBook(params: FlipBookParams) {
+    let rawPixels = GetImageData(params.images);
     let means: number[] = [];
     for (let img of rawPixels) {
         let m = 0;
-        for (let col = 0; col < width; ++col) {
-            for (let row = 0; row < height; ++row) {
+        for (let col = 0; col < params.width; ++col) {
+            for (let row = 0; row < params.height; ++row) {
+                let pixelIdx = row * params.width + col;
                 let r = 0, g = 0, b = 0;
                 let numChan = 3;
                 if (img instanceof ImageData) {
-                    r = SrgbToLinear(img.data[4 * (row * width + col) + 0] / 255);
-                    g = SrgbToLinear(img.data[4 * (row * width + col) + 1] / 255);
-                    b = SrgbToLinear(img.data[4 * (row * width + col) + 2] / 255);
+                    r = SrgbToLinear(img.data[4 * pixelIdx + 0] / 255);
+                    g = SrgbToLinear(img.data[4 * pixelIdx + 1] / 255);
+                    b = SrgbToLinear(img.data[4 * pixelIdx + 2] / 255);
                 } else if (img instanceof Float32Array) {
-                    numChan = img.length / width / height;
-                    r = img[numChan * (row * width + col) + 0 % numChan];
-                    g = img[numChan * (row * width + col) + 1 % numChan];
-                    b = img[numChan * (row * width + col) + 2 % numChan];
+                    numChan = img.length / (params.width * params.height);
+                    r = img[numChan * pixelIdx + 0 % numChan];
+                    g = img[numChan * pixelIdx + 1 % numChan];
+                    b = img[numChan * pixelIdx + 2 % numChan];
                 }
                 m += numChan == 3 ? (r + g + b) / 3 : r;
             }
         }
-        m /= width * height;
+        m /= params.width * params.height;
         means.push(m);
     }
 
-    const root = createRoot(parentElement);
+    let themeStyle = colorThemes[params.colorTheme ?? "dark"];
+
+    const root = createRoot(params.parentElement);
+    let flipRef = createRef<FlipBook>();
     root.render(
         <FlipBook
-            names={names}
-            width={width}
-            height={height}
+            names={params.names}
+            width={params.width}
+            height={params.height}
             rawPixels={rawPixels}
             means={means}
-            toneMappers={Array(names.length)}
-            initialZoom={initialZoom}
-            initialTMO={initialTMO}
-            onClick={onClick}
+            toneMappers={Array(params.names.length)}
+            initialZoom={params.initialZoom}
+            initialTMO={params.initialTMO}
+            onClick={params.onClick}
+            style={themeStyle}
+            ref={flipRef}
         />
     );
+
+    return flipRef;
 }

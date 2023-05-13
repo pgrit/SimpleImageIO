@@ -61,7 +61,7 @@ public static class HistogramRenderer {
 
     public static string RenderHtml(Image img, int width, int height) {
         var h = Render((img), width, height);
-        string url = "data:image/png;base64," + h.Image.AsBase64Png();
+        string url = "data:image/png;base64," + h.Image.AsBase64();
         string lineStyle =
             $"""
             width: 2pt;
