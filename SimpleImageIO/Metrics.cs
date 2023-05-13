@@ -42,17 +42,21 @@ public static class Metrics {
     /// error values.
     /// </summary>
     public static Image RelMSEImage(Image image, Image reference, float epsilon = 0.01f) {
-        var delta = image - reference;
-        return delta * delta / (reference + epsilon);
+        return Image.ApplyOp(image, reference, (i, r) => {
+            float d = (i - r);
+            return d * d / (r * r + epsilon);
+        });
     }
 
     /// <summary>
     /// Computes an MSE image. The result is a new image, where each pixel stores the per-channel
     /// error values.
     /// </summary>
-    public static Image MSEImage(Image image, Image reference, float epsilon = 0.01f) {
-        var delta = image - reference;
-        return delta * delta;
+    public static Image MSEImage(Image image, Image reference) {
+        return Image.ApplyOp(image, reference, (i, r) => {
+            float d = (i - r);
+            return d * d;
+        });
     }
 
     /// <summary>
