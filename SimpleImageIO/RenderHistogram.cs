@@ -1,10 +1,20 @@
 namespace SimpleImageIO;
 
+/// <summary>
+/// Visualizes the histogram of an image
+/// </summary>
 public static class HistogramRenderer {
-    public record struct HistogramLegend(float MeanPos, float MeanValue, float MinValue, float MaxValue, float MaxPercent) {}
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name="MeanPos">Relative position of the image's mean value in the histogram, from left to right, 0 to 1</param>
+    /// <param name="MeanValue">The images mean value (across all color channels)</param>
+    /// <param name="MinValue">The minimum value, i.e., value at the left edge of the histogram</param>
+    /// <param name="MaxValue">The maximum value, i.e., value at the right edge of the histogram</param>
+    public record struct HistogramLegend(float MeanPos, float MeanValue, float MinValue, float MaxValue) {}
 
-    public static MonochromeImage RenderChannel(Image image, int channel, float min, float max, int resolution,
-                                                int height, int maxCount) {
+    static MonochromeImage RenderChannel(Image image, int channel, float min, float max, int resolution,
+                                         int height, int maxCount) {
         int[] counts = new int[resolution];
         Parallel.For(0, image.Height, row => {
             int localRow = row;
@@ -29,6 +39,13 @@ public static class HistogramRenderer {
         return histImg;
     }
 
+    /// <summary>
+    /// Visualizes a histogram as an image.
+    /// </summary>
+    /// <param name="img">The image of which to compute the histogram</param>
+    /// <param name="width">Width of the histogram (= number of bins)</param>
+    /// <param name="height">Height of the histogram in pixels (= quantization resolution)</param>
+    /// <returns>The rendered histogram and the corresponding values (range, mean, etc)</returns>
     public static (Image Image, HistogramLegend Legend) Render(Image img, int width, int height) {
         var posHist = new Histogram(new MonochromeImage(img).ApplyOpInPlace(v => Math.Max(0, v)));
         var negHist = new Histogram(new MonochromeImage(img).ApplyOpInPlace(v => Math.Max(0, -v)));
@@ -56,9 +73,16 @@ public static class HistogramRenderer {
 
         float meanPos = (hist.Average - min) / (max - min);
 
-        return (result, new(meanPos, hist.Average, min == -0 ? 0 : min, max, maxCount / (img.Width * (float)img.Height) * 100));
+        return (result, new(meanPos, hist.Average, min == -0 ? 0 : min, max));
     }
 
+    /// <summary>
+    /// Creates an HTML snippet that visualizes a histogram with markers and values
+    /// </summary>
+    /// <param name="img">The image</param>
+    /// <param name="width">Width of the histogram in pixels (= number of bins)</param>
+    /// <param name="height">Height of the histogram in pixels (= quantization resolution)</param>
+    /// <returns>HTML code as a string</returns>
     public static string RenderHtml(Image img, int width, int height) {
         var h = Render((img), width, height);
         string url = "data:image/png;base64," + h.Image.AsBase64();

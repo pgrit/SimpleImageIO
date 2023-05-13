@@ -38,6 +38,24 @@ public static class Metrics {
     }
 
     /// <summary>
+    /// Computes a relative MSE image. The result is a new image, where each pixel stores the per-channel
+    /// error values.
+    /// </summary>
+    public static Image RelMSEImage(Image image, Image reference, float epsilon = 0.01f) {
+        var delta = image - reference;
+        return delta * delta / (reference + epsilon);
+    }
+
+    /// <summary>
+    /// Computes an MSE image. The result is a new image, where each pixel stores the per-channel
+    /// error values.
+    /// </summary>
+    public static Image MSEImage(Image image, Image reference, float epsilon = 0.01f) {
+        var delta = image - reference;
+        return delta * delta;
+    }
+
+    /// <summary>
     /// Computes the relative mean square error of two images. Ignores a small percentage of the
     /// brightest pixels. The result is less obscured by outliers this way.
     /// </summary>
