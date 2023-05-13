@@ -422,15 +422,15 @@ public unsafe class Image : IDisposable {
         result.Height = a.Height;
         result.NumChannels = a.NumChannels;
         result.Alloc();
-        for (int row = 0; row < a.Height; ++row) {
+        Parallel.For(0, a.Height, row => {
             for (int col = 0; col < a.Width; ++col) {
                 for (int chan = 0; chan < a.NumChannels; ++chan) {
-                    float av = a.GetPixelChannel(col, row, chan);
-                    float bv = b.GetPixelChannel(col, row, chan);
-                    result.SetPixelChannel(col, row, chan, op(av, bv));
+                    float av = a[col, row, chan];
+                    float bv = b[col, row, chan];
+                    result[col, row, chan] = op(av, bv);
                 }
             }
-        }
+        });
         return result;
     }
 
@@ -446,14 +446,14 @@ public unsafe class Image : IDisposable {
         result.Height = a.Height;
         result.NumChannels = a.NumChannels;
         result.Alloc();
-        for (int row = 0; row < a.Height; ++row) {
+        Parallel.For(0, a.Height, row => {
             for (int col = 0; col < a.Width; ++col) {
                 for (int chan = 0; chan < a.NumChannels; ++chan) {
-                    float av = a.GetPixelChannel(col, row, chan);
-                    result.SetPixelChannel(col, row, chan, op(av));
+                    float av = a[col, row, chan];
+                    result[col, row, chan] = op(av);
                 }
             }
-        }
+        });
         return result;
     }
 
@@ -463,13 +463,13 @@ public unsafe class Image : IDisposable {
     /// <param name="op">Function to invoke</param>
     /// <returns>this image object</returns>
     public Image ApplyOpInPlace(Func<float, float> op) {
-        for (int row = 0; row < Height; ++row) {
+        Parallel.For(0, Height, row => {
             for (int col = 0; col < Width; ++col) {
                 for (int chan = 0; chan < NumChannels; ++chan) {
                     this[col, row, chan] = op(this[col, row, chan]);
                 }
             }
-        }
+        });
         return this;
     }
 
@@ -483,13 +483,13 @@ public unsafe class Image : IDisposable {
         if (Width != other.Width || Height != other.Height || NumChannels != other.NumChannels)
             throw new ArgumentException("Image dimensions must match");
 
-        for (int row = 0; row < Height; ++row) {
+        Parallel.For(0, Height, row => {
             for (int col = 0; col < Width; ++col) {
                 for (int chan = 0; chan < NumChannels; ++chan) {
                     this[col, row, chan] = op(this[col, row, chan], other[col, row, chan]);
                 }
             }
-        }
+        });
         return this;
     }
 
