@@ -24,8 +24,8 @@ static class TestFlip {
         corrupt[12, 12] = new(float.PositiveInfinity, 0, float.NegativeInfinity);
         corrupt[13, 13] = new(1, float.NaN, 0.4f);
         var f2 = new FlipBook(900, 800)
-            .Add("Corrupt Half", corrupt, FlipBook.DataType.RGB_HALF)
-            .Add("Corrupt Float32", corrupt, FlipBook.DataType.RGB)
+            .Add("Corrupt Half", corrupt, FlipBook.DataType.Float16)
+            .Add("Corrupt Float32", corrupt, FlipBook.DataType.Float32)
             .WithToneMapper(FlipBook.InitialTMO.GLSL("""
             vec3 v = rgb;
             rgb = vec3(0.0);
@@ -34,17 +34,19 @@ static class TestFlip {
             if (anynan(v))
                 rgb += vec3(0.0, 1.0, 1.0);
             """))
-            .WithZoom(FlipBook.InitialZoom.Fit);
+            .WithZoom(FlipBook.InitialZoom.Fit)
+            .WithColorTheme("light");
 
         // Relative squared error images
         RgbImage reference = new("Data/Reference.exr");
         RgbImage denom = reference * reference + 0.01f;
         var f3 = new FlipBook(900, 800)
             .Add("PT", new MonochromeImage((pt - reference).Squared() / denom))
-            .Add("BDPT", (bdpt - reference).Squared() / denom, FlipBook.DataType.LDR_JPEG)
+            .Add("BDPT", (bdpt - reference).Squared() / denom, FlipBook.DataType.JPEG)
             .Add("VCM", (vcm - reference).Squared() / denom)
             .WithToneMapper(FlipBook.InitialTMO.FalseColor(0.0f, 0.1f))
-            .WithZoom(FlipBook.InitialZoom.FillHeight);
+            .WithZoom(FlipBook.InitialZoom.FillHeight)
+            .WithColorTheme("doesnexist");
 
         string hist =
             HistogramRenderer.RenderHtml(new MonochromeImage((bdpt - reference).Squared() / denom), 300, 100) +

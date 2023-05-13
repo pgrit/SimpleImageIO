@@ -22,7 +22,7 @@ namespace SimpleImageIO.Tests {
             SimpleImageIO.Filter.Box(image, aImage, radius);
             SimpleImageIO.Filter.RepeatedBox(image, bImage, radius);
 
-            Assert.Equal(aImage.AsBase64Png(), bImage.AsBase64Png());
+            Assert.Equal(aImage.AsBase64(), bImage.AsBase64());
         }
 
         [Theory]
@@ -44,7 +44,7 @@ namespace SimpleImageIO.Tests {
             SimpleImageIO.Filter.Box(image, aImage, radius);
             SimpleImageIO.Filter.RepeatedBox(image, bImage, radius);
 
-            Assert.Equal(aImage.AsBase64Png(), bImage.AsBase64Png());
+            Assert.Equal(aImage.AsBase64(), bImage.AsBase64());
         }
     }
 }

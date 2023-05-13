@@ -294,11 +294,13 @@ public unsafe class Image : IDisposable {
     }
 
     /// <summary>
-    /// Converts the image data to a string containing the base64 encoded .png file.
+    /// Converts the image data to a string containing the base64 encoded file.
     /// Only supports 1, 3, or 4 channel images (monochrome, rgb, rgba)
     /// </summary>
-    /// <returns>The base64 encoded .png as a string</returns>
-    public string AsBase64Png(string extension = ".png") {
+    /// <param name="extension">The file extension that specifies the format, including the .</param>
+    /// <param name="lossyQuality">If the format uses lossy compression: quality level between 0 and 100. Else: ignored</param>
+    /// <returns>The base64 encoded image as a string</returns>
+    public string AsBase64(string extension = ".png", int lossyQuality = 80) {
         var bytes = WriteToMemory(extension);
         return Convert.ToBase64String(bytes);
     }
