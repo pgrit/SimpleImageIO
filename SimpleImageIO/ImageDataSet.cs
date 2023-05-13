@@ -39,8 +39,8 @@ public class ImageDataSet {
     /// <summary>
     /// The loaded image data. This is a flattened representation, i.e., each entry corresponds to one (set of)
     /// files that matched the query regex.
-    /// Use Linq to query the images that you desire, or <see cref="GetImages(string)"/> /
-    /// <see cref="GetImages(string, string)"/>
+    /// Use Linq to query the images that you desire, or <see cref="GetImages(string, IEnumerable&lt;string&gt;)"/> /
+    /// <see cref="GetImages(string, IEnumerable&lt;string&gt;)"/>
     /// </summary>
     public readonly List<ImageDatasetEntry> Data;
 
@@ -141,49 +141,29 @@ public class ImageDataSet {
     }
 
     /// <summary>
-    /// Retrieves all images with the same name and identical first path component. Grouped by the second
-    /// path component. If no second path component exists, or the grouping is not unique, those images
-    /// are ignored.
+    /// Retrieves all images with the same name and identical path components. Grouped by the first
+    /// path component that was not part of the filter criterion.
+    /// If no such path component exists, or the grouping is not unique, those images are ignored.
     /// </summary>
-    /// <param name="firstComponent">The common path component</param>
+    /// <param name="components">List of path components that must match in all selected images</param>
     /// <param name="imageName">Name of the image</param>
-    public Dictionary<string, Image> GetImages(string firstComponent, string imageName)
+    public Dictionary<string, Image> GetImages(string imageName, IEnumerable<string> components)
     => Data
-        .Where(x => x.Path[0] == firstComponent && x.Path.Length > 1)
+        .Where(x => x.Path.Zip(components).All(v => v.Item1 == v.Item2))
         .Where(x => x.Images.ContainsKey(imageName))
-        .GroupBy(x => x.Path[1])
+        .GroupBy(x => x.Path[components.Count()])
         .Where(group => group.Count() == 1)
         .ToDictionary(group => group.Key, group => group.First().Images[imageName].Image);
 
     /// <summary>
-    /// Retrieves all images with the same name and identical first and second path component. Grouped by the third
-    /// path component. If no third path component exists, or the grouping is not unique, those images
-    /// are ignored.
+    /// Retrieves all images with the same name and identical path components. Grouped by the first
+    /// path component that was not part of the filter criterion.
+    /// If no such path component exists, or the grouping is not unique, those images are ignored.
     /// </summary>
-    /// <param name="firstComponent">The common first path component</param>
-    /// <param name="secondComponent">The common second path component</param>
+    /// <param name="components">List of path components that must match in all selected images</param>
     /// <param name="imageName">Name of the image</param>
-    public Dictionary<string, Image> GetImages(string firstComponent, string secondComponent, string imageName)
-    => Data
-        .Where(x => x.Path.Length > 2 && x.Path[0] == firstComponent && x.Path[1] == secondComponent)
-        .Where(x => x.Images.ContainsKey(imageName))
-        .GroupBy(x => x.Path[2])
-        .Where(group => group.Count() == 1)
-        .ToDictionary(group => group.Key, group => group.First().Images[imageName].Image);
-
-    /// <summary>
-    /// Retrieves all images with the same name, grouped by the first path component. Returns only unique
-    /// images. If duplicates exist (i.e., same first path component and image name across multiple entries),
-    /// then ALL duplicated images are ignored.
-    /// </summary>
-    /// <param name="imageName">Name of the image</param>
-    /// <returns>A dictionary where the keys are the first path components and the values are the images.</returns>
-    public Dictionary<string, Image> GetImages(string imageName)
-    => Data
-        .Where(x => x.Images.ContainsKey(imageName))
-        .GroupBy(x => x.Path[0])
-        .Where(group => group.Count() == 1)
-        .ToDictionary(group => group.Key, group => group.First().Images[imageName].Image);
+    public Dictionary<string, Image> GetImages(string imageName, params string[] components)
+    => GetImages(imageName, components as IEnumerable<string>);
 
     /// <summary>
     /// Queries all auxiliary files with .json ending of image sets with identical first
