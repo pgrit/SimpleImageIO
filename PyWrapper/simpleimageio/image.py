@@ -10,7 +10,7 @@ _write_image.restype = None
 
 _write_layered_exr = corelib.core.WriteLayeredExr
 _write_layered_exr.argtypes = [
-    POINTER(POINTER(c_float)), POINTER(c_int), c_int, c_int, POINTER(c_int), c_int, POINTER(c_char_p), c_char_p]
+    POINTER(POINTER(c_float)), POINTER(c_int), c_int, c_int, POINTER(c_int), c_int, POINTER(c_char_p), c_char_p, c_bool]
 _write_layered_exr.restype = None
 
 _cache_image = corelib.core.CacheImage
@@ -105,7 +105,7 @@ def read_layered_exr(filename: str):
 def write(filename: str, data, jpeg_quality = 80):
     corelib.invoke(_write_image, data, filename.encode('utf-8'), jpeg_quality)
 
-def write_layered_exr(filename: str, layers: dict):
+def write_layered_exr(filename: str, layers: dict, useHalfPrecision: bool = True):
     names = sorted(layers.keys())
 
     # Gather the data in the desired layout for the C-API
@@ -132,7 +132,7 @@ def write_layered_exr(filename: str, layers: dict):
     _write_layered_exr((POINTER(c_float) * num_layers)(*images),
         (c_int * num_layers)(*strides), width, height,
         (c_int * num_layers)(*num_channels), num_layers, (c_char_p * num_layers)(*cstr_names),
-        filename.encode('utf-8'))
+        filename.encode('utf-8'), useHalfPrecision)
 
 def base64_png(img):
     numbytes = c_int()

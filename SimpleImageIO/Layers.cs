@@ -56,7 +56,19 @@ public static class Layers {
     /// <param name="layers">
     /// Pairs of layer names and layer images to write to the .exr. Must have equal resolutions.
     /// </param>
-    public static void WriteToExr(string filename, params (string Name, Image Image)[] layers) {
+    public static void WriteToExr(string filename, params (string Name, Image Image)[] layers)
+    => WriteToExr(filename, true, layers);
+
+    /// <summary>
+    /// Writes a multi-layer .exr file where each layer is represented by a separate image with one or
+    /// more channels
+    /// </summary>
+    /// <param name="filename">Name of the output .exr file, extension should be .exr</param>
+    /// <param name="halfPrecision">If false, write 32 bit float, else 16 bit.</param>
+    /// <param name="layers">
+    /// Pairs of layer names and layer images to write to the .exr. Must have equal resolutions.
+    /// </param>
+    public static void WriteToExr(string filename, bool halfPrecision, params (string Name, Image Image)[] layers) {
         Image.EnsureDirectory(filename);
 
         // Assemble the raw data in a C-API compatible format
@@ -76,7 +88,7 @@ public static class Layers {
         }
 
         SimpleImageIOCore.WriteLayeredExr(dataPointers.ToArray(), strides.ToArray(), Width, Height,
-            NumChannels.ToArray(), dataPointers.Count, names.ToArray(), filename);
+            NumChannels.ToArray(), dataPointers.Count, names.ToArray(), filename, halfPrecision);
     }
 
     /// <summary>

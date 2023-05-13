@@ -48,7 +48,8 @@ static internal partial class SimpleImageIOCore {
     [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
     public static extern void WriteLayeredExr(IntPtr[] datas, int[] strides, int width, int height,
                                               int[] numChannels, int numLayers, string[] names,
-                                              [MarshalAs(UnmanagedType.LPUTF8Str)] string filename);
+                                              [MarshalAs(UnmanagedType.LPUTF8Str)] string filename,
+                                              [MarshalAs(UnmanagedType.I1)] bool writeHalf);
 
     [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
     public static extern IntPtr WriteToMemory(IntPtr data, int rowStride, int width, int height,

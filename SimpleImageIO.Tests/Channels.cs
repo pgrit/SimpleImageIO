@@ -132,7 +132,7 @@ public class Channels {
         thirdImage.SetPixel(1, 0, 0.1f);
         thirdImage.SetPixel(1, 1, 0.01f);
 
-        Layers.WriteToExr("layered.exr",
+        Layers.WriteToExr("layered.exr", false,
             ("normal", otherImage), ("depth", thirdImage), ("", image));
         var layers = Layers.LoadFromFile("layered.exr");
 
