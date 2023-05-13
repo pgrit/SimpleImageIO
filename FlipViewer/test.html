@@ -12,19 +12,22 @@
     <div id="page2" style="max-width: 1000px; margin: 0 auto;height: 900px; margin-top: 10pt;">
     </div>
 
+    <div id="page3" style="max-width: 1000px; margin: 0 auto;height: 900px; margin-top: 10pt;">
+    </div>
+
     <script>
         {
             let width = 2000;
             let height = 1000;
-            var pixels1 = new Float32Array(Array(width*height*3).fill(0.0));
-            for (var row = 0; row < height; ++row) {
-                for (var col = 0; col < width; ++col) {
+            let pixels1 = new Float32Array(Array(width*height*3).fill(0.0));
+            for (let row = 0; row < height; ++row) {
+                for (let col = 0; col < width; ++col) {
                     pixels1[(row * width + col) * 3 + 0] = 0.1;
                     pixels1[(row * width + col) * 3 + 1] = row % 10 < 2 ? 500.0 : 0.3;
                     pixels1[(row * width + col) * 3 + 2] = 1.0 * col / width;
                 }
             }
-            var pixels2 = new Float32Array(Array(width*height*3).fill(0.0));
+            let pixels2 = new Float32Array(Array(width*height*3).fill(0.0));
             for (let row = 0; row < height; ++row) {
                 for (let col = 0; col < width; ++col) {
                     pixels2[(row * width + col) * 3 + 0] = 0.1;
@@ -45,6 +48,7 @@
                     exposure: 1.0
                 },
                 containerId: "page",
+                groupName: "testgroup",
             }
 
             let data2 = {
@@ -59,21 +63,33 @@
                     exposure: 1.0
                 },
                 containerId: "page2",
-                colorTheme: "light"
+                colorTheme: "light",
+                groupName: "testgroup",
             }
 
-            // flipbook.MakeFlipBook(data, (col, row, evt) => {
-            //     if (evt.ctrlKey)
-            //         console.log(`pixel: ${col}, ${row}`)
-            // });
-
-            flipbook.MakeFlipGroup([data, data2], [
-                (col, row, evt) => {
-                    if (evt.ctrlKey)
-                        console.log(`pixel: ${col}, ${row}`)
+            let data3 = {
+                dataUrls: [pixels1, pixels2],
+                types: ["float32array", "float32array"],
+                names: ["Artifacts", "Perfect"],
+                width: width,
+                height: height,
+                initialZoom: 0.5,
+                initialTMO: {
+                    activeTMO: flipbook.ToneMapType.Exposure,
+                    exposure: 1.0
                 },
-                null
-            ])
+                containerId: "page3",
+                colorTheme: "light",
+            }
+
+            flipbook.MakeFlipBook(data3, (col, row, evt) => {
+                if (evt.ctrlKey)
+                    console.log(`pixel: ${col}, ${row}`)
+            });
+
+            flipbook.MakeFlipBook(data);
+
+            flipbook.MakeFlipBook(data2);
         }
     </script>
 </body>

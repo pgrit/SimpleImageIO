@@ -8,6 +8,7 @@ import { MethodList } from './MethodList';
 import { Tools } from './Tools';
 import { Popup } from './Popup';
 import { ImageType, ToneMapSettings, ZoomLevel } from './flipviewer';
+import { group } from 'console';
 
 const UPDATE_INTERVAL_MS = 100;
 
@@ -37,6 +38,14 @@ export class ToneMappingImage {
     }
 }
 
+type SelectUpdateFn = (groupName: string, newIdx: number) => void;
+var selectUpdateListeners: SelectUpdateFn[] = [];
+
+export function SetGroupIndex(groupName: string, newIdx: number) {
+    for (let fn of selectUpdateListeners)
+        fn(groupName, newIdx);
+}
+
 export interface FlipProps {
     names: string[];
     width: number;
@@ -48,6 +57,7 @@ export interface FlipProps {
     initialTMO?: ToneMapSettings;
     style?: React.CSSProperties;
     onClick?: OnClickHandler;
+    groupName?: string;
 }
 
 interface FlipState {
@@ -72,6 +82,7 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
         this.tools = createRef();
 
         this.onKeyDown = this.onKeyDown.bind(this);
+        this.onSelectUpdate = this.onSelectUpdate.bind(this);
     }
 
     onKeyDown(evt: React.KeyboardEvent<HTMLDivElement>) {
@@ -85,7 +96,7 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
         }
         newIdx = Math.min(this.props.rawPixels.length - 1, Math.max(0, newIdx));
         if (!isNaN(newIdx) && newIdx != this.state.selectedIdx) {
-            this.setState({selectedIdx: newIdx});
+            this.updateSelection(newIdx);
             evt.stopPropagation();
         }
 
@@ -169,6 +180,11 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
         );
     }
 
+    updateSelection(newIdx: number) {
+        if (this.props.groupName) SetGroupIndex(this.props.groupName, newIdx);
+        else this.setState({selectedIdx: newIdx});
+    }
+
     render(): React.ReactNode {
         let popup = null;
         if (this.state.popupContent) {
@@ -187,7 +203,7 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
                     <MethodList
                         names={this.props.names}
                         selectedIdx={this.state.selectedIdx}
-                        setSelectedIdx={(idx) => this.setState({selectedIdx: idx})}
+                        setSelectedIdx={this.updateSelection.bind(this)}
                     />
                     <ImageContainer ref={this.imageContainer}
                         width = {this.props.width}
@@ -217,9 +233,23 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
         )
     }
 
+    onSelectUpdate(groupName: string, newIdx: number) {
+        if (groupName == this.props.groupName) {
+            newIdx = Math.min(this.props.rawPixels.length - 1, Math.max(0, newIdx));
+            this.setState({selectedIdx: newIdx});
+        }
+    }
+
     componentDidMount(): void {
         if (this.props.initialZoom)
             this.imageContainer.current.setZoom(this.props.initialZoom);
+
+        selectUpdateListeners.push(this.onSelectUpdate);
+    }
+
+    componentWillUnmount(): void {
+        let idx = selectUpdateListeners.findIndex(v => v === this.onSelectUpdate);
+        selectUpdateListeners.splice(idx, 1);
     }
 
     connect(other: React.RefObject<FlipBook>) {
@@ -291,17 +321,7 @@ export type FlipBookParams = {
     colorTheme?: string
 }
 
-/**
- *
- * @param {*} parentElement the DOM node to add this flipbook to
- * @param {*} names list of names, one for each image
- * @param {*} images list of images, either HDR raw data as Float32Array, or LDR data as a base64 string
- * @param {*} width the width in pixels that all images in this flipbook must have
- * @param {*} height the height in pixels that all images in this flipbook must have
- * @param {*} initialZoom either "fill_height", "fill_width", "fit", or a number specifying the zoom level
- * @param {*} initialTMO name and settings for the initial TMO configuration
- */
-export function AddFlipBook(params: FlipBookParams) {
+export function AddFlipBook(params: FlipBookParams, groupName?: string) {
     let rawPixels = GetImageData(params.images);
     let means: number[] = [];
     for (let img of rawPixels) {
@@ -331,7 +351,6 @@ export function AddFlipBook(params: FlipBookParams) {
     let themeStyle = colorThemes[params.colorTheme ?? "dark"];
 
     const root = createRoot(params.parentElement);
-    let flipRef = createRef<FlipBook>();
     root.render(
         <FlipBook
             names={params.names}
@@ -344,9 +363,13 @@ export function AddFlipBook(params: FlipBookParams) {
             initialTMO={params.initialTMO}
             onClick={params.onClick}
             style={themeStyle}
-            ref={flipRef}
+            groupName={groupName}
         />
     );
 
-    return flipRef;
+    new MutationObserver(_ => {
+        if (!document.body.contains(params.parentElement)) {
+            root.unmount();
+        }
+    }).observe(document.body, {childList: true, subtree: true});
 }

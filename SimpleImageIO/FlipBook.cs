@@ -212,6 +212,7 @@ public class FlipBook
     InitialZoom initialZoom;
     InitialTMO initialTMO;
     string theme;
+    string groupName;
 
     /// <summary>
     /// Syntactic sugar to create a new object of this class. Makes the fluent API more readable.
@@ -258,6 +259,16 @@ public class FlipBook
     /// <param name="theme">Of of the supported themes: "dark" or "light"</param>
     public FlipBook WithColorTheme(string theme) {
         this.theme = theme;
+        return this;
+    }
+
+    /// <summary>
+    /// Assigns this flip book to a named group. All flip books in the same group will link their image
+    /// selection logic to each other.
+    /// </summary>
+    /// <param name="groupName">Unique name of the group</param>
+    public FlipBook WithGroupName(string groupName) {
+        this.groupName = groupName;
         return this;
     }
 
@@ -383,7 +394,8 @@ public class FlipBook
             "names": [{{string.Join(',', nameStrs.Select(n => $"\"{n}\""))}}],
             "dataUrls": [{{string.Join(',', dataStrs.Select(n => $"\"{n}\""))}}],
             "types": [{{string.Join(',', typeStrs.Select(n => $"\"{n}\""))}}],
-            "colorTheme": "{{theme}}"
+            "colorTheme": "{{theme}}",
+            "groupName": "{{groupName}}"
         }
         """;
 

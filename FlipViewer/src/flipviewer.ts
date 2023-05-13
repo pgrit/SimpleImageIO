@@ -1,4 +1,4 @@
-import { AddFlipBook } from "./FlipBook";
+import { AddFlipBook, SetGroupIndex } from "./FlipBook";
 import { OnClickHandler } from "./ImageContainer";
 
 async function readRGBE(url: string) {
@@ -61,15 +61,6 @@ export enum ImageType {
     Float32Array = "float32array"
 }
 
-export function loadImage(type: ImageType, url: string) {
-    switch (type) {
-        case ImageType.Single: return readFloat(url);
-        case ImageType.Half: return readHalf(url);
-        case ImageType.Rgbe: return readRGBE(url);
-        case ImageType.Ldr: return readLDR(url);
-    }
-}
-
 export enum ZoomLevel {
     Fit = -1,
     FitWidth = -2,
@@ -86,6 +77,7 @@ export type FlipData = {
     initialTMO: ToneMapSettings;
     containerId: string;
     colorTheme?: string;
+    groupName?: string;
 }
 
 export enum ToneMapType {
@@ -138,11 +130,9 @@ export async function MakeFlipBook(data: FlipData | string, onClick?: OnClickHan
         initialTMO: data.initialTMO,
         onClick: onClick,
         colorTheme: data.colorTheme
-    });
+    }, data.groupName);
 }
 
-export async function MakeFlipGroup(data: (FlipData | string)[], onClick?: OnClickHandler[]) {
-    let f1 = await MakeFlipBook(data[0], onClick[0]);
-    let f2 = await MakeFlipBook(data[1], onClick[1]);
-    // f1.current.connect(f2)
+export function UpdateFlipGroupSelection(groupName: string, newIdx: number) {
+    SetGroupIndex(groupName, newIdx);
 }
