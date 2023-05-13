@@ -20,6 +20,17 @@ public record ImageDatasetEntry(string[] Path, Dictionary<string, LazyImage> Ima
 }
 
 /// <summary>
+/// LINQ extensions for the image dataset feature
+/// </summary>
+public static class EnumerableExtensions {
+    /// <summary>
+    /// Shorthand to convert an enumerable of key-value pairs to a dictionary
+    /// </summary>
+    public static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> source)
+    => source.ToDictionary(item => item.Key, item => item.Value);
+}
+
+/// <summary>
 /// Loads all images (and other files) in a directory that match a regular expression. Images are grouped
 /// based on captures in the regex so they can be queried via Linq.
 /// </summary>
@@ -167,20 +178,29 @@ public class ImageDataSet {
 
     /// <summary>
     /// Queries all auxiliary files with .json ending of image sets with identical first
-    /// path component; grouped by the second path component.
+    /// path components; grouped by the first path component that is not part of the filtering criterion.
     /// </summary>
-    public Dictionary<string, JsonNode> GetAuxJson(string firstComponent)
+    public Dictionary<string, JsonNode> GetAuxJson(IEnumerable<string> components)
     => Data
-        .Where(x => x.Path[0] == firstComponent && x.Path.Length > 1)
+        .Where(x => x.Path.Zip(components).All(v => v.Item1 == v.Item2))
         .Select(x => {
             var auxJson = x.AuxFiles.Where(y => y.EndsWith(".json"));
             if (auxJson.Count() > 0)
-                return (x.Path[1], JsonNode.Parse(File.ReadAllText(auxJson.First())));
-            return (x.Path[1], null);
+                return (x.Path[components.Count()], JsonNode.Parse(File.ReadAllText(auxJson.First())));
+            return (x.Path[components.Count()], null);
         })
         .Where(x => x.Item2 != null)
+        .GroupBy(x => x.Item1)
+        .Where(group => group.Count() == 1)
         .ToDictionary(
-            x => x.Item1,
-            x => x.Item2
+            x => x.Key,
+            x => x.First().Item2
         );
+
+    /// <summary>
+    /// Queries all auxiliary files with .json ending of image sets with identical first
+    /// path components; grouped by the first path component that is not part of the filtering criterion.
+    /// </summary>
+    public Dictionary<string, JsonNode> GetAuxJson(params string[] components)
+    => GetAuxJson(components as IEnumerable<string>);
 }
