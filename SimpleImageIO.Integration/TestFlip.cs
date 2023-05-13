@@ -12,7 +12,8 @@ static class TestFlip {
             .Add("BDPT", bdpt)
             .Add("VCM", vcm, (FlipBook.DataType)50)
             .WithToneMapper(FlipBook.InitialTMO.Exposure(2.0f))
-            .WithZoom(1.5f);
+            .WithZoom(1.5f)
+            .WithGroupName("renderings");
 
         string colorHist =
             HistogramRenderer.RenderHtml(pt, 300, 100) +
@@ -46,13 +47,14 @@ static class TestFlip {
             .Add("VCM", (vcm - reference).Squared() / denom)
             .WithToneMapper(FlipBook.InitialTMO.FalseColor(0.0f, 0.1f))
             .WithZoom(FlipBook.InitialZoom.FillHeight)
-            .WithColorTheme("doesnexist");
+            .WithColorTheme("doesnexist")
+            .WithGroupName("renderings");
 
         string hist =
             HistogramRenderer.RenderHtml(new MonochromeImage((bdpt - reference).Squared() / denom), 300, 100) +
             HistogramRenderer.RenderHtml(new MonochromeImage((pt - reference).Squared() / denom), 300, 100);
 
-        string content = "<!DOCTYPE html><html><head>" + FlipBook.Header + "</head><body>" + f1 + colorHist + f2 + f3 + hist + "</body>";
+        string content = "<!DOCTYPE html><html><head>" + FlipBook.Header + "</head><body>" + f1 + f3 + hist + colorHist + f2 + "</body>";
         System.IO.File.WriteAllText("testFlip.html", content);
     }
 }
