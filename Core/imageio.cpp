@@ -279,7 +279,7 @@ bool CopyCachedExrLayer(int id, std::string layerName, float* out) {
 
 void WriteImageToExr(const float** layers, const int* rowStrides, int width, int height, const int* numChannels,
                      int numLayers, const char** layerNames, const char* filename, unsigned char** memoryOut,
-                     size_t* numBytes) {
+                     size_t* numBytes, bool writeHalf) {
     EXRImage image;
     InitEXRImage(&image);
     EXRHeader header;
@@ -382,9 +382,8 @@ void WriteImageToExr(const float** layers, const int* rowStrides, int width, int
     header.pixel_types = (int*) alloca(sizeof(int) * header.num_channels);
     header.requested_pixel_types = (int*) alloca(sizeof(int) * header.num_channels);
     for (int i = 0; i < header.num_channels; i++) {
-        // From float to float
         header.pixel_types[i] = TINYEXR_PIXELTYPE_FLOAT;
-        header.requested_pixel_types[i] = TINYEXR_PIXELTYPE_FLOAT;
+        header.requested_pixel_types[i] = writeHalf ? TINYEXR_PIXELTYPE_HALF : TINYEXR_PIXELTYPE_FLOAT;
     }
 
     // Save the file
@@ -698,8 +697,8 @@ void WritePfmImage(const float* data, int rowStride, int width, int height, int 
 extern "C" {
 
 SIIO_API void WriteLayeredExr(const float** datas, int* strides, int width, int height, const int* numChannels,
-                              int numLayers, const char** names, const char* filename) {
-    WriteImageToExr(datas, strides, width, height, numChannels, numLayers, names, filename, nullptr, nullptr);
+                              int numLayers, const char** names, const char* filename, bool writeHalf) {
+    WriteImageToExr(datas, strides, width, height, numChannels, numLayers, names, filename, nullptr, nullptr, writeHalf);
 }
 
 SIIO_API void WriteImage(const float* data, int rowStride, int width, int height, int numChannels,
@@ -707,7 +706,7 @@ SIIO_API void WriteImage(const float* data, int rowStride, int width, int height
     auto fname = std::string(filename);
     if (fname.compare(fname.size() - 4, 4, ".exr") == 0) {
         // This is an .exr image, write it with tinyexr
-        WriteImageToExr(&data, &rowStride, width, height, &numChannels, 1, nullptr, filename, nullptr, nullptr);
+        WriteImageToExr(&data, &rowStride, width, height, &numChannels, 1, nullptr, filename, nullptr, nullptr, lossyQuality == 0);
     } else if (fname.compare(fname.size() - 4, 4, ".pfm") == 0) {
         WritePfmImage(data, rowStride, width, height, numChannels, filename);
     } else if (fname.compare(fname.size() - 4, 4, ".tif") == 0
@@ -735,7 +734,7 @@ SIIO_API unsigned char* WriteToMemory(const float* data, int rowStride, int widt
     if (!strncmp(extension, ".exr", 4)) {
         unsigned char* result;
         size_t num;
-        WriteImageToExr(&data, &rowStride, width, height, &numChannels, 1, nullptr, nullptr, &result, &num);
+        WriteImageToExr(&data, &rowStride, width, height, &numChannels, 1, nullptr, nullptr, &result, &num, lossyQuality == 0);
         *numBytes = (int) num;
 
         cacheMutex.lock();

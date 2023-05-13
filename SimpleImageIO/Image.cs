@@ -262,13 +262,15 @@ public unsafe class Image : IDisposable {
     /// </summary>
     /// <param name="filename">Name of the file to write, extension must be one of the supported formats</param>
     /// <param name="lossyQuality">
-    /// If the format is ".jpeg", this number between 0 and 100 determines the compression
-    /// quality. Otherwise, it is ignored.
+    /// If the format is ".jpeg", this number between 0 and 100 determines the compression quality (default: 80).
+    /// For .exr, numbers != 0 write 32 bit floats, == 0 writes 16 bit half precision floats (default: 0).
+    /// Otherwise, it is ignored.
     /// </param>
-    public void WriteToFile(string filename, int lossyQuality = 80) {
+    public void WriteToFile(string filename, int? lossyQuality = null) {
+        int quality = lossyQuality ?? (filename.EndsWith(".exr") ? 0 : 80);
         EnsureDirectory(filename);
         SimpleImageIOCore.WriteImage(DataPointer, NumChannels * Width, Width, Height, NumChannels,
-            filename, lossyQuality);
+            filename, quality);
     }
 
     /// <summary>
@@ -278,13 +280,15 @@ public unsafe class Image : IDisposable {
     /// The file name extension of the desired format, e.g., ".exr" or ".png".
     /// </param>
     /// <param name="lossyQuality">
-    /// If the format is ".jpeg", this number between 0 and 100 determines the compression
-    /// quality. Otherwise, it is ignored.
+    /// If the format is ".jpeg", this number between 0 and 100 determines the compression quality (default: 80).
+    /// For .exr, numbers != 0 write 32 bit floats, == 0 writes 16 bit half precision floats (default: 0).
+    /// Otherwise, it is ignored.
     /// </param>
     /// <returns>The memory contents of the image file</returns>
-    public byte[] WriteToMemory(string extension, int lossyQuality = 80) {
+    public byte[] WriteToMemory(string extension, int? lossyQuality = null) {
+        int quality = lossyQuality ?? (extension == ".exr" ? 0 : 80);
         IntPtr mem = SimpleImageIOCore.WriteToMemory(DataPointer, NumChannels * Width, Width, Height,
-            NumChannels, extension, lossyQuality, out int numBytes);
+            NumChannels, extension, quality, out int numBytes);
 
         byte[] bytes = new byte[numBytes];
         Marshal.Copy(mem, bytes, 0, numBytes);
@@ -294,16 +298,17 @@ public unsafe class Image : IDisposable {
     }
 
     /// <summary>
-    /// Converts the image data to a string containing the base64 encoded file.
-    /// Only supports 1, 3, or 4 channel images (monochrome, rgb, rgba)
+    /// Calls <see cref="WriteToMemory" /> and converts the output bytes to a base64 string.
     /// </summary>
     /// <param name="extension">The file extension that specifies the format, including the .</param>
-    /// <param name="lossyQuality">If the format uses lossy compression: quality level between 0 and 100. Else: ignored</param>
+    /// <param name="lossyQuality">
+    /// If the format is ".jpeg", this number between 0 and 100 determines the compression quality (default: 80).
+    /// For .exr, numbers != 0 write 32 bit floats, == 0 writes 16 bit half precision floats (default: 0).
+    /// Otherwise, it is ignored.
+    /// </param>
     /// <returns>The base64 encoded image as a string</returns>
-    public string AsBase64(string extension = ".png", int lossyQuality = 80) {
-        var bytes = WriteToMemory(extension);
-        return Convert.ToBase64String(bytes);
-    }
+    public string AsBase64(string extension = ".png", int? lossyQuality = null)
+    => Convert.ToBase64String(WriteToMemory(extension, lossyQuality));
 
     /// <summary>
     /// Loads an image from one of the supported formats into this object
