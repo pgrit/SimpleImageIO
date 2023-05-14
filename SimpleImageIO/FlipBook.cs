@@ -144,7 +144,7 @@ public class FlipBook
     /// </summary>
     /// <param name="Html">The HTML element that will host the flip book</param>
     /// <param name="Data">JSON / JavaScript object with the image data</param>
-    /// <param name="ScriptFn">Name of the JS script that should be run with <see cref="Data"/> as argument</param>
+    /// <param name="ScriptFn">Name of the JS function that should be run with <see cref="Data"/> as argument</param>
     /// <param name="Id">ID of the HTML element defined in <see cref="Html"/></param>
     public record struct GeneratedCode(string Html, string Data, string ScriptFn, string Id) { }
 
@@ -190,18 +190,14 @@ public class FlipBook
     => "data:image/jpeg;base64," + img.AsBase64(".jpg", quality);
 
     /// <summary>
-    /// Creates the HTML, JS, and CSS code controlling the flip viewer logic. Needs to be added once in
-    /// the resulting .html file.
-    ///
-    /// Ideally, this should be added exactly once inside the &lt;head&gt;, but most (or all?) browsers accept it
-    /// if this is added multiple times or in arbitrary locations (i.e., inside the &lt;body&gt; works fine, too).
+    /// HTML code that should be added once to each webpage / notebook that displays flip books.
     /// </summary>
     /// <returns>HTML code as a string</returns>
     public static string Header
     => $"<script>{HeaderScript}</script>";
 
     /// <summary>
-    /// The JavaScript that should be in the header of the generated HTML code.
+    /// The JavaScript code that is part of <see cref="Header"/>
     /// </summary>
     public static string HeaderScript
     => ReadResourceText("flipbook.js");
@@ -240,7 +236,7 @@ public class FlipBook
     /// <summary>
     /// Sets the requested initial zoom level in this flip book
     /// </summary>
-    public FlipBook WithZoom(InitialZoom zoom) {
+    public FlipBook SetZoom(InitialZoom zoom) {
         initialZoom = zoom;
         return this;
     }
@@ -248,7 +244,7 @@ public class FlipBook
     /// <summary>
     /// Sets the requested initial tone mapping operator in this flip book
     /// </summary>
-    public FlipBook WithToneMapper(InitialTMO tmo) {
+    public FlipBook SetToneMapper(InitialTMO tmo) {
         initialTMO = tmo;
         return this;
     }
@@ -257,7 +253,7 @@ public class FlipBook
     /// Sets the color theme for this flip book
     /// </summary>
     /// <param name="theme">Of of the supported themes: "dark" or "light"</param>
-    public FlipBook WithColorTheme(string theme) {
+    public FlipBook SetColorTheme(string theme) {
         this.theme = theme;
         return this;
     }
@@ -267,7 +263,7 @@ public class FlipBook
     /// selection logic to each other.
     /// </summary>
     /// <param name="groupName">Unique name of the group</param>
-    public FlipBook WithGroupName(string groupName) {
+    public FlipBook SetGroupName(string groupName) {
         this.groupName = groupName;
         return this;
     }
@@ -406,11 +402,17 @@ public class FlipBook
     /// Creates a flip book out of a dictionary of named images
     /// </summary>
     public static FlipBook Make(IEnumerable<KeyValuePair<string, Image>> images,
-                                FlipBook.DataType dataType = FlipBook.DataType.RGBE) {
-        FlipBook flip = FlipBook.New;
+                                FlipBook.DataType dataType = FlipBook.DataType.RGBE)
+    => FlipBook.New.AddAll(images, dataType);
+
+    /// <summary>
+    /// Adds a dictionary of named images to a flip book
+    /// </summary>
+    public FlipBook AddAll(IEnumerable<KeyValuePair<string, Image>> images,
+                           FlipBook.DataType dataType = FlipBook.DataType.RGBE) {
         foreach (var (name, image) in images) {
-            flip.Add(name, image, dataType);
+            Add(name, image, dataType);
         }
-        return flip;
+        return this;
     }
 }

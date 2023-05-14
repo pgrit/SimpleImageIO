@@ -11,9 +11,9 @@ static class TestFlip {
             .Add("PT", pt)
             .Add("BDPT", bdpt)
             .Add("VCM", vcm, (FlipBook.DataType)50)
-            .WithToneMapper(FlipBook.InitialTMO.Exposure(2.0f))
-            .WithZoom(1.5f)
-            .WithGroupName("renderings");
+            .SetToneMapper(FlipBook.InitialTMO.Exposure(2.0f))
+            .SetZoom(1.5f)
+            .SetGroupName("renderings");
 
         string colorHist =
             HistogramRenderer.RenderHtml(pt, 300, 100) +
@@ -27,7 +27,7 @@ static class TestFlip {
         var f2 = new FlipBook(900, 800)
             .Add("Corrupt Half", corrupt, FlipBook.DataType.Float16)
             .Add("Corrupt Float32", corrupt, FlipBook.DataType.Float32)
-            .WithToneMapper(FlipBook.InitialTMO.GLSL("""
+            .SetToneMapper(FlipBook.InitialTMO.GLSL("""
             vec3 v = rgb;
             rgb = vec3(0.0);
             if (anyinf(v))
@@ -35,8 +35,8 @@ static class TestFlip {
             if (anynan(v))
                 rgb += vec3(0.0, 1.0, 1.0);
             """))
-            .WithZoom(FlipBook.InitialZoom.Fit)
-            .WithColorTheme("light");
+            .SetZoom(FlipBook.InitialZoom.Fit)
+            .SetColorTheme("light");
 
         // Relative squared error images
         RgbImage reference = new("Data/Reference.exr");
@@ -45,10 +45,10 @@ static class TestFlip {
             .Add("PT", new MonochromeImage((pt - reference).Squared() / denom))
             .Add("BDPT", (bdpt - reference).Squared() / denom, FlipBook.DataType.JPEG)
             .Add("VCM", (vcm - reference).Squared() / denom)
-            .WithToneMapper(FlipBook.InitialTMO.FalseColor(0.0f, 0.1f))
-            .WithZoom(FlipBook.InitialZoom.FillHeight)
-            .WithColorTheme("doesnexist")
-            .WithGroupName("renderings");
+            .SetToneMapper(FlipBook.InitialTMO.FalseColor(0.0f, 0.1f))
+            .SetZoom(FlipBook.InitialZoom.FillHeight)
+            .SetColorTheme("doesnexist")
+            .SetGroupName("renderings");
 
         string hist =
             HistogramRenderer.RenderHtml(new MonochromeImage((bdpt - reference).Squared() / denom), 300, 100) +
