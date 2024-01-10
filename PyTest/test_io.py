@@ -92,7 +92,7 @@ class TestInputOutput(unittest.TestCase):
 
         self.assertEqual(img.shape[0], 750)
         self.assertEqual(img.shape[1], 2126)
-        self.assertEqual(img.shape[2], 3)
+        self.assertEqual(img.shape[2], 4)
 
     def test_base64(self):
         sio.write("image.png", [

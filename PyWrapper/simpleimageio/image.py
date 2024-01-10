@@ -67,10 +67,6 @@ def read(filename: str):
 
     _copy_cached_img(idx, buffer.ctypes.data_as(POINTER(c_float)))
 
-    # We enforce rgb results and always drop any extra channels (alpha)
-    if chans > 3:
-        return buffer[:,:,:3]
-
     return buffer
 
 def read_layered_exr(filename: str):
