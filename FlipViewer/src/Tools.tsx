@@ -33,7 +33,7 @@ export class Tools extends React.Component<ToolsProps, ToolsState> {
             <div className={styles["tools"]}>
                 <span style={{ marginRight: "auto" }}>
                     <button className={styles.toolsBtn} onClick={this.props.copyImage}>
-                        Copy image as PNG <span className={styles['key']}>Ctrl</span> + <span className={styles['key']}>c</span>
+                        Copy as PNG <span className={styles['key']}>Ctrl</span> + <span className={styles['key']}>c</span>
                     </button>
                 </span>
                 <span style={{ marginRight: "2em" }}>

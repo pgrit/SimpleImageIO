@@ -415,4 +415,15 @@ public class FlipBook
         }
         return this;
     }
+
+    /// <summary>
+    /// Adds a dictionary of named images to a flip book
+    /// </summary>
+    public FlipBook AddAll(IEnumerable<(string, Image)> images,
+                           FlipBook.DataType dataType = FlipBook.DataType.RGBE) {
+        foreach (var (name, image) in images) {
+            Add(name, image, dataType);
+        }
+        return this;
+    }
 }

@@ -10,7 +10,8 @@ export interface ToneMapControlsProps {
 }
 
 const defaultScript =
-`rgb = pow(2.0, -3.0) * rgb + 0.5 * vec3(gl_FragCoord / 1000.0);
+`rgb = rgb / (rgb + 1.0);
+if (anynan(rgb) || anyinf(rgb)) rgb = vec3(1.,0.,1.);
 
 // Useful variables and functions:
 // - rgb: linear RGB pixel value [in / out]

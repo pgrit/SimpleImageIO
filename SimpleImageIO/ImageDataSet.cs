@@ -58,8 +58,7 @@ public class ImageDataSet {
     static IEnumerable<string> GetGroupStrings(Match match)
     => match.Groups.Cast<Group>().ToArray()[1..].Select(g => g.Value);
 
-    static IEnumerable<string[]> GetMatches(string basePath, string pattern) {
-        var regex = new Regex(pattern, RegexOptions.IgnoreCase);
+    static IEnumerable<string[]> GetMatches(string basePath, Regex regex) {
         return Directory.EnumerateFiles(basePath, "*", SearchOption.AllDirectories)
             .Select(f => System.IO.Path.GetRelativePath(basePath, f))
             .Select(f => regex.Match(f))
@@ -72,7 +71,7 @@ public class ImageDataSet {
     /// Converts a path search string containing placeholders (&lt;something&gt;), wildcards (*), and
     /// recursive wildcards (**) to a regular expression with named capture groups for each placeholder.
     /// </summary>
-    public static string RegexFromPattern(string pattern) {
+    public static Regex RegexFromPattern(string pattern) {
         pattern = pattern.Replace("/", @"[\\/]");
         pattern = pattern.Replace(".", @"\.");
 
@@ -88,21 +87,20 @@ public class ImageDataSet {
         foreach (Match m in matches) {
             pattern = pattern.Replace(m.Value, @$"(?{m.Value}[^\\/]*)");
         }
-        return $"^{pattern}$";
-    }
-
-    /// <summary>
-    /// Combines multiple regular expresions by wrapping each in a non-captured group (i.e., "(?: )") and
-    /// or-ing these groups.
-    /// </summary>
-    public static string AnyRegex(params string[] v) {
-        return string.Join('|', v.Select(x => $"(?:{x})"));
+        return new Regex($"^{pattern}$", RegexOptions.IgnoreCase);
     }
 
     /// <summary>
     /// Creates a regular expression that matches any of the given search patterns. (i.e., or-combined)
     /// </summary>
-    public static string AnyPattern(params string[] v) => AnyRegex(v.Select(x => RegexFromPattern(x)).ToArray());
+    public static Regex AnyPattern(params string[] v) {
+        // Convert each pattern to a regex and put it in an uncaptured group
+        // (uncaptured so that it does not interfere with the capture match = sorting logic)
+        var groupedRegexes = v.Select(x => $"(?:{RegexFromPattern(x).ToString()})");
+
+        // Return or-combined regex
+        return new Regex(string.Join('|', groupedRegexes), RegexOptions.IgnoreCase);
+    }
 
     /// <summary>
     /// Creates a dataset of images (and aux files) by scanning the given directory for all files that
@@ -112,9 +110,9 @@ public class ImageDataSet {
     /// Adds all .exr images that are in a subdirectory of the root.
     /// </summary>
     /// <param name="basePath">Path to the root directory</param>
-    /// <param name="pattern">A regular expression that will be matched against each file.</param>
-    public ImageDataSet(string basePath, string pattern) {
-        var data = GetMatches(basePath, pattern);
+    /// <param name="regex">A regular expression that will be matched against each file.</param>
+    public ImageDataSet(string basePath, Regex regex) {
+        var data = GetMatches(basePath, regex);
 
         PathComponents = new();
         for (int i = 0; ; ++i) {
@@ -152,6 +150,51 @@ public class ImageDataSet {
     }
 
     /// <summary>
+    /// Creates a dataset of images (and aux files) by scanning the current working directory for all files that
+    /// match a regular expression.
+    /// Images are grouped hierarchically based on the capture groups in the expression(s). For example,
+    /// (.*)/(.*)\.exr
+    /// Adds all .exr images that are in a subdirectory of the root.
+    /// </summary>
+    /// <param name="regex">A regular expression that will be matched against each file.</param>
+    public ImageDataSet(Regex regex) : this(".", regex) { }
+
+    /// <summary>
+    /// Creates a dataset of images (and aux files) by scanning the given directory for all files that
+    /// match a pattern.
+    /// The pattern has a form like:
+    /// <code>
+    /// <![CDATA[ <1>/<2>/**/*.exr ]]>
+    /// </code>
+    /// On every OS, a slash ("/") should be used as the directory separator. The placeholders like "&lt;1&gt;"
+    /// will be captured as a path component in the resulting dataset.
+    /// Placeholder names can be arbitrary strings. If, as in the example here, the names are numbers, then these
+    /// also define the component order in the resulting dataset.
+    /// Multiple patterns can be or-combined via <see cref="AnyPattern" />. Then, placeholders with identical
+    /// names will be combined into a component.
+    /// </summary>
+    /// <param name="basePath">Path to the root directory</param>
+    /// <param name="pattern">The pattern that will be matched against each file.</param>
+    public ImageDataSet(string basePath, string pattern) : this(basePath, RegexFromPattern(pattern)) { }
+
+    /// <summary>
+    /// Creates a dataset of images (and aux files) by scanning the current working directory for all files that
+    /// match a pattern.
+    /// The pattern has a form like:
+    /// <code>
+    /// <![CDATA[ <1>/<2>/**/*.exr ]]>
+    /// </code>
+    /// On every OS, a slash ("/") should be used as the directory separator. The placeholders like "&lt;1&gt;"
+    /// will be captured as a path component in the resulting dataset.
+    /// Placeholder names can be arbitrary strings. If, as in the example here, the names are numbers, then these
+    /// also define the component order in the resulting dataset.
+    /// Multiple patterns can be or-combined via <see cref="AnyPattern" />. Then, placeholders with identical
+    /// names will be combined into a component.
+    /// </summary>
+    /// <param name="pattern">The pattern that will be matched against each file.</param>
+    public ImageDataSet(string pattern) : this(".", RegexFromPattern(pattern)) { }
+
+    /// <summary>
     /// Retrieves all images with the same name and identical path components. Grouped by the first
     /// path component that was not part of the filter criterion.
     /// If no such path component exists, or the grouping is not unique, those images are ignored.
@@ -175,6 +218,30 @@ public class ImageDataSet {
     /// <param name="imageName">Name of the image</param>
     public Dictionary<string, Image> GetImages(string imageName, params string[] components)
     => GetImages(imageName, components as IEnumerable<string>);
+
+    ImageDataSet(IEnumerable<HashSet<string>> path, IEnumerable<ImageDatasetEntry> data) {
+        Data = data.ToList();
+        PathComponents = path.ToList();
+        ImageNames = Data.SelectMany(x => x.Images.Keys).Distinct().ToHashSet();
+    }
+
+    /// <summary>
+    /// Filters the dataset by extracting all entries with a given first path component
+    /// </summary>
+    /// <param name="component">The desired first component</param>
+    /// <returns>A new dataset with all extracted entries (image data is not duplicated)</returns>
+    public ImageDataSet this[string component]
+    => new(
+        PathComponents.Skip(1),
+        Data
+            .Where(x => x.Path.Any() && x.Path[0] == component) // elements that match the first component
+            .Select(x => new ImageDatasetEntry(x.Path[1..], x.Images, x.AuxFiles)) // shorten path of each
+    );
+
+    /// <summary>
+    /// The first image in the first entry of this dataset. Useful if a dataset contains only one image.
+    /// </summary>
+    public LazyImage FirstImage => Data[0].Images.First().Value;
 
     /// <summary>
     /// Queries all auxiliary files with .json ending of image sets with identical first
@@ -203,4 +270,21 @@ public class ImageDataSet {
     /// </summary>
     public Dictionary<string, JsonNode> GetAuxJson(params string[] components)
     => GetAuxJson(components as IEnumerable<string>);
+
+    /// <summary>
+    /// Queries all auxiliary files with the same name across all entries that share the same path prefix.
+    /// </summary>
+    /// <param name="fileName">File name of the auxiliary file</param>
+    /// <param name="components">Path prefix that must be identical across all entries</param>
+    /// <returns>Full paths to the auxiliary file, grouped by the first path component after the common prefix.</returns>
+    public Dictionary<string, string> GetAuxFiles(string fileName, IEnumerable<string> components)
+    => Data
+        .Where(entry => entry.Path.Zip(components).All(v => v.Item1 == v.Item2))
+        .Where(entry => entry.AuxFiles.Contains(fileName))
+        .GroupBy(entry => entry.Path[components.Count()])
+        .Where(group => group.Count() == 1)
+        .ToDictionary(
+            x => x.Key,
+            x => x.First().AuxFiles.Find(name => name.EndsWith(fileName))
+        );
 }
