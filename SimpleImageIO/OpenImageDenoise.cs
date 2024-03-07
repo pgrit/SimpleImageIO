@@ -5,7 +5,11 @@ namespace SimpleImageIO;
 internal enum OIDNDeviceType {
     OIDN_DEVICE_TYPE_DEFAULT = 0, // select device automatically
 
-    OIDN_DEVICE_TYPE_CPU = 1, // CPU device
+    OIDN_DEVICE_TYPE_CPU   = 1, // CPU device
+    OIDN_DEVICE_TYPE_SYCL  = 2, // SYCL device
+    OIDN_DEVICE_TYPE_CUDA  = 3, // CUDA device
+    OIDN_DEVICE_TYPE_HIP   = 4, // HIP device
+    OIDN_DEVICE_TYPE_METAL = 5, // Metal device
 }
 
 internal enum OIDNFormat {
@@ -16,6 +20,11 @@ internal enum OIDNFormat {
     OIDN_FORMAT_FLOAT2 = 2,
     OIDN_FORMAT_FLOAT3 = 3,
     OIDN_FORMAT_FLOAT4 = 4,
+
+    OIDN_FORMAT_HALF  = 257,
+    OIDN_FORMAT_HALF2,
+    OIDN_FORMAT_HALF3,
+    OIDN_FORMAT_HALF4,
 }
 
 internal enum OIDNError {
@@ -58,7 +67,7 @@ internal static class OpenImageDenoise {
         nuint bytePixelStride, nuint byteRowStride);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
-    public static extern void oidnSetFilter1b(IntPtr filter, string name, bool value);
+    public static extern void oidnSetFilterBool(IntPtr filter, string name, bool value);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern void oidnCommitFilter(IntPtr filter);

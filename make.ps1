@@ -1,5 +1,5 @@
 param(
-    [string] $renderLibVersion = "0.1.1",
+    [string] $renderLibVersion = "0.3.0",
     [string] $prebuiltFrontend = $null,
     [boolean] $clean = $false,
     [boolean] $skipRuntimes = $false
@@ -37,17 +37,25 @@ if (-not $skipRuntimes)
 
     echo "Copying files for OIDN..."
 
-    cp prebuilt/linux/lib/libtbb.so.12.8 runtimes/linux-x64/native/libtbb.so.12
-    cp prebuilt/linux/lib/libOpenImageDenoise.so.1.4.3 runtimes/linux-x64/native/libOpenImageDenoise.so
+    cp prebuilt/linux/lib/libtbb.so.12.12 runtimes/linux-x64/native/libtbb.so.12
+    cp prebuilt/linux/lib/libOpenImageDenoise.so.2.2.0 runtimes/linux-x64/native/libOpenImageDenoise.so
+    cp prebuilt/linux/lib/libOpenImageDenoise_core.so.2.2.0 runtimes/linux-x64/native/
+    cp prebuilt/linux/lib/libOpenImageDenoise_device_cpu.so.2.2.0 runtimes/linux-x64/native/
 
     cp prebuilt/win/bin/tbb12.dll runtimes/win-x64/native/
     cp prebuilt/win/bin/OpenImageDenoise.dll runtimes/win-x64/native/OpenImageDenoise.dll
+    cp prebuilt/win/bin/OpenImageDenoise_core.dll runtimes/win-x64/native/
+    cp prebuilt/win/bin/OpenImageDenoise_device_cpu.dll runtimes/win-x64/native/
 
-    cp prebuilt/osx/lib/libtbb.12.8.dylib runtimes/osx-x64/native/libtbb.12.dylib
-    cp prebuilt/osx/lib/libOpenImageDenoise.1.4.3.dylib runtimes/osx-x64/native/libOpenImageDenoise.dylib
+    cp prebuilt/osx/lib/libtbb.12.12.dylib runtimes/osx-x64/native/libtbb.12.dylib
+    cp prebuilt/osx/lib/libOpenImageDenoise.2.2.0.dylib runtimes/osx-x64/native/libOpenImageDenoise.dylib
+    cp prebuilt/osx/lib/libOpenImageDenoise_core.2.2.0.dylib runtimes/osx-x64/native/
+    cp prebuilt/osx/lib/libOpenImageDenoise_device_cpu.2.2.0.dylib runtimes/osx-x64/native/
 
-    cp prebuilt/osx/lib/libtbb.12.8.dylib runtimes/osx-arm64/native/libtbb.12.dylib
-    cp prebuilt/osx-arm64/lib/libOpenImageDenoise.1.4.3.dylib runtimes/osx-arm64/native/libOpenImageDenoise.dylib
+    cp prebuilt/osx/lib/libtbb.12.12.dylib runtimes/osx-arm64/native/libtbb.12.dylib
+    cp prebuilt/osx-arm64/lib/libOpenImageDenoise.2.2.0.dylib runtimes/osx-arm64/native/libOpenImageDenoise.dylib
+    cp prebuilt/osx-arm64/lib/libOpenImageDenoise_core.2.2.0.dylib runtimes/osx-arm64/native/
+    cp prebuilt/osx-arm64/lib/libOpenImageDenoise_device_cpu.2.2.0.dylib runtimes/osx-arm64/native/
 
     echo "Compiling SimpleImageIOCore..."
 

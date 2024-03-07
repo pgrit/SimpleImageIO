@@ -48,7 +48,7 @@ public class Denoiser : IDisposable {
         RgbImage output = new(color.Width, color.Height);
         SetFilterImage(filter, output, "output");
 
-        OpenImageDenoise.oidnSetFilter1b(filter, "hdr", true);
+        OpenImageDenoise.oidnSetFilterBool(filter, "hdr", true);
         OpenImageDenoise.oidnCommitFilter(filter);
 
         OpenImageDenoise.oidnExecuteFilter(filter);
