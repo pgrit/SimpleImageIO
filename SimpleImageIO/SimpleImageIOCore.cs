@@ -4,6 +4,22 @@ using System.Runtime.InteropServices;
 namespace SimpleImageIO;
 
 static internal partial class SimpleImageIOCore {
+
+#region LINKING_ON_WIN_WORKAROUND
+    static SimpleImageIOCore() {
+        // Some change in OIDN between v1 and v2 causes the Win linker to no longer find the dll dependencies
+        // We work around this by linking each .dll manually here
+        // (the proper fix is likely deep within embree's CMake setup...)
+        if (System.OperatingSystem.IsWindows())
+        {
+            NativeLibrary.Load("OpenImageDenoise_core.dll", System.Reflection.Assembly.GetExecutingAssembly(), DllImportSearchPath.SafeDirectories);
+            NativeLibrary.Load("OpenImageDenoise_device_cpu.dll", System.Reflection.Assembly.GetExecutingAssembly(), DllImportSearchPath.SafeDirectories);
+            NativeLibrary.Load("tbb12.dll", System.Reflection.Assembly.GetExecutingAssembly(), DllImportSearchPath.SafeDirectories);
+        }
+    }
+#endregion LINKING_ON_WIN_WORKAROUND
+
+
     #region ReadingImages
 
     [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
