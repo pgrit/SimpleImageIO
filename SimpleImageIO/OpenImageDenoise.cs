@@ -39,7 +39,7 @@ internal enum OIDNError {
 
 internal static class OpenImageDenoise {
 #region LINKING_ON_WIN_WORKAROUND
-    static SimpleImageIOCore() {
+    static OpenImageDenoise() {
         // Some change in OIDN between v1 and v2 causes the Win linker to no longer find the dll dependencies
         // We work around this by linking each .dll manually here
         // (the proper fix is likely deep within embree's CMake setup...)
