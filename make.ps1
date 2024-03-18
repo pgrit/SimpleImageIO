@@ -1,5 +1,5 @@
 param(
-    [string] $renderLibVersion = "0.3.0",
+    [string] $renderLibVersion = "0.3.1",
     [string] $prebuiltFrontend = $null,
     [boolean] $clean = $false,
     [boolean] $skipRuntimes = $false
@@ -26,8 +26,12 @@ Ensure-Dir build
 
 if (-not $skipRuntimes)
 {
+    if ($clean)
+    {
+        Remove-Item -Recurse -Force ./prebuilt
+    }
 
-    if (-not(Test-Path -Path "prebuilt" -PathType Container) -or $clean)
+    if (-not(Test-Path -Path "prebuilt" -PathType Container))
     {
         echo "Downloading precompiled binaries for OIDN..."
         Invoke-WebRequest -Uri "https://github.com/pgrit/RenderLibs/releases/download/v$renderLibVersion/RenderLibs-v$renderLibVersion.zip" -OutFile "prebuilt.zip"
