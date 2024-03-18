@@ -12,9 +12,9 @@ static internal partial class SimpleImageIOCore {
         // (the proper fix is likely deep within embree's CMake setup...)
         if (System.OperatingSystem.IsWindows())
         {
+            NativeLibrary.Load("tbb12.dll", System.Reflection.Assembly.GetExecutingAssembly(), DllImportSearchPath.SafeDirectories);
             NativeLibrary.Load("OpenImageDenoise_core.dll", System.Reflection.Assembly.GetExecutingAssembly(), DllImportSearchPath.SafeDirectories);
             NativeLibrary.Load("OpenImageDenoise_device_cpu.dll", System.Reflection.Assembly.GetExecutingAssembly(), DllImportSearchPath.SafeDirectories);
-            NativeLibrary.Load("tbb12.dll", System.Reflection.Assembly.GetExecutingAssembly(), DllImportSearchPath.SafeDirectories);
         }
     }
 #endregion LINKING_ON_WIN_WORKAROUND
