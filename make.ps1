@@ -1,5 +1,5 @@
 param(
-    [string] $renderLibVersion = "0.3.1",
+    [string] $renderLibVersion = "0.3.2",
     [string] $prebuiltFrontend = $null,
     [boolean] $clean = $false,
     [boolean] $skipRuntimes = $false
@@ -56,7 +56,7 @@ if (-not $skipRuntimes)
     cp prebuilt/osx/lib/libOpenImageDenoise_core.2.2.0.dylib runtimes/osx-x64/native/
     cp prebuilt/osx/lib/libOpenImageDenoise_device_cpu.2.2.0.dylib runtimes/osx-x64/native/
 
-    cp prebuilt/osx/lib/libtbb.12.12.dylib runtimes/osx-arm64/native/libtbb.12.dylib
+    cp prebuilt/osx-arm64/lib/libtbb.12.12.dylib runtimes/osx-arm64/native/libtbb.12.dylib
     cp prebuilt/osx-arm64/lib/libOpenImageDenoise.2.2.0.dylib runtimes/osx-arm64/native/libOpenImageDenoise.dylib
     cp prebuilt/osx-arm64/lib/libOpenImageDenoise_core.2.2.0.dylib runtimes/osx-arm64/native/
     cp prebuilt/osx-arm64/lib/libOpenImageDenoise_device_cpu.2.2.0.dylib runtimes/osx-arm64/native/
