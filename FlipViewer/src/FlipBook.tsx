@@ -55,6 +55,7 @@ export interface FlipProps {
     toneMappers: ToneMappingImage[];
     initialZoom?: ZoomLevel;
     initialTMO?: ToneMapSettings;
+    initialTMOOverrides: ToneMapSettings[];
     style?: React.CSSProperties;
     onClick?: OnClickHandler;
     groupName?: string;
@@ -257,6 +258,7 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
                 <ToneMapControls ref={this.tmoCtrls}
                     toneMappers={this.props.toneMappers}
                     initialSettings={this.props.initialTMO}
+                    initialTMOOverrides={this.props.initialTMOOverrides}
                     hidden={this.state.hideTools}
                     selectedIdx={this.state.selectedIdx}
                 />
@@ -348,6 +350,7 @@ export type FlipBookParams = {
     height: number,
     initialZoom: ZoomLevel,
     initialTMO: ToneMapSettings,
+    initialTMOOverrides: ToneMapSettings[],
     onClick?: OnClickHandler,
     colorTheme?: string,
     hideTools: boolean,
@@ -393,6 +396,7 @@ export function AddFlipBook(params: FlipBookParams, groupName?: string) {
             toneMappers={Array(params.names.length)}
             initialZoom={params.initialZoom}
             initialTMO={params.initialTMO}
+            initialTMOOverrides={params.initialTMOOverrides}
             onClick={params.onClick}
             style={themeStyle}
             groupName={groupName}

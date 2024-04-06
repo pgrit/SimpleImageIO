@@ -7,6 +7,7 @@ import { ToneMapSettings, ToneMapType } from './flipviewer';
 export interface ToneMapControlsProps {
     toneMappers: ToneMappingImage[];
     initialSettings?: ToneMapSettings;
+    initialTMOOverrides: ToneMapSettings[];
     hidden: boolean;
     selectedIdx: number;
 }
@@ -48,13 +49,18 @@ export class ToneMapControls extends React.Component<ToneMapControlsProps, ToneM
         };
 
         for (let i = 0; i < props.toneMappers.length; ++i) {
-            this.state.soloSettings[i] = structuredClone(this.initialSettings);
+            if (props.initialTMOOverrides?.[i] != null) {
+                this.state.soloSettings[i] = structuredClone(props.initialTMOOverrides[i]);
+                this.state.soloMode[i] = true;
+            } else
+                this.state.soloSettings[i] = structuredClone(this.initialSettings);
         }
     }
 
     reset() {
         this.setState({
-            soloMode: Array(this.props.toneMappers.length).fill(false),
+            // TODO reset the per-image settings
+            // soloMode: Array(this.props.toneMappers.length).fill(false),
             globalSettings: structuredClone(this.initialSettings),
         }, this.apply);
     }

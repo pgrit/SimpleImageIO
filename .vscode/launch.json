@@ -18,7 +18,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/SimpleImageIO.Benchmark/bin/Debug/net7.0/SimpleImageIO.Benchmark.dll",
+            "program": "${workspaceFolder}/SimpleImageIO.Benchmark/bin/Debug/net8.0/SimpleImageIO.Benchmark.dll",
             "args": [],
             "cwd": "${workspaceFolder}/SimpleImageIO.Benchmark",
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
@@ -32,7 +32,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/SimpleImageIO.Integration/bin/Debug/net7.0/SimpleImageIO.Integration.dll",
+            "program": "${workspaceFolder}/SimpleImageIO.Integration/bin/Debug/net8.0/SimpleImageIO.Integration.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console

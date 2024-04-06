@@ -75,6 +75,7 @@ export type FlipData = {
     height: number;
     initialZoom: ZoomLevel;
     initialTMO: ToneMapSettings;
+    initialTMOOverrides: ToneMapSettings[]
     containerId: string;
     colorTheme?: string;
     groupName?: string;
@@ -129,6 +130,7 @@ export async function MakeFlipBook(data: FlipData | string, onClick?: OnClickHan
         height: data.height,
         initialZoom: data.initialZoom,
         initialTMO: data.initialTMO,
+        initialTMOOverrides: data.initialTMOOverrides,
         onClick: onClick,
         colorTheme: data.colorTheme,
         hideTools: data.hideTools,

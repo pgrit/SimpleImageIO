@@ -202,7 +202,7 @@ public class FlipBook
     public static string HeaderScript
     => ReadResourceText("flipbook.js");
 
-    List<(string Name, Image Image, DataType TargetType)> images = new();
+    List<(string Name, Image Image, DataType TargetType, InitialTMO TMOOverride)> images = new();
     int htmlWidth;
     int htmlHeight;
     InitialZoom initialZoom;
@@ -284,13 +284,14 @@ public class FlipBook
     /// </summary>
     /// <param name="name">Name of the new image</param>
     /// <param name="image">Image object, must have the same resolution as existing images</param>
-    /// <param name="targetType"></param>
+    /// <param name="targetType">Data type to use for this image's pixels</param>
+    /// <param name="tmoOverride">If not null, this image will use its own tone mapping settings</param>
     /// <returns>This object (fluent API)</returns>
-    public FlipBook Add(string name, Image image, DataType targetType = DataType.RGBE)
+    public FlipBook Add(string name, Image image, DataType targetType = DataType.RGBE, InitialTMO tmoOverride = null)
     {
         if (images.Count > 0 && (images[0].Image.Width != image.Width || images[0].Image.Height != image.Height))
             throw new ArgumentException("Image resolution does not match", nameof(image));
-        images.Add((name, image, targetType));
+        images.Add((name, image, targetType, tmoOverride));
         return this;
     }
 
@@ -391,6 +392,14 @@ public class FlipBook
             initialTMOStr = JsonSerializer.Serialize(initialTMO);
         }
 
+        List<string> tmoOverrideStrs = [];
+        foreach (var img in images) {
+            if (img.TMOOverride == null)
+                tmoOverrideStrs.Add("null");
+            else
+                tmoOverrideStrs.Add(JsonSerializer.Serialize(img.TMOOverride));
+        }
+
         string json = $$"""
         {
             "width": {{width}},
@@ -398,6 +407,9 @@ public class FlipBook
             "containerId": "{{id}}",
             "initialZoom": {{initialZoom.ToString()}},
             "initialTMO": {{initialTMOStr}},
+            "initialTMOOverrides": [
+                {{string.Join(',', tmoOverrideStrs)}}
+            ],
             "names": [{{string.Join(',', nameStrs.Select(n => $"\"{n}\""))}}],
             "dataUrls": [{{string.Join(',', dataStrs.Select(n => $"\"{n}\""))}}],
             "types": [{{string.Join(',', typeStrs.Select(n => $"\"{n}\""))}}],
@@ -421,9 +433,9 @@ public class FlipBook
     /// Adds a dictionary of named images to a flip book
     /// </summary>
     public FlipBook AddAll(IEnumerable<KeyValuePair<string, Image>> images,
-                           FlipBook.DataType dataType = FlipBook.DataType.RGBE) {
+                           FlipBook.DataType dataType = FlipBook.DataType.RGBE, InitialTMO tmoOverride = null) {
         foreach (var (name, image) in images) {
-            Add(name, image, dataType);
+            Add(name, image, dataType, tmoOverride);
         }
         return this;
     }
@@ -432,9 +444,9 @@ public class FlipBook
     /// Adds a dictionary of named images to a flip book
     /// </summary>
     public FlipBook AddAll(IEnumerable<(string, Image)> images,
-                           FlipBook.DataType dataType = FlipBook.DataType.RGBE) {
+                           FlipBook.DataType dataType = FlipBook.DataType.RGBE, InitialTMO tmoOverride = null) {
         foreach (var (name, image) in images) {
-            Add(name, image, dataType);
+            Add(name, image, dataType, tmoOverride);
         }
         return this;
     }
