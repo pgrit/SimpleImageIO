@@ -258,6 +258,7 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
                     toneMappers={this.props.toneMappers}
                     initialSettings={this.props.initialTMO}
                     hidden={this.state.hideTools}
+                    selectedIdx={this.state.selectedIdx}
                 />
             </div>
         )

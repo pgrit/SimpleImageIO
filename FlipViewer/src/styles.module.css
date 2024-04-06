@@ -366,6 +366,7 @@ div.tools {
     border-color: var(--border);
     border-top-style: solid;
     border-top-width: 1pt;
+    align-items: center;
 }
 
 .hint {
