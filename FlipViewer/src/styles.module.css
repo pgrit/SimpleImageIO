@@ -175,8 +175,10 @@ p.magnifier {
 
 div.tools {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
     margin: 4px;
+    flex-wrap: wrap;
+    gap: 4px;
 }
 
 .toolsBtn {
@@ -322,12 +324,11 @@ div.tools {
     }
 
 .inputGroup {
-    display: grid;
-    grid-template-columns: max-content max-content max-content max-content;
-    column-gap: 1em;
+    display: flex;
     align-items: center;
-    margin-left: 1em;
-    margin-right: 1em;
+    margin-left: 0.5em;
+    flex-wrap: wrap;
+    column-gap: 1em;
 }
 
 .tmoSelectBtn {

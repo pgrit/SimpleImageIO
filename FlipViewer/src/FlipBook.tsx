@@ -58,12 +58,14 @@ export interface FlipProps {
     style?: React.CSSProperties;
     onClick?: OnClickHandler;
     groupName?: string;
+    hideTools: boolean;
 }
 
 interface FlipState {
     selectedIdx: number;
     popupContent?: React.ReactNode;
     popupDurationMs?: number;
+    hideTools: boolean;
 }
 
 export class FlipBook extends React.Component<FlipProps, FlipState> {
@@ -74,7 +76,8 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
     constructor(props : FlipProps) {
         super(props);
         this.state = {
-            selectedIdx: 0
+            selectedIdx: 0,
+            hideTools: props.hideTools
         };
 
         this.tmoCtrls = createRef();
@@ -117,6 +120,11 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
 
         if (evt.key === "r") {
             this.reset();
+            evt.stopPropagation();
+        }
+
+        if (evt.key === "t") {
+            this.setState({hideTools: !this.state.hideTools});
             evt.stopPropagation();
         }
     }
@@ -189,12 +197,12 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
         let popup = null;
         if (this.state.popupContent) {
             popup =
-            <Popup
-                durationMs={this.state.popupDurationMs}
-                unmount={() => this.setState({popupContent: null})}
-            >
-                {this.state.popupContent}
-            </Popup>
+                <Popup
+                    durationMs={this.state.popupDurationMs}
+                    unmount={() => this.setState({popupContent: null})}
+                >
+                    {this.state.popupContent}
+                </Popup>
         }
 
         return (
@@ -216,6 +224,13 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
                         onClick={this.props.onClick}
                     >
                         {popup}
+                        <button className={styles.toolsBtn}
+                            onClick={() => this.setState({hideTools: !this.state.hideTools})}
+                            style={{position: "absolute", bottom: 0, right: 0}}
+                        >
+                            { this.state.hideTools ? "Show tools " : "Hide tools " }
+                            <span className={styles['key']}>t</span>
+                        </button>
                     </ImageContainer>
                 </div>
                 <Tools ref={this.tools}
@@ -224,10 +239,12 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
                     copyImage={this.copyImage.bind(this)}
                     displayHelp={this.displayHelp.bind(this)}
                     reset={this.reset.bind(this)}
+                    hidden={this.state.hideTools}
                 />
                 <ToneMapControls ref={this.tmoCtrls}
                     toneMappers={this.props.toneMappers}
                     initialSettings={this.props.initialTMO}
+                    hidden={this.state.hideTools}
                 />
             </div>
         )
@@ -318,7 +335,8 @@ export type FlipBookParams = {
     initialZoom: ZoomLevel,
     initialTMO: ToneMapSettings,
     onClick?: OnClickHandler,
-    colorTheme?: string
+    colorTheme?: string,
+    hideTools: boolean,
 }
 
 export function AddFlipBook(params: FlipBookParams, groupName?: string) {
@@ -364,6 +382,7 @@ export function AddFlipBook(params: FlipBookParams, groupName?: string) {
             onClick={params.onClick}
             style={themeStyle}
             groupName={groupName}
+            hideTools={params.hideTools}
         />
     );
 

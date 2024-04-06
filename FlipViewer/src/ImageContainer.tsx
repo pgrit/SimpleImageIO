@@ -214,7 +214,6 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
                 onMouseMove={this.onMouseMove}
                 ref={this.container}
             >
-                {this.props.children}
                 <div className={styles['image-placer']}
                     ref={this.imgPlacer}
                     style={{
@@ -234,6 +233,7 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
                 <div className={styles.meanValue}>
                     Mean: {formatNumber(this.props.means[this.props.selectedIdx])}
                 </div>
+                {this.props.children}
             </div>
         );
     }

@@ -7,6 +7,7 @@ import { ToneMapSettings, ToneMapType } from './flipviewer';
 export interface ToneMapControlsProps {
     toneMappers: ToneMappingImage[];
     initialSettings?: ToneMapSettings;
+    hidden: boolean;
 }
 
 const defaultScript =
@@ -71,6 +72,9 @@ export class ToneMapControls extends React.Component<ToneMapControlsProps, ToneM
     }
 
     render() {
+        if (this.props.hidden)
+            return null;
+
         let tmoCtrls: JSX.Element;
         switch (this.state.activeTMO) {
             case ToneMapType.Exposure:
@@ -114,7 +118,7 @@ export class ToneMapControls extends React.Component<ToneMapControlsProps, ToneM
 
             case ToneMapType.Script:
                 tmoCtrls = <div className={styles["tmo-script"]}>
-                    <textarea className={styles.scriptArea} rows={8} cols={80} name="text"
+                    <textarea className={styles.scriptArea} rows={6} cols={80} name="text"
                         value={this.state.script}
                         onChange={(evt) => this.setState({ script: evt.target.value }, this.apply) }
                         onKeyDown={(evt) => evt.stopPropagation()}

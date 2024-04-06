@@ -209,6 +209,7 @@ public class FlipBook
     InitialTMO initialTMO;
     string theme;
     string groupName;
+    bool hideTools;
 
     /// <summary>
     /// Syntactic sugar to create a new object of this class. Makes the fluent API more readable.
@@ -265,6 +266,16 @@ public class FlipBook
     /// <param name="groupName">Unique name of the group</param>
     public FlipBook SetGroupName(string groupName) {
         this.groupName = groupName;
+        return this;
+    }
+
+    /// <summary>
+    /// Sets if the tool bars below the images should be shown initially or not.
+    /// (Can always be toggled in the browser later)
+    /// </summary>
+    /// <param name="visible">If false, tool buttons will be hidden initially</param>
+    public FlipBook SetToolVisibility(bool visible) {
+        this.hideTools = !visible;
         return this;
     }
 
@@ -373,7 +384,7 @@ public class FlipBook
         }
 
         string id = "flipbook-" + Guid.NewGuid().ToString();
-        string html = $"<div id='{id}' style='width:{htmlWidth}px; height:{htmlHeight}px;'></div>";
+        string html = $"<div id='{id}' style='width:{htmlWidth}px; height:{htmlHeight}px; resize: both; overflow: auto;'></div>";
 
         string initialTMOStr = "null";
         if (initialTMO != null) {
@@ -391,7 +402,8 @@ public class FlipBook
             "dataUrls": [{{string.Join(',', dataStrs.Select(n => $"\"{n}\""))}}],
             "types": [{{string.Join(',', typeStrs.Select(n => $"\"{n}\""))}}],
             "colorTheme": "{{theme}}",
-            "groupName": "{{groupName}}"
+            "groupName": "{{groupName}}",
+            "hideTools": {{hideTools.ToString().ToLowerInvariant()}},
         }
         """;
 

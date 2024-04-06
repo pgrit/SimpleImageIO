@@ -8,6 +8,7 @@ export interface ToolsProps {
     copyImage: () => void;
     displayHelp: () => void;
     centerView: () => void;
+    hidden: boolean;
 }
 
 interface ToolsState {
@@ -29,22 +30,23 @@ export class Tools extends React.Component<ToolsProps, ToolsState> {
     }
 
     render(): React.ReactNode {
+        if (this.props.hidden)
+            return null;
+
         return (
             <div className={styles["tools"]}>
-                <span style={{ marginRight: "auto" }}>
+                <span>
                     <button className={styles.toolsBtn} onClick={this.props.copyImage}>
-                        Copy as PNG <span className={styles['key']}>Ctrl</span> + <span className={styles['key']}>c</span>
+                        Copy PNG <span className={styles['key']}>Ctrl</span> + <span className={styles['key']}>c</span>
                     </button>
                 </span>
-                <span style={{ marginRight: "2em" }}>
+                <span>
                     <button className={styles.toolsBtn} onClick={this.props.reset}>
                         Reset <span className={styles['key']}>r</span>
                     </button>
-                </span>
-                <span style={{ marginRight: "2em" }}>
                     <button className={styles.toolsBtn} onClick={() => this.props.centerView()}>Center</button>
                 </span>
-                <span style={{ display: "flex", justifyContent: "flex-end", paddingRight: "2em", }}>
+                <span style={{ display: "flex", justifyContent: "flex-end", flexWrap: "wrap" }}>
                     <label className={styles.label}>
                         Zoom:
                         <input type="number" className={styles.numberInput} value={this.state.zoom} step="0.1"

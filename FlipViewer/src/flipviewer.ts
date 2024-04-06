@@ -78,6 +78,7 @@ export type FlipData = {
     containerId: string;
     colorTheme?: string;
     groupName?: string;
+    hideTools: boolean;
 }
 
 export enum ToneMapType {
@@ -129,7 +130,8 @@ export async function MakeFlipBook(data: FlipData | string, onClick?: OnClickHan
         initialZoom: data.initialZoom,
         initialTMO: data.initialTMO,
         onClick: onClick,
-        colorTheme: data.colorTheme
+        colorTheme: data.colorTheme,
+        hideTools: data.hideTools,
     }, data.groupName);
 }
 
