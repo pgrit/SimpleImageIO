@@ -94,9 +94,22 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
             newIdx = this.state.selectedIdx - 1;
         else if (evt.key === "ArrowRight" || evt.key === "ArrowUp")
             newIdx = this.state.selectedIdx + 1;
-        else {
-            newIdx = parseInt(evt.key) - 1;
+
+        let digit = NaN;
+        if (evt.code.startsWith("Digit"))
+            digit = parseInt(evt.code.substring("Digit".length));
+        else if (evt.code.startsWith("Numpad"))
+            digit = parseInt(evt.code.substring("Numpad".length));
+
+        // Map '0' to the 10th image
+        if (digit === 0)
+            digit = 10;
+
+        if (!isNaN(digit)) {
+            if (evt.shiftKey) digit += 10;
+            newIdx = digit - 1;
         }
+
         newIdx = Math.min(this.props.rawPixels.length - 1, Math.max(0, newIdx));
         if (!isNaN(newIdx) && newIdx != this.state.selectedIdx) {
             this.updateSelection(newIdx);
