@@ -3,6 +3,7 @@ import React from 'react';
 import { ToneMappingImage } from './FlipBook';
 import { Magnifier, formatNumber } from './Magnifier';
 import { ZoomLevel } from './flipviewer';
+import { JSX } from 'react/jsx-runtime';
 
 export type OnClickHandler = (col: number, row: number, event: MouseEvent) => void
 
@@ -28,12 +29,21 @@ interface ImageContainerState {
     magnifierVisible: boolean;
     magnifierRow?: number;
     magnifierCol?: number;
+
+    cropX?: number;
+    cropY?: number;
+    cropWidth?: number;
+    cropHeight?: number;
+    cropActive: boolean;
+    cropDragging: boolean;
+    cropMeans?: number[];
 }
 
 export class ImageContainer extends React.Component<ImageContainerProps, ImageContainerState> {
     canvasRefs: React.RefObject<HTMLCanvasElement>[];
     imgPlacer: React.RefObject<HTMLDivElement>;
     container: React.RefObject<HTMLDivElement>;
+    cropMarker: React.RefObject<HTMLDivElement>;
 
     constructor(props: ImageContainerProps) {
         super(props);
@@ -41,7 +51,9 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
             posX: 0,
             posY: 0,
             scale: 1,
-            magnifierVisible: false
+            magnifierVisible: false,
+            cropActive: false,
+            cropDragging: false,
         };
 
         this.canvasRefs = [];
@@ -50,6 +62,7 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
 
         this.imgPlacer = React.createRef();
         this.container = React.createRef();
+        this.cropMarker = React.createRef();
 
         this.onMouseMove = this.onMouseMove.bind(this);
         this.onMouseMoveOverImage = this.onMouseMoveOverImage.bind(this);
@@ -101,6 +114,56 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
         this.setState({magnifierVisible: false});
     }
 
+    computeCropMeans() {
+        let left = this.state.cropX;
+        if (this.state.cropWidth < 0) {
+            left += this.state.cropWidth;
+        }
+        let top = this.state.cropY;
+        if (this.state.cropHeight < 0) {
+            top += this.state.cropHeight;
+        }
+        let width = Math.abs(this.state.cropWidth);
+        let height = Math.abs(this.state.cropHeight);
+
+        // TODO remove code duplication - this is the exact same code used to compute the full image means in FlipBook.tsx
+
+        function SrgbToLinear(srgb: number) {
+            if (srgb <= 0.04045) {
+                return srgb / 12.92;
+            } else {
+                return Math.pow((srgb + 0.055) / 1.055, 2.4);
+            }
+        }
+
+        let means: number[] = [];
+        for (let img of this.props.rawPixels) {
+            let m = 0;
+            for (let col = left; col < left + width; ++col) {
+                for (let row = top; row < top + height; ++row) {
+                    let pixelIdx = row * this.props.width + col;
+                    let r = 0, g = 0, b = 0;
+                    let numChan = 3;
+                    if (img instanceof ImageData) {
+                        r = SrgbToLinear(img.data[4 * pixelIdx + 0] / 255);
+                        g = SrgbToLinear(img.data[4 * pixelIdx + 1] / 255);
+                        b = SrgbToLinear(img.data[4 * pixelIdx + 2] / 255);
+                    } else if (img instanceof Float32Array) {
+                        numChan = img.length / (this.props.width * this.props.height);
+                        r = img[numChan * pixelIdx + 0 % numChan];
+                        g = img[numChan * pixelIdx + 1 % numChan];
+                        b = img[numChan * pixelIdx + 2 % numChan];
+                    }
+                    m += numChan == 3 ? (r + g + b) / 3 : r;
+                }
+            }
+            m /= width * height;
+            means.push(m);
+        }
+
+        this.setState({cropMeans: means});
+    }
+
     onClick(event: React.MouseEvent<HTMLDivElement>) {
         let bounds = this.imgPlacer.current.getBoundingClientRect();
         let x = event.clientX - bounds.left;
@@ -115,12 +178,54 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
         {
             this.props.onClick(curPixelCol, curPixelRow, event.nativeEvent);
         }
+
+        // Confirm or remove the crop box
+        if (event.ctrlKey && this.state.cropActive) {
+            if (this.state.cropWidth === 0 || this.state.cropHeight === 0 || !this.state.cropDragging) {
+                this.setState({
+                    cropActive: false,
+                    cropDragging: false,
+                });
+            } else {
+                this.setState({
+                    cropDragging: false
+                });
+                this.computeCropMeans();
+            }
+        }
     }
 
     onMouseMove(event: React.MouseEvent<HTMLDivElement>) {
         // If left mouse button down
         if ((event.buttons & 1) == 1) {
-            this.shiftImage(event.movementX, event.movementY)
+            if (event.ctrlKey) {
+                let bounds = this.imgPlacer.current.getBoundingClientRect();
+                let x = event.clientX - bounds.left;
+                let y = event.clientY - bounds.top;
+
+                let curPixelCol = Math.floor(x / this.state.scale);
+                let curPixelRow = Math.floor(y / this.state.scale);
+                curPixelCol = Math.min(Math.max(curPixelCol, 0), this.props.width - 1);
+                curPixelRow = Math.min(Math.max(curPixelRow, 0), this.props.height - 1);
+
+                if (this.state.cropDragging) {
+                    this.setState({
+                        cropHeight: curPixelRow - this.state.cropY,
+                        cropWidth: curPixelCol - this.state.cropX,
+                    });
+                } else {
+                    this.setState({
+                        cropActive: true,
+                        cropDragging: true,
+                        cropX: curPixelCol,
+                        cropY: curPixelRow,
+                        cropHeight: 0,
+                        cropWidth: 0,
+                    });
+                }
+            } else {
+                this.shiftImage(event.movementX, event.movementY);
+            }
         }
     }
 
@@ -142,8 +247,13 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
         var relY = event.offsetY;
 
         if (event.target === this.container.current) {
+            // Map position outside the image to a hypothetical pixel position
             relX -= this.state.posX;
             relY -= this.state.posY;
+        } else if (event.target === this.cropMarker.current) {
+            // Map position wihtin the crop marker to the image position
+            relX += this.state.cropX * oldScale;
+            relY += this.state.cropY * oldScale;
         }
 
         var deltaX = (1 - factor) * relX;
@@ -208,6 +318,32 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
             />
         }
 
+        let crop: JSX.Element;
+        let cropMean: JSX.Element;
+        if (this.state.cropActive) {
+            let left = this.state.cropX;
+            if (this.state.cropWidth < 0) {
+                left += this.state.cropWidth;
+            }
+            let top = this.state.cropY;
+            if (this.state.cropHeight < 0) {
+                top += this.state.cropHeight;
+            }
+
+            crop = <div className={styles['cropMarker']} ref={this.cropMarker} style={{
+                left: left / this.props.width * 100 + "%",
+                top: top / this.props.height * 100 + "%",
+                width: Math.abs(this.state.cropWidth) / this.props.width * 100 + "%",
+                height: Math.abs(this.state.cropHeight) / this.props.height * 100 + "%"
+            }}></div>
+
+            if (!this.state.cropDragging) {
+                cropMean = <div style={{bottom: 16}} className={styles.meanValue}>
+                    Crop mean: {formatNumber(this.state.cropMeans[this.props.selectedIdx])}
+                </div>
+            }
+        }
+
         return (
             <div tabIndex={2} className={styles['image-container']}
                 onContextMenu={(e)=> e.preventDefault()}
@@ -229,10 +365,12 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
                 >
                     {canvases}
                     {magnifier}
+                    {crop}
                 </div>
                 <div className={styles.meanValue}>
                     Mean: {formatNumber(this.props.means[this.props.selectedIdx])}
                 </div>
+                {cropMean}
                 {this.props.children}
             </div>
         );

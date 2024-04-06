@@ -44,7 +44,7 @@ export class Tools extends React.Component<ToolsProps, ToolsState> {
                     <button className={styles.toolsBtn} onClick={this.props.reset}>
                         Reset <span className={styles['key']}>r</span>
                     </button>
-                    <button className={styles.toolsBtn} onClick={() => this.props.centerView()}>Center</button>
+                    {/* <button className={styles.toolsBtn} onClick={() => this.props.centerView()}>Center</button> */}
                 </span>
                 <span style={{ display: "flex", justifyContent: "flex-end", flexWrap: "wrap" }}>
                     <label className={styles.label}>

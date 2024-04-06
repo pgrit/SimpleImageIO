@@ -120,6 +120,13 @@
     margin-top: 4px;
 }
 
+.cropMarker {
+    position: absolute;
+    border-width: 2px;
+    border-color: black;
+    border-style: solid;
+}
+
 div.magnifier {
     display: block;
     position: fixed;

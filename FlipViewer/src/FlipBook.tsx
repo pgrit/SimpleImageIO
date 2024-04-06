@@ -146,7 +146,7 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
     reset() {
         if (this.props.initialZoom)
             this.imageContainer.current.setZoom(this.props.initialZoom);
-        this.tmoCtrls.current.reset();
+        // this.tmoCtrls.current.reset();
         this.imageContainer.current.centerView();
     }
 
