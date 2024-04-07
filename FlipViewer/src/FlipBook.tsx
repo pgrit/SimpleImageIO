@@ -158,24 +158,26 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
     }
 
     copyImage() {
-        let canvas: HTMLCanvasElement;
+        let canvas = this.props.toneMappers[this.state.selectedIdx].canvas;
         let isCrop = false;
         if (this.imageContainer.current.state.cropActive) {
             // To copy the crop, we first write it to a temporary canvas
-            canvas = document.createElement("canvas");
-            canvas.width = this.imageContainer.current.state.cropWidth;
-            canvas.height = this.imageContainer.current.state.cropHeight;
-            let ctx = canvas.getContext("2d");
+            const x = this.imageContainer.current.state.cropX;
+            const y = this.imageContainer.current.state.cropY;
+            const w = this.imageContainer.current.state.cropWidth;
+            const h = this.imageContainer.current.state.cropHeight;
 
-            let x = this.imageContainer.current.state.cropX;
-            let y = this.imageContainer.current.state.cropY;
-            ctx.drawImage(this.props.toneMappers[this.state.selectedIdx].canvas,
-                x, y, canvas.width, canvas.height,
-                0, 0, canvas.width, canvas.height);
+            const tmpCanvas = document.createElement("canvas");
+            const upscale = 10;
+            tmpCanvas.width = w * upscale;
+            tmpCanvas.height = h * upscale;
 
+            let ctx = tmpCanvas.getContext("2d");
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(canvas, x, y, w, h, 0, 0, tmpCanvas.width, tmpCanvas.height);
+
+            canvas = tmpCanvas;
             isCrop = true;
-        } else {
-            canvas = this.props.toneMappers[this.state.selectedIdx].canvas;
         }
 
         let onDone = () => this.displayPopup(<p>{isCrop ? "Crop" : "Image"} copied to clipboard</p>, 500);
