@@ -122,9 +122,14 @@
 
 .cropMarker {
     position: absolute;
-    border-width: 2px;
-    border-color: black;
-    border-style: solid;
+    outline: 3px dashed #000;
+    border: 3px dashed #e7f3f7;
+}
+
+.cropCoords {
+    font-family: monospace;
+    font-size: 12px;
+    margin-left: 1em;
 }
 
 div.magnifier {

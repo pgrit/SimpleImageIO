@@ -329,17 +329,27 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
             if (this.state.cropHeight < 0) {
                 top += this.state.cropHeight;
             }
+            let width = Math.abs(this.state.cropWidth);
+            let height = Math.abs(this.state.cropHeight);
 
             crop = <div className={styles['cropMarker']} ref={this.cropMarker} style={{
                 left: left / this.props.width * 100 + "%",
                 top: top / this.props.height * 100 + "%",
-                width: Math.abs(this.state.cropWidth) / this.props.width * 100 + "%",
-                height: Math.abs(this.state.cropHeight) / this.props.height * 100 + "%"
+                width: width / this.props.width * 100 + "%",
+                height: height / this.props.height * 100 + "%"
             }}></div>
 
             if (!this.state.cropDragging) {
+                let cropCoords = `top=${top}, left=${left}, width=${width}, height=${height}`;
+
                 cropMean = <div style={{bottom: 16}} className={styles.meanValue}>
                     Crop mean: {formatNumber(this.state.cropMeans[this.props.selectedIdx])}
+
+                    <input name='cropCoords' readOnly={true} value={cropCoords}
+                        style={{width: cropCoords.length + "ch"}}
+                        className={styles['cropCoords']}
+                        onClick={(event) => navigator.clipboard.writeText(event.currentTarget.value)}
+                    /> ← click to copy
                 </div>
             }
         }

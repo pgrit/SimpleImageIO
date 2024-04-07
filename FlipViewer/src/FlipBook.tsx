@@ -158,8 +158,28 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
     }
 
     copyImage() {
-        let onDone = () => this.displayPopup(<p>Copied to clipboard</p>, 500);
-        this.props.toneMappers[this.state.selectedIdx].canvas.toBlob(function(blob) {
+        let canvas: HTMLCanvasElement;
+        let isCrop = false;
+        if (this.imageContainer.current.state.cropActive) {
+            // To copy the crop, we first write it to a temporary canvas
+            canvas = document.createElement("canvas");
+            canvas.width = this.imageContainer.current.state.cropWidth;
+            canvas.height = this.imageContainer.current.state.cropHeight;
+            let ctx = canvas.getContext("2d");
+
+            let x = this.imageContainer.current.state.cropX;
+            let y = this.imageContainer.current.state.cropY;
+            ctx.drawImage(this.props.toneMappers[this.state.selectedIdx].canvas,
+                x, y, canvas.width, canvas.height,
+                0, 0, canvas.width, canvas.height);
+
+            isCrop = true;
+        } else {
+            canvas = this.props.toneMappers[this.state.selectedIdx].canvas;
+        }
+
+        let onDone = () => this.displayPopup(<p>{isCrop ? "Crop" : "Image"} copied to clipboard</p>, 500);
+        canvas.toBlob(function(blob) {
             try {
                 const item = new ClipboardItem({ "image/png": blob });
                 navigator.clipboard.write([item]).then(onDone);
@@ -190,10 +210,11 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
                 <ul>
                     <li>Right click on the image to display pixel values.</li>
                     <li>Hold ALT while scrolling to override zoom.</li>
+                    <li>Ctrl + click to select a crop area.</li>
                     <li>Ctrl+C copies the image as png.</li>
                     <li>e increases exposure, Shift+e reduces it.</li>
                     <li>f lowers the maximum for false color mapping, Shift+f increases it.</li>
-                    <li>Select images by pressing 1 - 9 on the keyboard.</li>
+                    <li>Select images by pressing 1 - 9 on the keyboard. Use 0 to select image 10, shift+number selects images 11-20</li>
                     <li>Use the left/right or up/down arrow keys to flip between images.</li>
                 </ul>
                 <p>Click anywhere to close this message</p>
