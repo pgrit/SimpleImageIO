@@ -188,7 +188,20 @@ export class ToneMapControls extends React.Component<ToneMapControlsProps, ToneM
                             state.script = evt.target.value;
                             this.setState({ }, this.apply)
                         }}
-                        onKeyDown={(evt) => evt.stopPropagation()}
+                        onKeyDown={(evt) => {
+                            evt.stopPropagation();
+                            if (evt.code === "Tab") {
+                                evt.preventDefault();
+
+                                let start = evt.currentTarget.selectionStart;
+                                let end = evt.currentTarget.selectionEnd;
+                                let value = evt.currentTarget.value;
+                                evt.currentTarget.value = (value.substring(0, start) + "    " + value.substring(end));
+
+                                evt.currentTarget.selectionStart = start + 4;
+                                evt.currentTarget.selectionEnd = evt.currentTarget.selectionStart;
+                            }
+                        }}
                     ></textarea>
                 </div>
                 break;
