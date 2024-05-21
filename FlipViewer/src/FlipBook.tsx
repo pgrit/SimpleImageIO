@@ -91,10 +91,14 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
 
     onKeyDown(evt: React.KeyboardEvent<HTMLDivElement>) {
         let newIdx = this.state.selectedIdx;
-        if (evt.key === "ArrowLeft" || evt.key === "ArrowDown")
+        if (evt.key === "ArrowLeft" || evt.key === "ArrowDown") {
             newIdx = this.state.selectedIdx - 1;
-        else if (evt.key === "ArrowRight" || evt.key === "ArrowUp")
+            evt.preventDefault(); // prevents the window from scrolling while flipping
+        }
+        else if (evt.key === "ArrowRight" || evt.key === "ArrowUp") {
             newIdx = this.state.selectedIdx + 1;
+            evt.preventDefault(); // prevents the window from scrolling while flipping
+        }
 
         let digit = NaN;
         if (evt.code.startsWith("Digit"))
@@ -111,7 +115,10 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
             newIdx = digit - 1;
         }
 
-        newIdx = Math.min(this.props.rawPixels.length - 1, Math.max(0, newIdx));
+        newIdx = newIdx % this.props.rawPixels.length;
+        if (newIdx < 0)
+            newIdx += this.props.rawPixels.length
+
         if (!isNaN(newIdx) && newIdx != this.state.selectedIdx) {
             this.updateSelection(newIdx);
             evt.stopPropagation();
