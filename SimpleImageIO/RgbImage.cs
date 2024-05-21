@@ -70,7 +70,7 @@ public class RgbImage : Image {
             // swap the buffers and channel counts
             (rgb.DataPointer, DataPointer) = (DataPointer, rgb.DataPointer);
             (rgb.NumChannels, NumChannels) = (NumChannels, rgb.NumChannels);
-        } else {
+        } else if (NumChannels != 3) {
             throw new NotSupportedException($"Converting images with {NumChannels} channels to RGB is not supported. (loading '{filename}')");
         }
     }
