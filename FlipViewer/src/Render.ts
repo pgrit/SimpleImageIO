@@ -103,7 +103,8 @@ export function renderImage(canvas: HTMLCanvasElement, pixels: Float32Array | Im
     }
 
     const shaderProgram = gl.createProgram();
-    gl.attachShader(shaderProgram, loadShader(gl, gl.VERTEX_SHADER, vsSource));
+    const vertShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
+    gl.attachShader(shaderProgram, vertShader);
     const fragShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
     if (fragShader === null) return;
     gl.attachShader(shaderProgram, fragShader);
@@ -194,6 +195,13 @@ export function renderImage(canvas: HTMLCanvasElement, pixels: Float32Array | Im
     ctx.drawImage(bitmap, 0, 0);
 
     bitmap.close(); // free image memory as quickly as possible
+
+    gl.deleteBuffer(uvBuffer);
+    gl.deleteBuffer(vertexBuffer);
+    gl.deleteTexture(texture);
+    gl.deleteProgram(shaderProgram);
+    gl.deleteShader(fragShader);
+    gl.deleteShader(vertShader);
 
     // In theory, we can use this to disable "too many active gl contexts" warnings. In practice, this
     // causes a warning of its own in Firefox...
