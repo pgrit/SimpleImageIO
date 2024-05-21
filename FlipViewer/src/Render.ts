@@ -168,7 +168,7 @@ export function renderImage(canvas: HTMLCanvasElement, pixels: Float32Array | Im
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
-    gl.clearColor(0.0, 1.0, 0.0, 1.0);
+    gl.clearColor(0.0, 1.0, 1.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     gl.activeTexture(gl.TEXTURE0);
@@ -187,6 +187,15 @@ export function renderImage(canvas: HTMLCanvasElement, pixels: Float32Array | Im
 
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
+    gl.finish();
+
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
-    ctx.drawImage(offscreen.transferToImageBitmap(), 0, 0);
+    let bitmap = offscreen.transferToImageBitmap();
+    ctx.drawImage(bitmap, 0, 0);
+
+    bitmap.close(); // free image memory as quickly as possible
+
+    // In theory, we can use this to disable "too many active gl contexts" warnings. In practice, this
+    // causes a warning of its own in Firefox...
+    // gl.getExtension("WEBGL_lose_context").loseContext();
 }

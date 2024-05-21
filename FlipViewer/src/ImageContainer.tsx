@@ -391,7 +391,7 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
         for (let i = 0; i < this.props.rawPixels.length; ++i) {
             let canvas = this.canvasRefs[i].current;
             let img = this.props.rawPixels[i];
-            this.props.toneMappers[i] = new ToneMappingImage(img, canvas, () => this.setState({}));
+            this.props.toneMappers[i] = new ToneMappingImage(img, canvas, () => { });
         }
 
         this.container.current.addEventListener('wheel', this.onWheel, { passive: false })
