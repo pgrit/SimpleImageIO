@@ -32,6 +32,10 @@
     box-sizing: border-box;
 }
 
+.flipbook:focus-within {
+    outline: 4px solid var(--accent);
+}
+
 .image-container {
     overflow: hidden;
     background-color: #1e2323;
@@ -191,6 +195,9 @@ div.tools {
     margin: 4px;
     flex-wrap: wrap;
     gap: 4px;
+}
+.tools:focus {
+    outline: none;
 }
 
 .toolsBtn {
@@ -368,6 +375,10 @@ div.tools {
 
 .tmoContainer  {
     background-color: var(--foreground);
+}
+
+.tmoContainer:focus {
+    outline: none;
 }
 
 .tmoSelectGroup {

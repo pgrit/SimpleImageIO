@@ -135,6 +135,7 @@ export class ToneMapControls extends React.Component<ToneMapControlsProps, ToneM
                                 state.exposure = evt.target.value;
                                 this.setState({ }, this.apply);
                             }}
+                            onKeyDown={(evt) => evt.stopPropagation()}
                         />
                     </label>
                     <p className={styles.hint}>
@@ -161,6 +162,7 @@ export class ToneMapControls extends React.Component<ToneMapControlsProps, ToneM
                                 state.min = evt.target.value;
                                 this.setState({ }, this.apply)
                             }}
+                            onKeyDown={(evt) => evt.stopPropagation()}
                         />
                     </label>
                     <label className={styles.label}>max
@@ -169,6 +171,7 @@ export class ToneMapControls extends React.Component<ToneMapControlsProps, ToneM
                                 state.max = evt.target.value;
                                 this.setState({ }, this.apply)
                             }}
+                            onKeyDown={(evt) => evt.stopPropagation()}
                         />
                     </label>
                     <p className={styles.hint}>
@@ -194,7 +197,7 @@ export class ToneMapControls extends React.Component<ToneMapControlsProps, ToneM
         let activeCls = ` ${styles.active}`;
 
         return (
-            <div className={styles.tmoContainer}>
+            <div className={styles.tmoContainer} tabIndex={4}>
                 <div className={styles.tmoSelectGroup}>
                     <button
                         className={styles.tmoSelectBtn + (state.activeTMO == ToneMapType.Exposure ? activeCls : "")}

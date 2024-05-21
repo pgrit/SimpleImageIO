@@ -250,8 +250,8 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
         }
 
         return (
-            <div className={styles['flipbook']} style={this.props.style}>
-                <div style={{display: "contents"}} onKeyDown={this.onKeyDown}>
+            <div className={styles['flipbook']} style={this.props.style} onKeyDown={this.onKeyDown}>
+                <div style={{display: "contents"}}>
                     <MethodList
                         names={this.props.names}
                         selectedIdx={this.state.selectedIdx}

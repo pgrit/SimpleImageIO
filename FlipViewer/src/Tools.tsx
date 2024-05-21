@@ -34,7 +34,7 @@ export class Tools extends React.Component<ToolsProps, ToolsState> {
             return null;
 
         return (
-            <div className={styles["tools"]}>
+            <div className={styles["tools"]} tabIndex={3}>
                 <span>
                     <button className={styles.toolsBtn} onClick={this.props.copyImage}>
                         Copy PNG <span className={styles['key']}>Ctrl</span> + <span className={styles['key']}>c</span>
@@ -55,6 +55,7 @@ export class Tools extends React.Component<ToolsProps, ToolsState> {
                                 this.setState({zoom: val});
                                 this.props.setZoom(val);
                             }}
+                            onKeyDown={(evt) => evt.stopPropagation()}
                         ></input>
                     </label>
                     <button className={styles.toolsBtn} onClick={() => this.props.setZoom(1 as ZoomLevel)}>100%</button>
