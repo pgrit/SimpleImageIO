@@ -43,7 +43,7 @@ public class RgbImage : Image {
     /// Loads an RGB image from a file. RGBA is automatically converted (by dropping alpha).
     /// </summary>
     /// <param name="filename">Path to an existing file with a supported format</param>
-    public RgbImage(string filename) {
+    public unsafe RgbImage(string filename) {
         LoadFromFile(filename);
 
         if (NumChannels == 4) {
@@ -58,9 +58,21 @@ public class RgbImage : Image {
             // swap the buffers and channel counts
             (rgb.DataPointer, DataPointer) = (DataPointer, rgb.DataPointer);
             (rgb.NumChannels, NumChannels) = (NumChannels, rgb.NumChannels);
-        }
+        } else if (NumChannels == 1) {
+            // Copy single channel value into all channels
+            using RgbImage rgb = new(Width, Height);
+            for (int row = 0; row < Height; ++row) {
+                for (int col = 0; col < Width; ++col) {
+                    rgb[col, row] = RgbColor.White * dataPtr[row * Width + col];
+                }
+            }
 
-        Debug.Assert(NumChannels == 3);
+            // swap the buffers and channel counts
+            (rgb.DataPointer, DataPointer) = (DataPointer, rgb.DataPointer);
+            (rgb.NumChannels, NumChannels) = (NumChannels, rgb.NumChannels);
+        } else {
+            throw new NotSupportedException($"Converting images with {NumChannels} channels to RGB is not supported. (loading '{filename}')");
+        }
     }
 
     /// <summary>

@@ -112,5 +112,22 @@ namespace SimpleImageIO.Tests {
             Assert.Equal(1.0f, pixel.G, 3);
             Assert.Equal(1.0f, pixel.B, 3);
         }
+
+        [Fact]
+        public void WriteMono_ReadRGB() {
+            MonochromeImage image = new(1, 1);
+            image.SetPixel(0, 0, 13.42f);
+            image.WriteToFile("testpixelmonotorgb.exr");
+
+            RgbImage loaded = new("testpixelmonotorgb.exr");
+            var pixel = loaded.GetPixel(0, 0);
+
+            Assert.Equal(1, loaded.Width);
+            Assert.Equal(1, loaded.Height);
+            Assert.Equal(3, loaded.NumChannels);
+            Assert.Equal(13.42f, pixel.R, 2);
+            Assert.Equal(13.42f, pixel.G, 2);
+            Assert.Equal(13.42f, pixel.B, 2);
+        }
     }
 }
