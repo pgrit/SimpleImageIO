@@ -49,7 +49,7 @@ export class Tools extends React.Component<ToolsProps, ToolsState> {
                 <span style={{ display: "flex", justifyContent: "flex-end", flexWrap: "wrap" }}>
                     <label className={styles.label}>
                         Zoom:
-                        <input type="number" className={styles.numberInput} value={this.state.zoom} step="0.1"
+                        <input type="number" name="zoom" className={styles.numberInput} value={this.state.zoom} step="0.1"
                             onInput={evt => {
                                 let val = evt.currentTarget.valueAsNumber;
                                 this.setState({zoom: val});

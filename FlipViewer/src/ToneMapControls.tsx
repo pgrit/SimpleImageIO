@@ -129,7 +129,7 @@ export class ToneMapControls extends React.Component<ToneMapControlsProps, ToneM
             case ToneMapType.Exposure:
                 tmoCtrls = <div className={styles.inputGroup}>
                     <label className={styles.label}>EV
-                        <input type="number" className={styles.numberInput} step="0.5"
+                        <input type="number" name="exposure" className={styles.numberInput} step="0.5"
                             value={state.exposure}
                             onChange={(evt) => {
                                 state.exposure = evt.target.value;
