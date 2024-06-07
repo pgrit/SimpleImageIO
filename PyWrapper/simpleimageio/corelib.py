@@ -12,6 +12,7 @@ else: # Use Linux-style and hope for the best :)
 
 _libpath = str(pathlib.Path(__file__).with_name(_dll_name))
 core = cdll.LoadLibrary(_libpath)
+assert core != None, platform.system()
 
 def get_numpy_data(img):
     # Make sure the data type is float32, only copy data if a cast is required
