@@ -6,8 +6,8 @@ jobs:
   build-frontend:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 19
         cache: 'npm'
@@ -18,7 +18,7 @@ jobs:
       run: npm install && npm run build
 
     - name: Upload bundle
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: frontend
         path: ${{github.workspace}}/FlipViewer/dist/flipbook.js
@@ -33,9 +33,9 @@ jobs:
     needs: [ build-frontend ]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: '3.11'
         check-latest: true
@@ -48,11 +48,11 @@ jobs:
       run: python -m pip install --user wheel
 
     - name: Setup .NET Core SDK
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0.x'
 
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: frontend
         path: ${{github.workspace}}/frontend
@@ -62,7 +62,7 @@ jobs:
       shell: pwsh
 
     - name: Upload Binaries
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: runtimes
         path: ${{github.workspace}}/runtimes/*
@@ -72,20 +72,20 @@ jobs:
     needs: [ build ]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: runtimes
         path: ${{github.workspace}}/runtimes
 
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: frontend
         path: ${{github.workspace}}/frontend
 
     - name: Setup .NET Core SDK
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0.x'
 
@@ -97,7 +97,7 @@ jobs:
       run: dotnet pack -c Release
 
     - name: Upload .nupkg
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         path: ${{github.workspace}}/SimpleImageIO/bin/**/*.nupkg
 
