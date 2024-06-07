@@ -6,7 +6,7 @@ namespace SimpleImageIO {
     /// Represents a linear RGB color by three floating point values.
     /// Convenience wrapper around a <see cref="Vector3"/>.
     /// </summary>
-    public struct RgbColor {
+    public struct RgbColor : IEquatable<RgbColor>, IEquatable<Vector3> {
         Vector3 data;
 
         /// <summary>
@@ -243,5 +243,17 @@ namespace SimpleImageIO {
         /// Computes the hash code of the underlying Vector3 via <see cref="Vector3.GetHashCode"/>.
         /// </summary>
         public override int GetHashCode() => data.GetHashCode();
+
+        /// <summary>
+        /// Checks whether this object is exactly equal to another RgbColor or Vector3 object.
+        /// Does not account for floating point imprecision.
+        /// </summary>
+        public bool Equals(RgbColor other) => data == other.data;
+
+        /// <summary>
+        /// Checks whether this object is exactly equal to another RgbColor or Vector3 object.
+        /// Does not account for floating point imprecision.
+        /// </summary>
+        public bool Equals(Vector3 other) => data == other;
     }
 }
