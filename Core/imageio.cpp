@@ -161,8 +161,12 @@ int CacheExrImage(const char* filename) {
         size_t len = strlen(result.header.channels[chan].name);
 
         std::string layerName;
-        if (len <= 2) layerName = "";
-        else layerName = std::string(result.header.channels[chan].name, len - 2);
+        if (len <= 2) // Plain channels without a layer will be merged into an unnamed default layer (e.g., "R", "G", and "B")
+            layerName = "";
+        else if (result.header.channels[chan].name[len - 2] != '.') // Keep the full name as the layer name
+            layerName = std::string(result.header.channels[chan].name, len);
+        else // Remove channel name from the layer name (e.g., .R / .G / .B)
+            layerName = std::string(result.header.channels[chan].name, len - 2);
 
         char chanName = result.header.channels[chan].name[len - 1];
 
@@ -926,6 +930,7 @@ SIIO_API int GetExrLayerNames(const char* filename, char*** names) {
         size_t len = strlen(header.channels[chan].name);
         std::string layerName;
         if (len <= 2) layerName = "";
+        else if (header.channels[chan].name[len - 2] != '.') layerName = std::string(header.channels[chan].name, len);
         else layerName = std::string(header.channels[chan].name, len - 2);
         layerNames.insert(layerName);
     }
