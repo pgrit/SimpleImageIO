@@ -57,6 +57,10 @@ jobs:
         name: frontend
         path: ${{github.workspace}}/frontend
 
+    - name: Install ninja on windows
+      run: choco install ninja
+      if: ${{ matrix.os }} == "windows-latest"
+
     - name: Build and test
       run: ./make.ps1 -prebuiltFrontend frontend/flipbook.js
       shell: pwsh

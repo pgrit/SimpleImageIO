@@ -80,6 +80,25 @@ if (-not $skipRuntimes)
         cmake --build . --config Release
         if (-not $?) { throw "Build failed" }
     }
+    elseif ([environment]::OSVersion::IsWindows())
+    {
+        if (Get-Command "ninja" -ErrorAction SilentlyContinue && Get-Command "clang" -ErrorAction SilentlyContinue)
+        {
+            cmake -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Release ..
+            if (-not $?) { throw "CMake configure failed" }
+
+            cmake --build . --config Release
+            if (-not $?) { throw "Build failed" }
+        }
+        else
+        {
+            cmake -DCMAKE_BUILD_TYPE=Release ..
+            if (-not $?) { throw "CMake configure failed" }
+
+            cmake --build . --config Release
+            if (-not $?) { throw "Build failed" }
+        }
+    }
     else
     {
         cmake -DCMAKE_BUILD_TYPE=Release ..
