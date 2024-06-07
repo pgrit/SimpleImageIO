@@ -59,7 +59,7 @@ jobs:
 
     - name: Install ninja on windows
       run: choco install ninja
-      if: runner.os == "Windows"
+      if: runner.os == 'Windows'
 
     - name: Build and test
       run: ./make.ps1 -prebuiltFrontend frontend/flipbook.js
