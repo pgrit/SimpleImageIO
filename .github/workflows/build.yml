@@ -58,7 +58,7 @@ jobs:
         path: ${{github.workspace}}/frontend
 
     - name: Install ninja on windows
-      run: choco install ninja
+      run: choco install ninja llvm
       if: runner.os == 'Windows'
 
     - name: Build and test
