@@ -57,22 +57,9 @@ jobs:
       run: choco install ninja && choco upgrade llvm
       if: runner.os == 'Windows'
 
-    - name: Install libomp on macOS
-      run: brew install libomp
-      if: runner.os == 'macOS'
-
-    - name: Build and test
-      env:
-        LDFLAGS: "-L/opt/homebrew/opt/libomp/lib"
-        CPPFLAGS: "-I/opt/homebrew/opt/libomp/include"
-      run: ./make.ps1 -prebuiltFrontend frontend/flipbook.js
-      shell: pwsh
-      if: runner.os == 'macOS'
-
     - name: Build and test
       run: ./make.ps1 -prebuiltFrontend frontend/flipbook.js
       shell: pwsh
-      if: runner.os != 'macOS'
 
     - name: Upload Binaries
       uses: actions/upload-artifact@v4

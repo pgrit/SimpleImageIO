@@ -4,15 +4,6 @@ if (WIN32)
     add_compile_definitions(SIMPLE_IMAGE_IO_DLL SIMPLE_IMAGE_IO_EXPORTS)
 endif()
 
-if (APPLE)
-    if (EXISTS "/opt/homebrew/opt/libomp")
-        add_compile_options("-L/opt/homebrew/opt/libomp/lib" "-I/opt/homebrew/opt/libomp/include")
-        message("added the stuff, does it work?")
-    else()
-        message("For OpenMP support, try: brew install libomp")
-    endif()
-endif()
-
 # FPNG stuff
 if (NOT MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-strict-aliasing -DFPNG_NO_SSE=1 -msse4.1 -mpclmul")
