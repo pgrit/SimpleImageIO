@@ -57,6 +57,10 @@ jobs:
       run: choco install ninja && choco upgrade llvm
       if: runner.os == 'Windows'
 
+    - name: DEBUG - check if libomp exists
+      run: ls "C:\Program Files\LLVM\lib"
+      if: runner.os == 'Windows'
+
     - name: Build and test
       run: ./make.ps1 -prebuiltFrontend frontend/flipbook.js
       shell: pwsh
