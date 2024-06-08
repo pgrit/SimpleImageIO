@@ -61,6 +61,10 @@ jobs:
       run: brew install libomp
       if: runner.os == 'macOS'
 
+    - name: Set paths for libomp on macOS
+      run: echo "LDFLAGS=-L/opt/homebrew/opt/libomp/lib" >> $GITHUB_ENV && echo "CPPFLAGS=-I/opt/homebrew/opt/libomp/include" >> $GITHUB_ENV
+      if: runner.os == 'macOS'
+
     - name: Build and test
       run: ./make.ps1 -prebuiltFrontend frontend/flipbook.js
       shell: pwsh
