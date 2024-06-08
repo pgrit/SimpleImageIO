@@ -49,9 +49,15 @@ endif()
 # MSVC does not report the correct __cplusplus value unless this flag is set
 if(MSVC)
     target_compile_options(SimpleImageIOCore PUBLIC "/Zc:__cplusplus")
+endif()
+
+# We check for WIN32 rather than MSVC so clang won't annoy us either
+if(WIN32)
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 endif()
 
+# FindOpenMP.cmake is broken for clang on windows in cmake 3.29, so we use an old copy instead
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")

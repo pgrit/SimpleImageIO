@@ -32,6 +32,7 @@ static const bool systemIsBigEndian = ((const char*)&testfloat)[0] != 0;
 #include "External/stb_image.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
+#define STBIW_WINDOWS_UTF8
 #include "External/stb_image_write.h"
 
 #define TINY_DNG_LOADER_IMPLEMENTATION
