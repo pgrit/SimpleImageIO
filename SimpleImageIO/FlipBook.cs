@@ -321,6 +321,24 @@ public class FlipBook
     }
 
     /// <summary>
+    /// Removes the image with the given name if it exists, does nothing otherwise
+    /// </summary>
+    /// <param name="name">case-sensitive image name (exact string match)</param>
+    /// <returns>This flip book</returns>
+    public FlipBook Remove(string name)
+    {
+        int i = images.FindIndex(i => i.Name == name);
+        if (i >= 0)
+            images.RemoveAt(i);
+        return this;
+    }
+
+    /// <summary>
+    /// Number of images in the flip book
+    /// </summary>
+    public int Count => images.Count;
+
+    /// <summary>
     /// Utility function to save the flip viewer in a static HTML webpage
     /// </summary>
     /// <param name="filename">Output filename. Should end with .html</param>
@@ -415,7 +433,7 @@ public class FlipBook
             "types": [{{string.Join(',', typeStrs.Select(n => $"\"{n}\""))}}],
             "colorTheme": "{{theme}}",
             "groupName": "{{groupName}}",
-            "hideTools": {{hideTools.ToString().ToLowerInvariant()}},
+            "hideTools": {{hideTools.ToString().ToLowerInvariant()}}
         }
         """;
 
@@ -426,14 +444,21 @@ public class FlipBook
     /// Creates a flip book out of a dictionary of named images
     /// </summary>
     public static FlipBook Make(IEnumerable<KeyValuePair<string, Image>> images,
-                                FlipBook.DataType dataType = FlipBook.DataType.RGBE)
-    => FlipBook.New.AddAll(images, dataType);
+                                DataType dataType = DataType.RGBE)
+    => New.AddAll(images, dataType);
+
+    /// <summary>
+    /// Creates a flip book out of a dictionary of named images
+    /// </summary>
+    public static FlipBook Make(IEnumerable<(string, Image)> images,
+                                DataType dataType = DataType.RGBE)
+    => New.AddAll(images, dataType);
 
     /// <summary>
     /// Adds a dictionary of named images to a flip book
     /// </summary>
     public FlipBook AddAll(IEnumerable<KeyValuePair<string, Image>> images,
-                           FlipBook.DataType dataType = FlipBook.DataType.RGBE, InitialTMO tmoOverride = null) {
+                           DataType dataType = DataType.RGBE, InitialTMO tmoOverride = null) {
         foreach (var (name, image) in images) {
             Add(name, image, dataType, tmoOverride);
         }
@@ -444,7 +469,7 @@ public class FlipBook
     /// Adds a dictionary of named images to a flip book
     /// </summary>
     public FlipBook AddAll(IEnumerable<(string, Image)> images,
-                           FlipBook.DataType dataType = FlipBook.DataType.RGBE, InitialTMO tmoOverride = null) {
+                           DataType dataType = DataType.RGBE, InitialTMO tmoOverride = null) {
         foreach (var (name, image) in images) {
             Add(name, image, dataType, tmoOverride);
         }
