@@ -22,29 +22,29 @@ _compute_mse_outlier_reject.argtypes = [
 _compute_mse_outlier_reject.restype = c_float
 
 def mse(img, ref):
-    img = np.array(img, dtype=np.float32, copy=False)
-    ref = np.array(ref, dtype=np.float32, copy=False)
+    img = np.asarray(img, dtype=np.float32)
+    ref = np.asarray(ref, dtype=np.float32)
     assert img.shape[0] == ref.shape[0], "Images must have the same height"
     assert img.shape[1] == ref.shape[1], "Images must have the same width"
     return corelib.invoke_on_pair(_compute_mse, img, ref)
 
 def mse_outlier_rejection(img, ref, percentage=0.1):
-    img = np.array(img, dtype=np.float32, copy=False)
-    ref = np.array(ref, dtype=np.float32, copy=False)
+    img = np.asarray(img, dtype=np.float32)
+    ref = np.asarray(ref, dtype=np.float32)
     assert img.shape[0] == ref.shape[0], "Images must have the same height"
     assert img.shape[1] == ref.shape[1], "Images must have the same width"
     return corelib.invoke_on_pair(_compute_mse_outlier_reject, img, ref, percentage)
 
 def relative_mse(img, ref, epsilon=0.01):
-    img = np.array(img, dtype=np.float32, copy=False)
-    ref = np.array(ref, dtype=np.float32, copy=False)
+    img = np.asarray(img, dtype=np.float32)
+    ref = np.asarray(ref, dtype=np.float32)
     assert img.shape[0] == ref.shape[0], "Images must have the same height"
     assert img.shape[1] == ref.shape[1], "Images must have the same width"
     return corelib.invoke_on_pair(_compute_rel_mse, img, ref, epsilon)
 
 def relative_mse_outlier_rejection(img, ref, percentage=0.1, epsilon=0.01):
-    img = np.array(img, dtype=np.float32, copy=False)
-    ref = np.array(ref, dtype=np.float32, copy=False)
+    img = np.asarray(img, dtype=np.float32)
+    ref = np.asarray(ref, dtype=np.float32)
     assert img.shape[0] == ref.shape[0], "Images must have the same height"
     assert img.shape[1] == ref.shape[1], "Images must have the same width"
     return corelib.invoke_on_pair(_compute_rel_mse_outlier_reject, img, ref, percentage, epsilon)

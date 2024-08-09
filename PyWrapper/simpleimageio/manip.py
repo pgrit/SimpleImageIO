@@ -31,7 +31,7 @@ _lum_to_mono.argtypes = (POINTER(c_float), c_int, POINTER(c_float), c_int, c_int
 _lum_to_mono.restype = None
 
 def exposure_inplace(img, exposure=0):
-    img = np.array(img, dtype=np.float32, copy=False)
+    img = np.asarray(img, dtype=np.float32)
     h = img.shape[0]
     w = img.shape[1]
     _exposure(img.ctypes.data_as(POINTER(c_float)), img.ctypes.data_as(POINTER(c_float)), w, h, exposure)
@@ -50,7 +50,7 @@ def to_byte_image(img):
     return corelib.invoke_with_byte_output(_to_byte_img, img)
 
 def zoom(img, scale: int):
-    img = np.array(img, dtype=np.float32, copy=False)
+    img = np.asarray(img, dtype=np.float32)
     h = img.shape[0]
     w = img.shape[1]
     if len(img.shape) < 3:
@@ -61,7 +61,7 @@ def zoom(img, scale: int):
     return buf
 
 def average_color_channels(img):
-    img = np.array(img, dtype=np.float32, copy=False)
+    img = np.asarray(img, dtype=np.float32)
     h = img.shape[0]
     w = img.shape[1]
     buf = np.zeros((h, w), dtype=np.float32)
@@ -69,7 +69,7 @@ def average_color_channels(img):
     return buf
 
 def luminance(img):
-    img = np.array(img, dtype=np.float32, copy=False)
+    img = np.asarray(img, dtype=np.float32)
     h = img.shape[0]
     w = img.shape[1]
     buf = np.zeros((h, w), dtype=np.float32)

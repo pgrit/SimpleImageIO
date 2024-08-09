@@ -17,7 +17,7 @@ assert core, platform.system()
 def get_numpy_data(img):
     # Make sure the data type is float32, only copy data if a cast is required
     # This also automatically generates a numpy array in case img was just a plain list of lists
-    img = np.array(img, dtype=np.float32, copy=False)
+    img = np.asarray(img, dtype=np.float32)
 
     if len(img.shape) == 3 and (img.strides[2] != 4 or img.strides[1] != 4 * 3):
         # we could have been given a masked array with gaps between values
