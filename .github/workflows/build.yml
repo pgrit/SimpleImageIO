@@ -53,9 +53,10 @@ jobs:
         name: frontend
         path: ${{github.workspace}}/frontend
 
-    - name: Install ninja and clang on Windows
-      run: choco install ninja && choco upgrade llvm
-      if: runner.os == 'Windows'
+    # TODO This fails to compile chrono.h but supposedly works again with LLVM 19
+    # - name: Install ninja and clang on Windows
+    #   run: choco install ninja && choco upgrade llvm
+    #   if: runner.os == 'Windows'
 
     - name: Build and test
       run: ./make.ps1 -prebuiltFrontend frontend/flipbook.js
