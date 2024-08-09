@@ -17,7 +17,7 @@ interface MagnifierState {
 
 export function formatNumber(number : number) {
     // Always print zero without any extras
-    if (number === 0) return number;
+    if (number === 0) return number.toString();
 
     // Shorter output for Infinity
     if (number === Infinity) return "Inf";
@@ -30,7 +30,21 @@ export function formatNumber(number : number) {
         if (number < -1e4 || number > -1e-3) return number.toExponential(2);
     }
 
-    return number.toFixed(4);
+    // Round to integer if we have 4 or more digits before the decimal point
+    let absVal = Math.abs(number);
+    let intVal = Math.floor(absVal);
+    let numBefore = intVal.toFixed(0).length;
+    if (numBefore >= 4) return number.toFixed(0);
+
+    // Also round to integer if the fractional part is tiny
+    if (absVal - intVal < 1e-4) return number.toFixed(0);
+
+    // Count the zeros after the decimal point before the first significant digit
+    let leadingZeros = 4 - ((absVal - intVal) * 1e4).toFixed(0).length;
+    if (intVal == 0) numBefore--; // The integer part is zero, so don't count it
+
+    // Display approximately 4 non-zero digits, converting to string and back to get rid of trailing zeros
+    return parseFloat(number.toFixed(leadingZeros + 4 - numBefore)).toString();
 }
 
 export class Magnifier extends React.Component<MagnifierProps, MagnifierState> {
