@@ -2,7 +2,9 @@ param(
     [string] $renderLibVersion = "0.3.2",
     [string] $prebuiltFrontend = $null,
     [boolean] $clean = $false,
-    [boolean] $skipRuntimes = $false
+    [boolean] $skipRuntimes = $false,
+    [boolean] $noPy = $false,
+    [boolean] $skipTest = $false
 )
 
 function Ensure-Dir {
@@ -132,28 +134,36 @@ else
     cp ./FlipViewer/dist/flipbook.js PyWrapper/simpleimageio/flipbook.js
 }
 
-echo "Building the python wrapper"
 
-python -m pip install build wheel
+if (-not $noPy)
+{
+    echo "Building the python wrapper"
 
-python -m build
-if (-not $?) { throw "Build failed" }
+    python -m pip install build wheel
 
-$latestWhl = Get-ChildItem -Path "./dist/*.whl" | Sort-Object LastAccessTime -Descending | Select-Object -First 1
-echo "Installing $latestWhl"
-python -m pip install --user $latestWhl.FullName
-python -m pip install --user --force-reinstall --no-deps $latestWhl.FullName
-if (-not $?) { throw "Install failed" }
+    python -m build
+    if (-not $?) { throw "Build failed" }
 
-echo "Testing python lib"
-cd PyTest
-python -m unittest
-if (-not $?) { throw "Test failed" }
-cd ..
+    $latestWhl = Get-ChildItem -Path "./dist/*.whl" | Sort-Object LastAccessTime -Descending | Select-Object -First 1
+    echo "Installing $latestWhl"
+    python -m pip install --user $latestWhl.FullName
+    python -m pip install --user --force-reinstall --no-deps $latestWhl.FullName
+    if (-not $?) { throw "Install failed" }
+
+    echo "Testing python lib"
+    cd PyTest
+    python -m unittest
+    if (-not $?) { throw "Test failed" }
+    cd ..
+}
 
 echo "Build and test the C# lib"
 
 dotnet build
 if (-not $?) { throw "Build failed" }
-dotnet test
-if (-not $?) { throw "Test failed" }
+
+if (-not $skipTest)
+{
+    dotnet test
+    if (-not $?) { throw "Test failed" }
+}
