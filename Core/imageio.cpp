@@ -233,47 +233,83 @@ bool CopyCachedExrLayer(int id, std::string layerName, float* out) {
     const auto& layerInfo = img.channelsPerLayer[layerName];
     int numChannels = layerInfo.CountChannels();
 
+    auto swizzle = [numChannels, &layerInfo, &layerName](unsigned char** images, int srcIdx, int dstIdx, float* out) {
+        if (numChannels == 1) { // Y
+            assert(layerInfo.idxY >= 0);
+            auto chanImg = (float*)images[layerInfo.idxY];
+            out[dstIdx + 0] = chanImg[srcIdx];
+        } else if (numChannels == 3) { // RGB
+            assert(layerInfo.idxR >= 0);
+            auto chanImg = (float*)images[layerInfo.idxR];
+            out[dstIdx + 0] = chanImg[srcIdx];
+
+            assert(layerInfo.idxG >= 0);
+            chanImg = (float*)images[layerInfo.idxG];
+            out[dstIdx + 1] = chanImg[srcIdx];
+
+            assert(layerInfo.idxB >= 0);
+            chanImg = (float*)images[layerInfo.idxB];
+            out[dstIdx + 2] = chanImg[srcIdx];
+        } else if (numChannels == 4) { // RGBA
+            assert(layerInfo.idxR >= 0);
+            auto chanImg = (float*)images[layerInfo.idxR];
+            out[dstIdx + 0] = chanImg[srcIdx];
+
+            assert(layerInfo.idxG >= 0);
+            chanImg = (float*)images[layerInfo.idxG];
+            out[dstIdx + 1] = chanImg[srcIdx];
+
+            assert(layerInfo.idxB >= 0);
+            chanImg = (float*)images[layerInfo.idxB];
+            out[dstIdx + 2] = chanImg[srcIdx];
+
+            assert(layerInfo.idxA >= 0);
+            chanImg = (float*)images[layerInfo.idxA];
+            out[dstIdx + 3] = chanImg[srcIdx];
+        } else {
+            std::cerr << "ERROR while reading .exr layer " << layerName << ": Images with "
+                    << numChannels << " channels are currently not supported. " << std::endl;
+            cacheMutex.unlock();
+            return false;
+        }
+        return true;
+    };
+
     // Copy image data and convert from SoA to AoS
-    int idx = 0;
-    for (int r = 0; r < img.image.height; ++r) {
-        for (int c = 0; c < img.image.width; ++c) {
-            if (numChannels == 1) { // Y
-                assert(layerInfo.idxY >= 0);
-                auto chanImg = (float*)img.image.images[layerInfo.idxY];
-                out[idx++] = chanImg[r * img.image.width + c];
-            } else if (numChannels == 3) { // RGB
-                assert(layerInfo.idxR >= 0);
-                auto chanImg = (float*)img.image.images[layerInfo.idxR];
-                out[idx++] = chanImg[r * img.image.width + c];
-
-                assert(layerInfo.idxG >= 0);
-                chanImg = (float*)img.image.images[layerInfo.idxG];
-                out[idx++] = chanImg[r * img.image.width + c];
-
-                assert(layerInfo.idxB >= 0);
-                chanImg = (float*)img.image.images[layerInfo.idxB];
-                out[idx++] = chanImg[r * img.image.width + c];
-            } else if (numChannels == 4) { // RGBA
-                assert(layerInfo.idxR >= 0);
-                auto chanImg = (float*)img.image.images[layerInfo.idxR];
-                out[idx++] = chanImg[r * img.image.width + c];
-
-                assert(layerInfo.idxG >= 0);
-                chanImg = (float*)img.image.images[layerInfo.idxG];
-                out[idx++] = chanImg[r * img.image.width + c];
-
-                assert(layerInfo.idxB >= 0);
-                chanImg = (float*)img.image.images[layerInfo.idxB];
-                out[idx++] = chanImg[r * img.image.width + c];
-
-                assert(layerInfo.idxA >= 0);
-                chanImg = (float*)img.image.images[layerInfo.idxA];
-                out[idx++] = chanImg[r * img.image.width + c];
-            } else {
-                std::cerr << "ERROR while reading .exr layer " << layerName << ": Images with "
-                          << numChannels << " channels are currently not supported." << std::endl;
-                cacheMutex.unlock();
-                return false;
+    if (img.header.tiled) {
+        int tileWidth = img.header.tile_size_x;
+        int tileHeight = img.header.tile_size_y;
+        for (int tileIdx = 0; tileIdx < img.image.num_tiles; ++tileIdx) {
+            const auto& tile = img.image.tiles[tileIdx];
+            for (int x = 0; x < tile.width; ++x) {
+                for (int y = 0; y < tile.height; ++y) {
+                    int c = tile.offset_x * tileWidth + x;
+                    int r = tile.offset_y * tileHeight + y;
+                    if (c > img.image.width || r > img.image.height)
+                        continue;
+                    int idx = (r * img.image.width + c) * numChannels;
+                    if (img.header.line_order == 0) {
+                        if (!swizzle(tile.images, y * tileWidth + x, idx, out))
+                            return false;
+                    } else {
+                        if (!swizzle(tile.images, (tileHeight - y - 1) * tileWidth + x, idx, out))
+                            return false;
+                    }
+                }
+            }
+        }
+    } else {
+        int idx = 0;
+        for (int r = 0; r < img.image.height; ++r) {
+            for (int c = 0; c < img.image.width; ++c) {
+                if (img.header.line_order == 0) {
+                    if (!swizzle(img.image.images, r * img.image.width + c, idx, out))
+                        return false;
+                } else {
+                    if (!swizzle(img.image.images, (img.image.height - r - 1) * img.image.width + c, idx, out))
+                        return false;
+                }
+                idx += numChannels;
             }
         }
     }
