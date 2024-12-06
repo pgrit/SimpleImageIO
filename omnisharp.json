@@ -53,6 +53,6 @@
     },
     "script": {
         "enableScriptNuGetReferences": true,
-        "defaultTargetFramework": "net8.0"
+        "defaultTargetFramework": "net9.0"
     }
 }

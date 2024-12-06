@@ -13,7 +13,7 @@ First, we load the SimpleImageIO package and output the required JavaScript code
 #!csharp
 
 #r "nuget: SimpleImageIO"
-// #r "./SimpleImageIO/bin/Debug/net7.0/SimpleImageIO.dll"
+// #r "./SimpleImageIO/bin/Debug/net9.0/SimpleImageIO.dll"
 using SimpleImageIO;
 HTML(FlipBook.Header)
 
