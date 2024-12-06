@@ -1,6 +1,6 @@
 ![Build](https://github.com/pgrit/SimpleImageIO/workflows/Build/badge.svg)
 <a href="https://www.nuget.org/packages/SimpleImageIO/">
-![NuGet Downloads](https://img.shields.io/nuget/dt/SimpleImageIO)
+![NuGet Version](https://img.shields.io/nuget/v/SimpleImageIO)
 </a>
 
 # Simple Image IO
