@@ -1,0 +1,10 @@
+#!csharp
+
+using SimpleImageIO;
+HTML(FlipBook.Header).Display();
+Microsoft.DotNet.Interactive.Formatting.Formatter.Register<FlipBook>((flip, writer) => writer.Write(flip.ToString()), "text/html");
+
+Microsoft.DotNet.Interactive.Formatting.Formatter.Register<SimpleImageIO.Image>((img, writer) => {
+    string desc = img.ToString() + $", {img.Width}x{img.Height}, {img.NumChannels} channels (Memory Address: {img.DataPointer})<br>";
+    writer.Write(desc + FlipBook.New.Add("image", img).ToString());
+}, "text/html");

@@ -3,7 +3,7 @@
     <Title>Simple Image IO</Title>
     <Description>A very simple C# wrapper to read and write various HDR and LDR image file formats.</Description>
     <PackageId>SimpleImageIO</PackageId>
-    <Version>1.7.0</Version>
+    <Version>1.7.1</Version>
     <Copyright>(c) Pascal Grittmann</Copyright>
     <RepositoryUrl>https://github.com/pgrit/SimpleImageIO</RepositoryUrl>
 
@@ -38,6 +38,10 @@
     <EmbeddedResource Include="../FlipViewer/dist/flipbook.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="extension.dib" Pack="true" PackagePath="interactive-extensions/dotnet" />
   </ItemGroup>
 
   <!-- Each additional platform requires an entry here, to copy the corresponding native binaries -->

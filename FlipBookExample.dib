@@ -13,9 +13,6 @@ First, we load the SimpleImageIO package and output the required JavaScript code
 #!csharp
 
 #r "nuget: SimpleImageIO"
-// #r "./SimpleImageIO/bin/Debug/net9.0/SimpleImageIO.dll"
-using SimpleImageIO;
-HTML(FlipBook.Header)
 
 #!markdown
 
@@ -29,7 +26,7 @@ var blue = new RgbImage(600, 400);
 blue.Fill(0.03f, 0.3f, 0.7f);
 blue[50,50] = new(100,200,10);
 
-HTML(FlipBook.New + ("blue", blue) + ("red", red))
+FlipBook.New + ("blue", blue) + ("red", red)
 
 #!markdown
 
@@ -37,7 +34,7 @@ You can save the output to a static .html page via the `Save(filename)` utility 
 
 #!csharp
 
-(FlipBook.New + ("blue", blue) + ("red", red)).Save("test.html")
+FlipBook.New.Add("blue", blue).Add("red", red).Save("test.html")
 
 #!markdown
 
@@ -45,4 +42,4 @@ The size of the FlipBook can be specified as an argument to the constructor, as 
 
 #!csharp
 
-HTML(new FlipBook(900, 800) + ("blue", blue) + ("red", red))
+new FlipBook(900, 800) + ("blue", blue) + ("red", red)
