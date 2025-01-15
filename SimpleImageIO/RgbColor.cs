@@ -6,7 +6,7 @@ namespace SimpleImageIO {
     /// Represents a linear RGB color by three floating point values.
     /// Convenience wrapper around a <see cref="Vector3"/>.
     /// </summary>
-    public struct RgbColor : IEquatable<RgbColor>, IEquatable<Vector3> {
+    public struct RgbColor : IEquatable<RgbColor>, IEquatable<Vector3>, IFormattable {
         Vector3 data;
 
         /// <summary>
@@ -63,11 +63,6 @@ namespace SimpleImageIO {
         /// Computes the average value of all three channels
         /// </summary>
         public float Average => (R + G + B) / 3.0f;
-
-        /// <summary>
-        /// Prints the color values as "(R, G, B)"
-        /// </summary>
-        public override string ToString() => $"({R}, {G}, {B})";
 
         /// <summary>
         /// Component wise product of two colors
@@ -255,5 +250,20 @@ namespace SimpleImageIO {
         /// Does not account for floating point imprecision.
         /// </summary>
         public bool Equals(Vector3 other) => data == other;
+
+        /// <summary>
+        /// Formats the RGB color, passing the format string to each individual component
+        /// </summary>
+        public readonly string ToString(string format, IFormatProvider formatProvider) => data.ToString(format, formatProvider);
+
+        /// <summary>
+        /// Formats the RGB color, passing the format string to each individual component
+        /// </summary>
+        public readonly string ToString(string format) => ToString(format, System.Globalization.CultureInfo.CurrentCulture);
+
+        /// <summary>
+        /// Formats the RGB color, applying a default format ("G") to each component
+        /// </summary>
+        public override readonly string ToString() => ToString("G");
     }
 }
