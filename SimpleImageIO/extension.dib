@@ -8,3 +8,20 @@ Microsoft.DotNet.Interactive.Formatting.Formatter.Register<SimpleImageIO.Image>(
     string desc = img.ToString() + $", {img.Width}x{img.Height}, {img.NumChannels} channels (Memory Address: {img.DataPointer})<br>";
     writer.Write(desc + FlipBook.New.Add("image", img).ToString());
 }, "text/html");
+
+Microsoft.DotNet.Interactive.Formatting.Formatter.Register<IEnumerable<KeyValuePair<string, SimpleImageIO.Image>>>((imgs, writer) => {
+    FlipBook flip = new();
+    foreach (var i in imgs) {
+        flip.Add(i.Key, i.Value);
+    }
+    writer.Write(flip.ToString());
+}, "text/html");
+
+Microsoft.DotNet.Interactive.Formatting.Formatter.Register<IEnumerable<SimpleImageIO.Image>>((imgs, writer) => {
+    FlipBook flip = new();
+    int idx = 0;
+    foreach (var i in imgs) {
+        flip.Add($"{idx++}", i);
+    }
+    writer.Write(flip.ToString());
+}, "text/html");
