@@ -35,6 +35,14 @@ public static class Filter {
         }
     }
 
+    private static Image MatchType(Image img) {
+        if (img.NumChannels == 1)
+            return MonochromeImage.StealData(img);
+        if (img.NumChannels == 3)
+            return RgbImage.StealData(img);
+        return img;
+    }
+
     /// <summary>
     /// A simple box filter. Performance optimized for radius 1, but supports other radii. The input and
     /// output images cannot be the same.
@@ -67,7 +75,7 @@ public static class Filter {
     public static Image Box(Image original, int radius) {
         Image target = new(original.Width, original.Height, original.NumChannels);
         Box(original, target, radius);
-        return target;
+        return MatchType(target);
     }
 
     /// <summary>
@@ -99,7 +107,7 @@ public static class Filter {
     public static Image RepeatedBox(Image original, int radius) {
         Image target = new(original.Width, original.Height, original.NumChannels);
         RepeatedBox(original, target, radius);
-        return target;
+        return MatchType(target);
     }
 
     /// <summary>
@@ -126,7 +134,7 @@ public static class Filter {
     public static Image Dilation(Image original, int radius) {
         Image target = new(original.Width, original.Height, original.NumChannels);
         Dilation(original, target, radius);
-        return target;
+        return MatchType(target);
     }
 
     /// <summary>
@@ -153,7 +161,7 @@ public static class Filter {
     public static Image Erosion(Image original, int radius) {
         Image target = new(original.Width, original.Height, original.NumChannels);
         Erosion(original, target, radius);
-        return target;
+        return MatchType(target);
     }
 
     /// <summary>
@@ -183,7 +191,7 @@ public static class Filter {
     public static Image Gauss(Image original, int radius) {
         Image target = new(original.Width, original.Height, original.NumChannels);
         Gauss(original, target, radius);
-        return target;
+        return MatchType(target);
     }
 
     /// <summary>
@@ -204,7 +212,7 @@ public static class Filter {
     public static Image Median(Image original) {
         Image target = new(original.Width, original.Height, original.NumChannels);
         Median(original, target);
-        return target;
+        return MatchType(target);
     }
 
     private static void Median3x3(Image original, Image target) {
