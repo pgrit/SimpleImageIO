@@ -25,9 +25,9 @@ export function formatNumber(number : number) {
 
     // Scientific notation for numbers that are too big to fit the table
     if (number > 0) {
-        if (number > 1e5 || number < 1e-4) return number.toExponential(2);
+        if (number > 1e4 || number < 1e-3) return number.toExponential(3);
     } else {
-        if (number < -1e4 || number > -1e-3) return number.toExponential(2);
+        if (number < -1e3 || number > -1e-2) return number.toExponential(3);
     }
 
     // Round to integer if we have 4 or more digits before the decimal point
