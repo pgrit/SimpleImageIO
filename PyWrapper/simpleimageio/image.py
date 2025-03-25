@@ -81,7 +81,7 @@ def read_layered_exr(filename: str):
     for i in range(num_layer):
         num_char = _get_layer_name_len(idx, i)
         str_buf = create_string_buffer(num_char)
-        _get_layer_name(idx, i, str_buf)
+        _get_layer_name(idx, i, str_buf.raw)
         name = str_buf.value
 
         num_chans = _get_layer_chan_count(idx, name)
