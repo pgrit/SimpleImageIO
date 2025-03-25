@@ -79,9 +79,9 @@ def read_layered_exr(filename: str):
     layers = {}
 
     for i in range(num_layer):
-        num_char = _get_layer_name_len(idx, i)
-        str_buf = create_string_buffer(num_char)
-        _get_layer_name(idx, i, str_buf.raw)
+        num_char = _get_layer_name_len(idx, i)       # Returns the number of characters (NOT including null-termination)
+        str_buf = create_string_buffer(num_char + 1) # Create temporary buffer with extra space for null-termination
+        _get_layer_name(idx, i, str_buf)             # Copies layer name into buffer including the null-termination
         name = str_buf.value
 
         num_chans = _get_layer_chan_count(idx, name)
