@@ -37,12 +37,12 @@ class build_ext(build_ext_orig):
             '-DCMAKE_BUILD_TYPE=' + config,
             '-DCMAKE_OSX_DEPLOYMENT_TARGET=10.15'
         ]
-        if shutil.which("ninja") and shutil.which("clang"):
-            cmake_args.extend([
-                '-G', 'Ninja',
-                '-DCMAKE_CXX_COMPILER=clang++',
-                '-DCMAKE_C_COMPILER=clang'
-            ])
+        # if shutil.which("ninja") and shutil.which("clang"):
+        #     cmake_args.extend([
+        #         '-G', 'Ninja',
+        #         '-DCMAKE_CXX_COMPILER=clang++',
+        #         '-DCMAKE_C_COMPILER=clang'
+        #     ])
         build_args = [ '--config', config ]
 
         # Run CMake and build (automatically copies the .dll / .so / .dylib file)
