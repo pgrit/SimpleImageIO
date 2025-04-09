@@ -50,6 +50,7 @@ async function readHalf(url: string) {
 async function readLDR(url: string) {
     let img = new Image();
     img.src = url;
+    await img.decode();
     return img;
 }
 
