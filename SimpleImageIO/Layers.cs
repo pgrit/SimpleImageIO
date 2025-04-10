@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -58,6 +59,30 @@ public static class Layers {
     /// </param>
     public static void WriteToExr(string filename, params (string Name, Image Image)[] layers)
     => WriteToExr(filename, true, layers);
+
+    /// <summary>
+    /// Writes a multi-layer .exr file where each layer is represented by a separate image with one or
+    /// more channels
+    /// </summary>
+    /// <param name="filename">Name of the output .exr file, extension should be .exr</param>
+    /// <param name="halfPrecision">If false, write 32 bit float, else 16 bit.</param>
+    /// <param name="layers">
+    /// Pairs of layer names and layer images to write to the .exr. Must have equal resolutions.
+    /// </param>
+    public static void WriteToExr(string filename, IEnumerable<(string Name, Image Image)> layers, bool halfPrecision = true)
+    => WriteToExr(filename, halfPrecision, [.. layers]);
+
+    /// <summary>
+    /// Writes a multi-layer .exr file where each layer is represented by a separate image with one or
+    /// more channels
+    /// </summary>
+    /// <param name="filename">Name of the output .exr file, extension should be .exr</param>
+    /// <param name="halfPrecision">If false, write 32 bit float, else 16 bit.</param>
+    /// <param name="layers">
+    /// Pairs of layer names and layer images to write to the .exr. Must have equal resolutions.
+    /// </param>
+    public static void WriteToExr(string filename, IEnumerable<KeyValuePair<string, Image>> layers, bool halfPrecision = true)
+    => WriteToExr(filename, halfPrecision, layers.Select(kv => (kv.Key, kv.Value)).ToArray());
 
     /// <summary>
     /// Writes a multi-layer .exr file where each layer is represented by a separate image with one or
