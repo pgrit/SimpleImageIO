@@ -217,6 +217,16 @@ namespace SimpleImageIO {
         => new(SrgbToLinear(red), SrgbToLinear(green), SrgbToLinear(blue));
 
         /// <summary>
+        /// Converts standard RGB (sRGB) to linear RGB
+        /// </summary>
+        /// <param name="red">Red color channel in [0, 1]</param>
+        /// <param name="green">Green color channel in [0, 1]</param>
+        /// <param name="blue">Blue color channel in [0, 1]</param>
+        /// <returns>Linear RGB color value</returns>
+        public static RgbColor SrgbToLinear(byte red, byte green, byte blue)
+        => new(SrgbToLinear(red / 255.0f), SrgbToLinear(green / 255.0f), SrgbToLinear(blue / 255.0f));
+
+        /// <summary>
         /// Checks whether this object is exactly equal to another RgbColor or Vector3 object.
         /// Does not account for floating point imprecision.
         /// </summary>
