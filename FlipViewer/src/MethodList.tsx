@@ -9,6 +9,9 @@ interface MethodListProps {
 }
 
 export function MethodList({ names, selectedIdx, setSelectedIdx }: MethodListProps) {
+    if (names.length == 1) // TODO instead / in addition to this: add button / shortcut to hide the list
+        return;
+
     const btns = [];
     for (let i = 0; i < names.length; ++i) {
         let clsName = styles['method-label'];
