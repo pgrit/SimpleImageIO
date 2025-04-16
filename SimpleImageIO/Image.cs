@@ -84,6 +84,50 @@ public unsafe class Image : IDisposable {
         Unsafe.InitBlock(dataPtr, 0, (uint)(Width * Height * NumChannels * sizeof(float)));
     }
 
+    /// <returns>True if the pixel coordinates lie within the image</returns>
+    public bool IsInside(int col, int row) {
+        return col >= 0 && col < Width && row >= 0 && row < Height;
+    }
+
+    /// <returns>True if the pixel coordinates lie within the image</returns>
+    public bool IsInside(System.Numerics.Vector2 colrow) {
+        int col = (int)colrow.X;
+        int row = (int)colrow.Y;
+        return col >= 0 && col < Width && row >= 0 && row < Height;
+    }
+
+    /// <summary>
+    /// Queries the values at the given pixel and converts them to a linear RGB color
+    /// </summary>
+    /// <returns>The color at this pixel, or null if the position was outside the image</returns>
+    /// <exception cref="NotImplementedException"><see cref="NumChannels" /> is not 1, 3, or 4</exception>
+    public RgbColor? TryGetColor(int col, int row) {
+        if (!IsInside(col, row))
+            return null;
+
+        if (NumChannels == 3 || NumChannels == 4)
+            return new(
+                this[col, row, 0],
+                this[col, row, 1],
+                this[col, row, 2]
+            );
+        else if (NumChannels == 1)
+            return new(this[col, row, 0]);
+        else
+            throw new NotImplementedException($"Conversion of {NumChannels} channels to RGB is not implemented.");
+    }
+
+    /// <summary>
+    /// Queries the values at the given pixel and converts them to a linear RGB color
+    /// </summary>
+    /// <returns>The color at this pixel, or null if the position was outside the image</returns>
+    /// <exception cref="NotImplementedException"><see cref="NumChannels" /> is not 1, 3, or 4</exception>
+    public RgbColor? TryGetColor(System.Numerics.Vector2 colrow) {
+        int col = (int)colrow.X;
+        int row = (int)colrow.Y;
+        return TryGetColor(col, row);
+    }
+
     /// <summary>
     /// Moves the raw data from one image to another. The source image is empty afterwards and should
     /// no longer be used. If dest is a derived class, like <see cref="RgbImage" /> the user should make
