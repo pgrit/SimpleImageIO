@@ -448,6 +448,10 @@ public unsafe class Image : IDisposable {
             NumChannels * Width, other.Width, other.Height, NumChannels, scale);
     }
 
+    /// <returns>True if the resolution and number of channels is the same in both images</returns>
+    public static bool Matches(Image a, Image b)
+    => a.Width == b.Width && a.Height == b.Height && a.NumChannels == b.NumChannels;
+
     /// <summary>
     /// Combines two images by applying a function to each pair of values in each channel in each pixel.
     /// Calls op(a[i], b[i]) for every position i.
@@ -458,7 +462,7 @@ public unsafe class Image : IDisposable {
     /// <returns>A new image with the combined values</returns>
     /// <exception cref="ArgumentException">Image dimensions or channel counts do not match</exception>
     public static T ApplyOp<T>(T a, T b, Func<float, float, float> op) where T : Image, new() {
-        if (a.Width != b.Width || a.Height != b.Height || a.NumChannels != b.NumChannels)
+        if (!Matches(a, b))
             throw new ArgumentException("Image dimensions must match");
 
         var result = new T();
