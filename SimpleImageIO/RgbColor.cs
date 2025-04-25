@@ -226,6 +226,9 @@ public struct RgbColor : IEquatable<RgbColor>, IEquatable<Vector3>, IFormattable
     public static RgbColor SrgbToLinear(byte red, byte green, byte blue)
     => new(SrgbToLinear(red / 255.0f), SrgbToLinear(green / 255.0f), SrgbToLinear(blue / 255.0f));
 
+    /// <returns>true if all components are finite numbers, i.e., not Inf or NaN</returns>
+    public static bool IsFinite(RgbColor clr) => float.IsFinite(clr.R) && float.IsFinite(clr.G) && float.IsFinite(clr.B);
+
     /// <summary>
     /// Checks whether this object is exactly equal to another RgbColor or Vector3 object.
     /// Does not account for floating point imprecision.
