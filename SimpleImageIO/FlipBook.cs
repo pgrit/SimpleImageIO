@@ -102,7 +102,7 @@ public class FlipBook
         [JsonInclude] public string activeTMO;
         [JsonInclude] public float min;
         [JsonInclude] public float max = 1;
-        [JsonInclude] public bool log;
+        [JsonInclude] public bool useLog;
         [JsonInclude] public float exposure;
         [JsonInclude] public string script;
         #pragma warning restore CS1591
@@ -126,7 +126,7 @@ public class FlipBook
             activeTMO = "falsecolor",
             min = min,
             max = max,
-            log = log
+            useLog = log
         };
 
         /// <summary>
