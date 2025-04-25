@@ -214,14 +214,16 @@ public class FlipBook
     /// <summary>
     /// Syntactic sugar to create a new object of this class. Makes the fluent API more readable.
     /// </summary>
-    public static FlipBook New => new FlipBook();
+    public static FlipBook New => new();
 
     /// <summary>
     /// Initializes a new flip book with the given width and height in HTML pixels
     /// </summary>
-    public FlipBook(int width = 900, int height = 800) {
+    public FlipBook(int width = 660, int height = 480) {
         htmlWidth = width;
         htmlHeight = height;
+        hideTools = true;
+        initialZoom = new InitialZoom(1.0f);
     }
 
     /// <summary>
