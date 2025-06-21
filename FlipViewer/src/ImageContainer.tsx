@@ -251,14 +251,15 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
         var deltaX = (1 - factor) * relX;
         var deltaY = (1 - factor) * relY;
 
-        let x = event.offsetX;
-        let y = event.offsetY;
+        let bounds = this.imgPlacer.current.getBoundingClientRect();
+        let x = event.clientX - bounds.left;
+        let y = event.clientY - bounds.top;
 
         this.shiftImage(deltaX, deltaY);
         this.setState({
             scale: scale,
-            magnifierX: x + magnifierPadding,
-            magnifierY: y + magnifierPadding,
+            magnifierX: x + magnifierPadding - deltaX,
+            magnifierY: y + magnifierPadding - deltaY,
         });
 
         event.preventDefault();
