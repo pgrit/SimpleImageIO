@@ -39,6 +39,8 @@ interface ImageContainerState {
     cropMeans?: number[];
 }
 
+const magnifierPadding = 10;
+
 export class ImageContainer extends React.Component<ImageContainerProps, ImageContainerState> {
     canvasRefs: React.RefObject<HTMLCanvasElement>[];
     imgPlacer: React.RefObject<HTMLDivElement>;
@@ -86,12 +88,10 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
     }
 
     onMouseMoveOverImage(event: React.MouseEvent<HTMLDivElement>) {
-        let bounds = this.imgPlacer.current.getBoundingClientRect();
-        let x = event.clientX - bounds.left;
-        let y = event.clientY - bounds.top;
+        let xy = this.offset(event);
 
-        let curPixelCol = Math.floor(x / this.state.scale);
-        let curPixelRow = Math.floor(y / this.state.scale);
+        let curPixelCol = Math.floor(xy.x / this.state.scale);
+        let curPixelRow = Math.floor(xy.y / this.state.scale);
 
         if ((event.buttons & 2) == 0)
         {
@@ -99,12 +99,10 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
             return;
         }
 
-        const offset = 10;
-
         this.setState({
             magnifierVisible: true,
-            magnifierX: event.clientX + offset,
-            magnifierY: event.clientY + offset,
+            magnifierX: xy.x + magnifierPadding,
+            magnifierY: xy.y + magnifierPadding,
             magnifierCol: curPixelCol,
             magnifierRow: curPixelRow
         });
@@ -165,12 +163,9 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
     }
 
     onClick(event: React.MouseEvent<HTMLDivElement>) {
-        let bounds = this.imgPlacer.current.getBoundingClientRect();
-        let x = event.clientX - bounds.left;
-        let y = event.clientY - bounds.top;
-
-        let curPixelCol = Math.floor(x / this.state.scale);
-        let curPixelRow = Math.floor(y / this.state.scale);
+        let xy = this.offset(event);
+        let curPixelCol = Math.floor(xy.x / this.state.scale);
+        let curPixelRow = Math.floor(xy.y / this.state.scale);
         curPixelCol = Math.min(Math.max(curPixelCol, 0), this.props.width - 1);
         curPixelRow = Math.min(Math.max(curPixelRow, 0), this.props.height - 1);
 
@@ -199,12 +194,9 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
         // If left mouse button down
         if ((event.buttons & 1) == 1) {
             if (event.ctrlKey) {
-                let bounds = this.imgPlacer.current.getBoundingClientRect();
-                let x = event.clientX - bounds.left;
-                let y = event.clientY - bounds.top;
-
-                let curPixelCol = Math.floor(x / this.state.scale);
-                let curPixelRow = Math.floor(y / this.state.scale);
+                let xy = this.offset(event);
+                let curPixelCol = Math.floor(xy.x / this.state.scale);
+                let curPixelRow = Math.floor(xy.y / this.state.scale);
                 curPixelCol = Math.min(Math.max(curPixelCol, 0), this.props.width - 1);
                 curPixelRow = Math.min(Math.max(curPixelRow, 0), this.props.height - 1);
 
@@ -259,8 +251,15 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
         var deltaX = (1 - factor) * relX;
         var deltaY = (1 - factor) * relY;
 
+        let x = event.offsetX;
+        let y = event.offsetY;
+
         this.shiftImage(deltaX, deltaY);
-        this.setState({scale: scale});
+        this.setState({
+            scale: scale,
+            magnifierX: x + magnifierPadding,
+            magnifierY: y + magnifierPadding,
+        });
 
         event.preventDefault();
 

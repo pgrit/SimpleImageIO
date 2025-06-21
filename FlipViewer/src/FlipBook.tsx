@@ -7,8 +7,7 @@ import { ToneMapControls } from './ToneMapControls';
 import { MethodList } from './MethodList';
 import { Tools } from './Tools';
 import { Popup } from './Popup';
-import { ImageType, ToneMapSettings, ZoomLevel } from './flipviewer';
-import { group } from 'console';
+import { ToneMapSettings, ZoomLevel } from './flipviewer';
 
 const UPDATE_INTERVAL_MS = 100;
 
