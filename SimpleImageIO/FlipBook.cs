@@ -210,6 +210,17 @@ public class FlipBook
     string theme;
     string groupName;
     bool hideTools;
+    string containerId = null;
+    int[] key = null;
+
+    /// <summary>
+    /// Returns a image from the list images
+    /// </summary>
+    /// <param name="index"></param>
+    /// <returns></returns>
+    public (string Name, Image Image, DataType TargetType, InitialTMO TMOOverride) GetImage(int index) {
+        return images[index];
+    }
 
     /// <summary>
     /// Syntactic sugar to create a new object of this class. Makes the fluent API more readable.
@@ -282,6 +293,24 @@ public class FlipBook
     }
 
     /// <summary>
+    /// Sets the key of this flipbook to keep track on the react side of all flipbooks
+    /// Same thing as a group name but this key can decide which flipbook of a group fired a listener to the c# side
+    /// </summary>
+    /// <param name="key">Key for the dictionary on React side</param>
+    public FlipBook SetKey(int[] key) {
+        this.key = key;
+        return this;
+    }
+
+    /// <summary>
+    /// Returns the key as a string. Each element is seperated by a ','
+    /// </summary>
+    /// <returns></returns>
+    public string GetKeyAsString() {
+        return String.Join(',', key);
+    }
+
+    /// <summary>
     /// Adds a new image to this flip book.
     /// </summary>
     /// <param name="name">Name of the new image</param>
@@ -289,8 +318,7 @@ public class FlipBook
     /// <param name="targetType">Data type to use for this image's pixels</param>
     /// <param name="tmoOverride">If not null, this image will use its own tone mapping settings</param>
     /// <returns>This object (fluent API)</returns>
-    public FlipBook Add(string name, Image image, DataType targetType = DataType.RGBE, InitialTMO tmoOverride = null)
-    {
+    public FlipBook Add(string name, Image image, DataType targetType = DataType.RGBE, InitialTMO tmoOverride = null) {
         if (images.Count > 0 && (images[0].Image.Width != image.Width || images[0].Image.Height != image.Height))
             throw new ArgumentException("Image resolution does not match", nameof(image));
         images.Add((name, image, targetType, tmoOverride));
@@ -405,6 +433,8 @@ public class FlipBook
         }
 
         string id = "flipbook-" + Guid.NewGuid().ToString();
+        if (String.IsNullOrEmpty(this.containerId))
+            this.containerId = id;
         string html = $"<div id='{id}' style='width:{htmlWidth}px; height:{htmlHeight}px; resize: both; overflow: auto;'></div>";
 
         string initialTMOStr = "null";
@@ -425,6 +455,7 @@ public class FlipBook
             "width": {{width}},
             "height": {{height}},
             "containerId": "{{id}}",
+            "key": {{JsonSerializer.Serialize(key)}},
             "initialZoom": {{initialZoom.ToString()}},
             "initialTMO": {{initialTMOStr}},
             "initialTMOOverrides": [
@@ -440,6 +471,110 @@ public class FlipBook
         """;
 
         return new(html, json, "flipbook.MakeFlipBook", id);
+    }
+
+    /// <summary>
+    /// Generates the HTML and JS for the flip book and updates the image in the FlipBook.
+    /// </summary>
+    public GeneratedCode UpdateImage((string Name, Image Image, DataType TargetType, InitialTMO TMOOverride) updateImage, int index)
+    {
+        // Update image in flipbook
+        images[index] = updateImage;
+
+        // Update image on Html
+        if (images.Count == 0)
+            throw new InvalidOperationException("No images in the flip book");
+
+        List<string> dataStrs = new();
+        List<string> typeStrs = new();
+        List<string> nameStrs = new();
+        int width = images[0].Image.Width;
+        int height = images[0].Image.Height;
+        
+        if (width != updateImage.Image.Width || height != updateImage.Image.Height)
+            throw new InvalidOperationException("Image resolutions differ");
+
+        // The RGBE only supports exactly 3 color channels, so we fall back to half
+        var targetType = updateImage.TargetType;
+        if (targetType == DataType.RGBE && updateImage.Image.NumChannels != 3)
+            targetType = DataType.Float16;
+
+        dataStrs.Add(targetType switch
+        {
+            DataType.Float32 => WriteImageAsFloat32(updateImage.Image),
+            DataType.RGBE => CompressImageAsRGBE(updateImage.Image),
+            DataType.PNG => CompressImageAsPNG(updateImage.Image),
+            DataType.Float16 => WriteImageAsFloat16(updateImage.Image),
+            DataType quality => CompressImageAsJPEG(updateImage.Image, (int)quality)
+        });
+
+        typeStrs.Add(targetType switch
+        {
+            DataType.Float32 => "single",
+            DataType.RGBE => "rgbe",
+            DataType.Float16 => "half",
+            _ => "ldr"
+        });
+
+        nameStrs.Add(updateImage.Name);
+
+        // string id = "flipbook-" + Guid.NewGuid().ToString();
+        string id = this.containerId;
+        string html = $"<div id='{id}' style='width:{htmlWidth}px; height:{htmlHeight}px; resize: both; overflow: auto;'></div>";
+
+        string initialTMOStr = "null";
+        if (initialTMO != null) {
+            initialTMOStr = JsonSerializer.Serialize(initialTMO);
+        }
+
+        List<string> tmoOverrideStrs = [];
+        foreach (var img in images) {
+            if (img.TMOOverride == null)
+                tmoOverrideStrs.Add("null");
+            else
+                tmoOverrideStrs.Add(JsonSerializer.Serialize(img.TMOOverride));
+        }
+
+        string json = $$"""
+        {
+            "width": {{width}},
+            "height": {{height}},
+            "containerId": "{{id}}",
+            "key": {{JsonSerializer.Serialize(key)}},
+            "initialZoom": {{initialZoom.ToString()}},
+            "initialTMO": {{initialTMOStr}},
+            "initialTMOOverrides": [
+                {{string.Join(',', tmoOverrideStrs)}}
+            ],
+            "names": [{{string.Join(',', nameStrs.Select(n => $"\"{n}\""))}}],
+            "dataUrls": [{{string.Join(',', dataStrs.Select(n => $"\"{n}\""))}}],
+            "types": [{{string.Join(',', typeStrs.Select(n => $"\"{n}\""))}}],
+            "colorTheme": "{{theme}}",
+            "groupName": "{{groupName}}",
+            "hideTools": {{hideTools.ToString().ToLowerInvariant()}}
+        }
+        """;
+
+        // string json = $$"""
+        // {
+        //     "width": {},
+        //     "height": {},
+        //     "containerId": "{}",
+        //     "initialZoom": {},
+        //     "initialTMO": {},
+        //     "initialTMOOverrides": [
+        //         {}
+        //     ],
+        //     "names": [{{string.Join(',', nameStrs.Select(n => $"\"{n}\""))}}],
+        //     "dataUrls": [{{string.Join(',', dataStrs.Select(n => $"\"{n}\""))}}],
+        //     "types": [{{string.Join(',', typeStrs.Select(n => $"\"{n}\""))}}],
+        //     "colorTheme": "{}",
+        //     "groupName": "{{groupName}}",
+        //     "hideTools": {}
+        // }
+        // """;
+
+        return new(html, json, "flipbook.UpdateImage", id);
     }
 
     /// <summary>

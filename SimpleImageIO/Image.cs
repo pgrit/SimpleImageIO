@@ -542,6 +542,11 @@ public unsafe class Image : IDisposable {
     }
 
     /// <summary>
+    /// Calculates the absolute Difference from two equal-sized images with equal channel count
+    /// </summary>
+    public static Image AbsDiff(Image a, Image b) => ApplyOp(a, b, (x, y) => Math.Abs(x - y));
+
+    /// <summary>
     /// Adds two equal-sized images with equal channel count
     /// </summary>
     public static Image operator +(Image a, Image b) => ApplyOp(a, b, (x, y) => x + y);

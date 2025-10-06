@@ -17,7 +17,7 @@ export class Popup extends React.Component<PopupProps, PopupState> {
 
     render(): React.ReactNode {
         return (
-            <div className={styles.popup} onClick={this.props.unmount}>
+            <div className={styles.popup} onClick={this.props.unmount} onWheel={this.props.unmount}>
                 {this.props.children}
             </div>
         );
