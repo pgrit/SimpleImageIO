@@ -211,15 +211,15 @@ public class FlipBook
     string groupName;
     bool hideTools;
     string containerId = null;
-    int[] key = null;
+    string key = null;
 
     /// <summary>
     /// Returns a image from the list images
     /// </summary>
     /// <param name="index"></param>
     /// <returns></returns>
-    public (string Name, Image Image, DataType TargetType, InitialTMO TMOOverride) GetImage(int index) {
-        return images[index];
+    public Image GetImage(int index) {
+        return images[index].Image;
     }
 
     /// <summary>
@@ -297,17 +297,17 @@ public class FlipBook
     /// Same thing as a group name but this key can decide which flipbook of a group fired a listener to the c# side
     /// </summary>
     /// <param name="key">Key for the dictionary on React side</param>
-    public FlipBook SetKey(int[] key) {
+    public FlipBook SetKey(string key) {
         this.key = key;
         return this;
     }
 
     /// <summary>
-    /// Returns the key as a string. Each element is seperated by a ','
+    /// Returns the key. 
     /// </summary>
     /// <returns></returns>
-    public string GetKeyAsString() {
-        return String.Join(',', key);
+    public string GetKey() {
+        return this.key;
     }
 
     /// <summary>
@@ -476,10 +476,12 @@ public class FlipBook
     /// <summary>
     /// Generates the HTML and JS for the flip book and updates the image in the FlipBook.
     /// </summary>
-    public GeneratedCode UpdateImage((string Name, Image Image, DataType TargetType, InitialTMO TMOOverride) updateImage, int index)
+    public GeneratedCode UpdateImage(Image updateImage, int index)
     {
         // Update image in flipbook
-        images[index] = updateImage;
+        var image = images[index];
+        image.Image = updateImage;
+        images[index] = image;
 
         // Update image on Html
         if (images.Count == 0)
@@ -491,21 +493,21 @@ public class FlipBook
         int width = images[0].Image.Width;
         int height = images[0].Image.Height;
         
-        if (width != updateImage.Image.Width || height != updateImage.Image.Height)
+        if (width != updateImage.Width || height != updateImage.Height)
             throw new InvalidOperationException("Image resolutions differ");
 
         // The RGBE only supports exactly 3 color channels, so we fall back to half
-        var targetType = updateImage.TargetType;
-        if (targetType == DataType.RGBE && updateImage.Image.NumChannels != 3)
+        var targetType = images[index].TargetType;
+        if (targetType == DataType.RGBE && updateImage.NumChannels != 3)
             targetType = DataType.Float16;
 
         dataStrs.Add(targetType switch
         {
-            DataType.Float32 => WriteImageAsFloat32(updateImage.Image),
-            DataType.RGBE => CompressImageAsRGBE(updateImage.Image),
-            DataType.PNG => CompressImageAsPNG(updateImage.Image),
-            DataType.Float16 => WriteImageAsFloat16(updateImage.Image),
-            DataType quality => CompressImageAsJPEG(updateImage.Image, (int)quality)
+            DataType.Float32 => WriteImageAsFloat32(updateImage),
+            DataType.RGBE => CompressImageAsRGBE(updateImage),
+            DataType.PNG => CompressImageAsPNG(updateImage),
+            DataType.Float16 => WriteImageAsFloat16(updateImage),
+            DataType quality => CompressImageAsJPEG(updateImage, (int)quality)
         });
 
         typeStrs.Add(targetType switch
@@ -516,7 +518,7 @@ public class FlipBook
             _ => "ldr"
         });
 
-        nameStrs.Add(updateImage.Name);
+        nameStrs.Add(images[index].Name);
 
         // string id = "flipbook-" + Guid.NewGuid().ToString();
         string id = this.containerId;
