@@ -15,27 +15,20 @@ const UPDATE_INTERVAL_MS = 500;
 export type BookRef = React.RefObject<FlipBook>;
 const registry = new Map<string, Set<BookRef>>();
 
-export function keyToString(key: number[]){
-    if(key)
-        return key.join(',');
-    else
-        return "";
+export function getBooks(key: string): BookRef[] {
+    return Array.from(registry.get(key) ?? new Set());
 }
-
-export function getBooks(key: number[]): BookRef[] {
-    return Array.from(registry.get(keyToString(key)) ?? new Set());
-}
-export function registerBook(key: number[], ref: BookRef) {
+export function registerBook(key: string, ref: BookRef) {
     if (!key) return;
-    const set = registry.get(keyToString(key)) ?? new Set<BookRef>();
+    const set = registry.get(key) ?? new Set<BookRef>();
     set.add(ref);
-    registry.set(keyToString(key), set);
+    registry.set(key, set);
 }
-export function unregisterBook(key: number[], ref: BookRef) {
-    const set = registry.get(keyToString(key));
+export function unregisterBook(key: string, ref: BookRef) {
+    const set = registry.get(key);
     if (!set) return;
     set.delete(ref);
-    if (set.size === 0) registry.delete(keyToString(key));
+    if (set.size === 0) registry.delete(key);
 }
 // ---------------------------------------------------------------
 
@@ -120,7 +113,6 @@ export interface FlipProps {
     onWheel?: OnWheelHandler;
     onMouseOver?: OnMouseOverHandler;
     onKeyIC?: OnKeyHandler;
-    // onKeyUpIC?: OnKeyUpHandler;
     groupName?: string;
     hideTools: boolean;
     keyStr: string;
@@ -546,7 +538,7 @@ export type FlipBookParams = {
     colorTheme?: string,
     hideTools: boolean,
     containerId: string,
-    key: number[],
+    key: string,
 }
 
 export function AddFlipBook(params: FlipBookParams, groupName?: string) {
@@ -600,7 +592,7 @@ export function AddFlipBook(params: FlipBookParams, groupName?: string) {
             style={themeStyle}
             groupName={groupName}
             hideTools={params.hideTools}
-            keyStr={keyToString(params.key)}
+            keyStr={params.key}
         />
     );
 

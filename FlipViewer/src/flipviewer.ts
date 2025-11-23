@@ -78,7 +78,7 @@ export type FlipData = {
     initialTMO: ToneMapSettings;
     initialTMOOverrides: ToneMapSettings[]
     containerId: string;
-    key: number[];
+    key: string;
     colorTheme?: string;
     groupName?: string;
     hideTools: boolean;
@@ -137,7 +137,6 @@ export async function MakeFlipBook(data: FlipData | string, onClick?: OnClickHan
         onWheel: onWheel,
         onMouseOver: onMouseOver,
         onKeyIC: onKey,
-        // onKeyUpIC: onKeyUp,
         colorTheme: data.colorTheme,
         hideTools: data.hideTools,
         containerId: data.containerId,

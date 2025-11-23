@@ -300,8 +300,8 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
         if (scale > MaxScale || scale < MinScale) return;
 
         // Adjust the position of the top left corner, so we get a scale pivot at the mouse cursor.
-        var relX = event.nativeEvent.offsetX;: nativeEvent.
-        var relY = event.nativeEvent.offsetY;: nativeEvent.
+        var relX = event.nativeEvent.offsetX;
+        var relY = event.nativeEvent.offsetY;
 
         if (event.target === this.container.current) {
             // Map position outside the image to a hypothetical pixel position
