@@ -11,6 +11,11 @@ export type OnMouseOverHandler = (col: number, row: number) => void
 export type OnKeyHandler = (selectedIdx: number, keyStr: string, keyPressed: string, isPressedDown: boolean) => void
 // export type OnKeyUpHandler = (selectedIdx: number, keyStr: string, keyReleased: string, isPressedDown: boolean) => void
 
+let isAnyKeyPressed = false;
+export function setKeyPressed(value: boolean): void {
+    isAnyKeyPressed = value;
+}
+
 export interface ImageContainerProps {
     width: number;
     height: number;
@@ -196,7 +201,7 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
         }
 
         // Confirm or remove the crop box
-        if (event.ctrlKey && this.state.cropActive) {
+        if (event.shiftKey && this.state.cropActive) {
             if (this.state.cropWidth === 0 || this.state.cropHeight === 0 || !this.state.cropDragging) {
                 this.setState({
                     cropActive: false,
@@ -229,7 +234,7 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
 
         // If left mouse button down
         if ((event.buttons & 1) == 1) {
-            if (event.ctrlKey) {
+            if (event.shiftKey) {
                 let xy = this.offset(event);
                 let curPixelCol = Math.floor(xy.x / this.state.scale);
                 let curPixelRow = Math.floor(xy.y / this.state.scale);
@@ -265,74 +270,78 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
     // while wheeling over flipbook, website scroll is disabled
     onWheelNative(event: WheelEvent)
     {
-        event.preventDefault();
+        if(event.altKey || isAnyKeyPressed)
+            event.preventDefault();
     }
 
     onWheel(event: React.WheelEvent<HTMLDivElement>) {
-        // if (event.altKey) return; // holding alt allows to scroll over the image
+        // if(event.altKey)
+        // {
+        //     let xy = this.offset(event);
+        //     let curPixelCol = Math.floor(xy.x / this.state.scale);
+        //     let curPixelRow = Math.floor(xy.y / this.state.scale);
+        //     curPixelCol = Math.min(Math.max(curPixelCol, 0), this.props.width - 1);
+        //     curPixelRow = Math.min(Math.max(curPixelRow, 0), this.props.height - 1);
+
+        //     if (this.props.onWheel)
+        //     {
+        //         this.props.onWheel(event.deltaY);
+        //     }
+
+        //     return;
+        // }
 
         if(event.altKey)
         {
-            let xy = this.offset(event);
-            let curPixelCol = Math.floor(xy.x / this.state.scale);
-            let curPixelRow = Math.floor(xy.y / this.state.scale);
-            curPixelCol = Math.min(Math.max(curPixelCol, 0), this.props.width - 1);
-            curPixelRow = Math.min(Math.max(curPixelRow, 0), this.props.height - 1);
-
-            if (this.props.onWheel)
-            {
-                this.props.onWheel(event.deltaY);
+            const ScrollSpeed = 0.25;
+            const MaxScale = 100;
+            const MinScale = 0.05;
+            
+            const oldScale = this.state.scale;
+            const scale = oldScale * (1 - Math.sign(event.deltaY) * ScrollSpeed);
+            const factor = scale / oldScale;
+            
+            if (scale > MaxScale || scale < MinScale) return;
+            
+            // Adjust the position of the top left corner, so we get a scale pivot at the mouse cursor.
+            var relX = event.nativeEvent.offsetX;
+            var relY = event.nativeEvent.offsetY;
+            
+            if (event.target === this.container.current) {
+                // Map position outside the image to a hypothetical pixel position
+                relX -= this.state.posX;
+                relY -= this.state.posY;
+            } else if (event.target === this.cropMarker.current) {
+                // Map position wihtin the crop marker to the image position
+                relX += this.state.cropX * oldScale;
+                relY += this.state.cropY * oldScale;
             }
-
-            return;
-        }
         
-
-
-        const ScrollSpeed = 0.25;
-        const MaxScale = 100;
-        const MinScale = 0.05;
-
-        const oldScale = this.state.scale;
-        const scale = oldScale * (1 - Math.sign(event.deltaY) * ScrollSpeed);
-        const factor = scale / oldScale;
-
-        if (scale > MaxScale || scale < MinScale) return;
-
-        // Adjust the position of the top left corner, so we get a scale pivot at the mouse cursor.
-        var relX = event.nativeEvent.offsetX;
-        var relY = event.nativeEvent.offsetY;
-
-        if (event.target === this.container.current) {
-            // Map position outside the image to a hypothetical pixel position
-            relX -= this.state.posX;
-            relY -= this.state.posY;
-        } else if (event.target === this.cropMarker.current) {
-            // Map position wihtin the crop marker to the image position
-            relX += this.state.cropX * oldScale;
-            relY += this.state.cropY * oldScale;
+            var deltaX = (1 - factor) * relX;
+            var deltaY = (1 - factor) * relY;
+        
+            let bounds = this.imgPlacer.current.getBoundingClientRect();
+            let x = event.clientX - bounds.left;
+            let y = event.clientY - bounds.top;
+        
+            this.shiftImage(deltaX, deltaY);
+            this.setState({
+                scale: scale,
+                magnifierX: x + magnifierPadding - deltaX,
+                magnifierY: y + magnifierPadding - deltaY,
+            }, () => { 
+                this.props.onStateChange?.(this.state); // callback
+            });
+        
+            // event.stopPropagation();
+        
+            // keep the manual input in sync
+            this.props.onZoom(this.state.scale * window.devicePixelRatio);
         }
-
-        var deltaX = (1 - factor) * relX;
-        var deltaY = (1 - factor) * relY;
-
-        let bounds = this.imgPlacer.current.getBoundingClientRect();
-        let x = event.clientX - bounds.left;
-        let y = event.clientY - bounds.top;
-
-        this.shiftImage(deltaX, deltaY);
-        this.setState({
-            scale: scale,
-            magnifierX: x + magnifierPadding - deltaX,
-            magnifierY: y + magnifierPadding - deltaY,
-        }, () => { 
-            this.props.onStateChange?.(this.state); // callback
-        });
-
-        event.stopPropagation();
-
-        // keep the manual input in sync
-        this.props.onZoom(this.state.scale * window.devicePixelRatio);
+        else if (this.props.onWheel)
+        {
+            this.props.onWheel(event.deltaY);
+        }
     }
 
     centerView() {

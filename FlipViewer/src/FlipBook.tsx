@@ -2,7 +2,7 @@ import { createRoot } from 'react-dom/client';
 import styles from './styles.module.css';
 import React, { createRef } from 'react';
 import { renderImage } from "./Render";
-import { ImageContainer, OnClickHandler, OnWheelHandler, OnMouseOverHandler, ImageContainerState, OnKeyHandler } from './ImageContainer';
+import { ImageContainer, OnClickHandler, OnWheelHandler, OnMouseOverHandler, ImageContainerState, OnKeyHandler, setKeyPressed } from './ImageContainer';
 import { ToneMapControls } from './ToneMapControls';
 import { MethodList } from './MethodList';
 import { Tools } from './Tools';
@@ -150,20 +150,25 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
 
     onKeyUp(evt: React.KeyboardEvent<HTMLDivElement>) {
         // c# listener
-        if(this.props.onKeyIC && keyPressed.has(evt.key) && (evt.key === "Alt" || evt.key === "Control"))
+        if(this.props.onKeyIC && keyPressed.has(evt.key))
         {            
             keyPressed.delete(evt.key);
             evt.preventDefault();
+            
+            if(keyPressed.size == 0)
+                setKeyPressed(false);
+
             this.props.onKeyIC(this.state.selectedIdx, this.props.keyStr, evt.key, false);
         }
     }
 
     onKeyDown(evt: React.KeyboardEvent<HTMLDivElement>) {
         // c# listener
-        if(this.props.onKeyIC && !keyPressed.has(evt.key) && (evt.key === "Alt" || evt.key === "Control"))
+        if(this.props.onKeyIC && !keyPressed.has(evt.key))
         {
             keyPressed.add(evt.key);
             evt.preventDefault();
+            setKeyPressed(true);
             this.props.onKeyIC(this.state.selectedIdx, this.props.keyStr, evt.key, true);
         }
 
