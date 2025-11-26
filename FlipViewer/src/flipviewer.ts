@@ -174,8 +174,6 @@ export async function UpdateImage(data: FlipData | string) {
         const tms = book.props.toneMappers;
         tms[book.state.selectedIdx].setPixels(images[0] as (Float32Array<ArrayBufferLike>));
     }
-
-    // flipBook.imageContainer.current.props.rawPixels[flipBook.state.selectedIdx] = images[0] as (Float32Array<ArrayBufferLike>); //TODO: maybe it doesnt work like that
 }
 
 export function UpdateFlipGroupSelection(groupName: string, newIdx: number) {

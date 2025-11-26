@@ -9,7 +9,7 @@ import { Tools } from './Tools';
 import { Popup } from './Popup';
 import { ToneMapSettings, ZoomLevel } from './flipviewer';
 
-const UPDATE_INTERVAL_MS = 500;
+const UPDATE_INTERVAL_MS = 100;
 
 // Registry to update flipbooks -------------
 export type BookRef = React.RefObject<FlipBook>;
@@ -39,6 +39,7 @@ const keyPressed = new Set<string>();
 export class ToneMappingImage {
     currentTMO: string;
     dirty: boolean;
+    isPixelUpdate: boolean;
     canvas: HTMLCanvasElement;
     pixels: Float32Array | ImageData;
 
@@ -50,10 +51,10 @@ export class ToneMappingImage {
 
         let hdrImg = this;
         setInterval(function() {
-            if (!hdrImg.dirty)
+            if (!hdrImg.dirty || hdrImg.isPixelUpdate)
                 return;
-            hdrImg.dirty = false;
             renderImage(hdrImg.canvas, hdrImg.pixels, hdrImg.currentTMO);
+            hdrImg.dirty = false;
             onAfterRender();
         }, UPDATE_INTERVAL_MS)
     }
@@ -62,8 +63,11 @@ export class ToneMappingImage {
         this.dirty = true;
     }
     setPixels(p: Float32Array | ImageData) {
+        this.isPixelUpdate = true;
         this.pixels = p;
-        this.dirty = true;
+        this.dirty = false;
+        renderImage(this.canvas, this.pixels, this.currentTMO);
+        this.isPixelUpdate = false;
     }
 }
 
