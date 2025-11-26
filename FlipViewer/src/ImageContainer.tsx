@@ -270,28 +270,12 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
     // while wheeling over flipbook, website scroll is disabled
     onWheelNative(event: WheelEvent)
     {
-        if(event.altKey || isAnyKeyPressed)
+        if(event.ctrlKey || isAnyKeyPressed)
             event.preventDefault();
     }
 
     onWheel(event: React.WheelEvent<HTMLDivElement>) {
-        // if(event.altKey)
-        // {
-        //     let xy = this.offset(event);
-        //     let curPixelCol = Math.floor(xy.x / this.state.scale);
-        //     let curPixelRow = Math.floor(xy.y / this.state.scale);
-        //     curPixelCol = Math.min(Math.max(curPixelCol, 0), this.props.width - 1);
-        //     curPixelRow = Math.min(Math.max(curPixelRow, 0), this.props.height - 1);
-
-        //     if (this.props.onWheel)
-        //     {
-        //         this.props.onWheel(event.deltaY);
-        //     }
-
-        //     return;
-        // }
-
-        if(event.altKey)
+        if(event.ctrlKey)
         {
             const ScrollSpeed = 0.25;
             const MaxScale = 100;
