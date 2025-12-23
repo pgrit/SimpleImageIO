@@ -16,13 +16,18 @@ clean:
 clean:
   rm -rf ./prebuilt
 
-# builds flipbook.js via npm
 [working-directory: 'FlipViewer']
-frontend:
+_frontend mode:
   npm install
-  npm run build
+  npm run build{{mode}}
   echo "Copying .js to python package..."
   cp ./dist/flipbook.js ../PyWrapper/simpleimageio/flipbook.js
+
+# builds flipbook.js via npm
+frontend: (_frontend "")
+
+# builds flipbook.js via npm in development mode (source map and no minify)
+frontend-dev: (_frontend "-dev")
 
 [unix]
 _ensure_dirs:
