@@ -138,7 +138,9 @@
 
 div.magnifier {
     display: block;
-    position: fixed;
+    /* https://github.com/pgrit/SimpleImageIO/compare/5b4ba2b1be0dd09a8eee09c11ebf5fe358bd1c01..8b52df90f094a174cecad22c01e20b40de0b6b76?diff=split&w#:~:text=position%3A-,absolute%3B,-z%2Dindex%3A */
+    /* https://www.w3schools.com/css/css_positioning.asp#:~:text=is%20positioned%20relative%20to%20the%20nearest%20positioned%20ancestor maybe absolute can only life in ancestor's dimensions*/
+    position: fixed; 
     z-index: 9001;
 }
 

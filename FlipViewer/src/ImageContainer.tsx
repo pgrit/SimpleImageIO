@@ -311,8 +311,8 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
             this.shiftImage(deltaX, deltaY);
             this.setState({
                 scale: scale,
-                magnifierX: x + magnifierPadding - deltaX,
-                magnifierY: y + magnifierPadding - deltaY,
+                magnifierX: event.clientX + magnifierPadding,
+                magnifierY: event.clientY + magnifierPadding,
             }, () => { 
                 this.props.onStateChange?.(this.state); // callback
             });
