@@ -11,26 +11,27 @@ import { ToneMapSettings, ZoomLevel } from './flipviewer';
 
 const UPDATE_INTERVAL_MS = 100;
 
-// Registry to update flipbooks -------------
+// Registry to update flipbooks
 export type BookRef = React.RefObject<FlipBook>;
 const registry = new Map<string, Set<BookRef>>();
 
 export function getBooks(key: string): BookRef[] {
     return Array.from(registry.get(key) ?? new Set());
 }
+
 export function registerBook(key: string, ref: BookRef) {
     if (!key) return;
     const set = registry.get(key) ?? new Set<BookRef>();
     set.add(ref);
     registry.set(key, set);
 }
+
 export function unregisterBook(key: string, ref: BookRef) {
     const set = registry.get(key);
     if (!set) return;
     set.delete(ref);
     if (set.size === 0) registry.delete(key);
 }
-// ---------------------------------------------------------------
 
 // to get only key presses and not is down state
 // Idea is to only fire events if state of key changes
@@ -155,10 +156,10 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
     onKeyUp(evt: React.KeyboardEvent<HTMLDivElement>) {
         // c# listener
         if(this.props.onKeyIC && keyPressed.has(evt.key))
-        {            
+        {
             keyPressed.delete(evt.key);
             evt.preventDefault();
-            
+
             if(keyPressed.size == 0)
                 setKeyPressed(false);
 
@@ -241,7 +242,7 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
             evt.stopPropagation();
         }
 
-        
+
         this.updateTMOSettings(this.tmoCtrls.current.state.globalSettings);
     }
 
@@ -332,7 +333,7 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
         else this.setState({selectedIdx: newIdx});
     }
 
-    
+
     updateTMOSettings(newTMOSettings: ToneMapSettings){
         if (this.props.groupName) SetGroupTMOSettings(this.props.groupName, newTMOSettings);
         else this.tmoCtrls.current.applySettings(newTMOSettings);
@@ -408,24 +409,24 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
         }
     }
 
-    
+
     onTMOUpdate(groupName: string, newTMOSettings: ToneMapSettings) {
         if (groupName == this.props.groupName) {
             this.tmoCtrls.current.applySettings(newTMOSettings);
         }
     }
 
-    
+
     // is called when onStateIsChanged in ImageContainer is called
     // everytime when the ImageContainerState changes (pos, zoom, etc.)
     // calls onImageContainerGroupUpdate = ()
     onImageContainerUpdate(newImageContainerState: ImageContainerState) {
         if (this.props.groupName) {
-            SetGroupImageContainerSettings(this.props.groupName, newImageContainerState); 
+            SetGroupImageContainerSettings(this.props.groupName, newImageContainerState);
         }
     }
 
-    
+
     // is called when other flipbook's ImageContainerStates changes
     onImageContainerGroupUpdate = (groupName: string, newImageContainerState: ImageContainerState) => {
         if (groupName === this.props.groupName && this.imageContainer.current) {
@@ -464,11 +465,11 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
         let idx = selectUpdateListeners.findIndex(v => v === this.onSelectUpdate);
         selectUpdateListeners.splice(idx, 1);
 
-        
+
         idx = tmoUpdateListeners.findIndex(v => v === this.onTMOUpdate);
         tmoUpdateListeners.splice(idx, 1);
 
-        
+
         idx = imgConStateUpdateListeners.findIndex(v => v === this.onImageContainerGroupUpdate);
         imgConStateUpdateListeners.splice(idx, 1);
     }
@@ -540,10 +541,10 @@ export type FlipBookParams = {
     initialTMO: ToneMapSettings,
     initialTMOOverrides: ToneMapSettings[],
     onClick?: OnClickHandler,
-    onWheel?: OnWheelHandler, 
-    onMouseOver?: OnMouseOverHandler, 
-    onKeyIC?: OnKeyHandler, 
-    // onKeyUpIC?: OnKeyUpHandler, 
+    onWheel?: OnWheelHandler,
+    onMouseOver?: OnMouseOverHandler,
+    onKeyIC?: OnKeyHandler,
+    // onKeyUpIC?: OnKeyUpHandler,
     colorTheme?: string,
     hideTools: boolean,
     containerId: string,
@@ -594,10 +595,9 @@ export function AddFlipBook(params: FlipBookParams, groupName?: string) {
             initialTMO={params.initialTMO}
             initialTMOOverrides={params.initialTMOOverrides}
             onClick={params.onClick}
-            onWheel={params.onWheel} 
-            onMouseOver={params.onMouseOver} 
-            onKeyIC={params.onKeyIC} 
-            // onKeyUpIC={params.onKeyUpIC} 
+            onWheel={params.onWheel}
+            onMouseOver={params.onMouseOver}
+            onKeyIC={params.onKeyIC}
             style={themeStyle}
             groupName={groupName}
             hideTools={params.hideTools}

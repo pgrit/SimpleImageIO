@@ -106,7 +106,7 @@ function AsFlipData(data: FlipData | string): FlipData {
         return data;
 }
 
-export async function MakeFlipBook(data: FlipData | string, onClick?: OnClickHandler, onWheel?: OnWheelHandler, onMouseOver?: OnMouseOverHandler, onKey?: OnKeyHandler/*, onKeyUp?: OnKeyUpHandler*/) {
+export async function MakeFlipBook(data: FlipData | string, onClick?: OnClickHandler, onWheel?: OnWheelHandler, onMouseOver?: OnMouseOverHandler, onKey?: OnKeyHandler) {
     data = AsFlipData(data);
 
     let work: Promise<Float32Array | HTMLImageElement>[] = [];
@@ -122,7 +122,7 @@ export async function MakeFlipBook(data: FlipData | string, onClick?: OnClickHan
         }
         work.push(loadFn(data.dataUrls[i]));
     }
-    
+
     let values = await Promise.all(work);
     return AddFlipBook({
         parentElement: document.getElementById(data.containerId),
@@ -147,7 +147,6 @@ export async function MakeFlipBook(data: FlipData | string, onClick?: OnClickHan
 export async function UpdateImage(data: FlipData | string) {
     data = AsFlipData(data);
 
-    // get updated Image
     let work: Promise<Float32Array | HTMLImageElement>[] = [];
     for (let i = 0; i < data.dataUrls.length; ++i) {
         let loadFn;
@@ -167,7 +166,7 @@ export async function UpdateImage(data: FlipData | string) {
     // update image of flipbooks with groupname data.groupname
     for(const ref of getBooks(data.key)) {
         const book = ref.current;
-        
+
         if(!book)
             continue;
 
