@@ -211,7 +211,11 @@ public class FlipBook
     string groupName;
     bool hideTools;
     string containerId = null;
-    string key = null;
+
+    /// <summary>
+    /// Unique key used to identify this flipbook in event handlers and to update images.
+    /// </summary>
+    string Key { get; set; } = Guid.NewGuid().ToString();
 
     /// <summary>
     /// Returns a image from the list images
@@ -293,21 +297,12 @@ public class FlipBook
     }
 
     /// <summary>
-    /// Sets the key of this flipbook to keep track on the react side of all flipbooks
-    /// Same thing as a group name but this key can decide which flipbook of a group fired a listener to the c# side
+    /// Replaces the default GUID <see cref="Key" /> by a user-defined value.
+    /// This must be unique across all FlipBooks in the same HTML page.
     /// </summary>
-    /// <param name="key">Key for the dictionary on React side</param>
     public FlipBook SetKey(string key) {
-        this.key = key;
+        this.Key = key;
         return this;
-    }
-
-    /// <summary>
-    /// Returns the key. 
-    /// </summary>
-    /// <returns></returns>
-    public string GetKey() {
-        return this.key;
     }
 
     /// <summary>
@@ -392,12 +387,7 @@ public class FlipBook
         return code.Html + $"<script>{code.ScriptFn}({code.Data});</script>";
     }
 
-    /// <summary>
-    /// Generates the HTML and JS for the flip book and returns them separately.
-    /// If index == -1 -> generates all images of current flipbook
-    /// If index != -1 -> generates only updated image from experiment
-    /// </summary>
-    public GeneratedCode Generate(int index = -1) {
+    private GeneratedCode GenerateInternal(int? index) {
         if (images.Count == 0)
             throw new InvalidOperationException("No images in the flip book");
 
@@ -408,7 +398,7 @@ public class FlipBook
         int height = images[0].Image.Height;
         for (int i = 0; i < images.Count; i++)
         {
-            if(index != -1 && index != i)
+            if(index.HasValue && index.Value != i)
                 continue;
 
             var img = images[i];
@@ -441,7 +431,7 @@ public class FlipBook
 
         if (String.IsNullOrEmpty(this.containerId))
             this.containerId = "flipbook-" + Guid.NewGuid().ToString();
-        
+
         string html = $"<div id='{this.containerId}' style='width:{htmlWidth}px; height:{htmlHeight}px; resize: both; overflow: auto;'></div>";
 
         string initialTMOStr = "null";
@@ -462,7 +452,7 @@ public class FlipBook
             "width": {{width}},
             "height": {{height}},
             "containerId": "{{this.containerId}}",
-            "key": {{JsonSerializer.Serialize(key)}},
+            "key": {{JsonSerializer.Serialize(Key)}},
             "initialZoom": {{initialZoom.ToString()}},
             "initialTMO": {{initialTMOStr}},
             "initialTMOOverrides": [
@@ -481,18 +471,23 @@ public class FlipBook
     }
 
     /// <summary>
-    /// Updates selected image and generate update hmtl code
+    /// Generates the HTML and JS for the flip book and returns them separately.
+    /// The HTML code must not be added more than once to the same page. This is
+    /// the case even if this function is invoked multiple times
+    /// (because the HTML is always the same).
     /// </summary>
-    /// <returns></returns>
-    public GeneratedCode UpdateImage(Image updateImage, int index)
-    {
-        // Update image list in flipbook
-        var image = images[index];
-        image.Image = updateImage;
-        images[index] = image;
+    public GeneratedCode Generate() => GenerateInternal(null);
 
-        // Returns HTML code for the updated image
-        return Generate(index);
+    /// <summary>
+    /// Replaces the image with the given index by a new one.
+    /// Assumes that <see cref="Generate()"/> was called before.
+    /// </summary>
+    /// <returns>JSON and JS code that must be output to the browser to change the image.
+    /// The HTML code is unchanged from the one returned by <see cref="Generate()"/> </returns>
+    public GeneratedCode ReplaceImage(Image newImage, int index)
+    {
+        images[index] = images[index] with { Image = newImage };
+        return GenerateInternal(index);
     }
 
     /// <summary>
