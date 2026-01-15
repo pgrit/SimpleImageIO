@@ -119,8 +119,8 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
 
         this.setState({
             magnifierVisible: true,
-            magnifierX: event.clientX + magnifierPadding,
-            magnifierY: event.clientY + magnifierPadding,
+            magnifierX: xy.x + magnifierPadding,
+            magnifierY: xy.y + magnifierPadding,
             magnifierCol: curPixelCol,
             magnifierRow: curPixelRow
         }, () => { 
