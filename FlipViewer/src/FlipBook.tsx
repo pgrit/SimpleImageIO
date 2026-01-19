@@ -15,22 +15,22 @@ const UPDATE_INTERVAL_MS = 100;
 export type BookRef = React.RefObject<FlipBook>;
 const registry = new Map<string, Set<BookRef>>();
 
-export function getBooks(key: string): BookRef[] {
-    return Array.from(registry.get(key) ?? new Set());
+export function getBooks(id: string): BookRef[] {
+    return Array.from(registry.get(id) ?? new Set());
 }
 
-export function registerBook(key: string, ref: BookRef) {
-    if (!key) return;
-    const set = registry.get(key) ?? new Set<BookRef>();
+export function registerBook(id: string, ref: BookRef) {
+    if (!id) return;
+    const set = registry.get(id) ?? new Set<BookRef>();
     set.add(ref);
-    registry.set(key, set);
+    registry.set(id, set);
 }
 
-export function unregisterBook(key: string, ref: BookRef) {
-    const set = registry.get(key);
+export function unregisterBook(id: string, ref: BookRef) {
+    const set = registry.get(id);
     if (!set) return;
     set.delete(ref);
-    if (set.size === 0) registry.delete(key);
+    if (set.size === 0) registry.delete(id);
 }
 
 // to get only key presses and not is down state
@@ -120,7 +120,7 @@ export interface FlipProps {
     onKeyIC?: OnKeyHandler;
     groupName?: string;
     hideTools: boolean;
-    keyStr: string;
+    idStr: string;
 }
 
 export interface FlipState {
@@ -163,7 +163,7 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
             if(keyPressed.size == 0)
                 setKeyPressed(false);
 
-            this.props.onKeyIC(this.state.selectedIdx, this.props.keyStr, evt.key, false);
+            this.props.onKeyIC(this.state.selectedIdx, this.props.idStr, evt.key, false);
         }
     }
 
@@ -174,7 +174,7 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
             keyPressed.add(evt.key);
             evt.preventDefault();
             setKeyPressed(true);
-            this.props.onKeyIC(this.state.selectedIdx, this.props.keyStr, evt.key, true);
+            this.props.onKeyIC(this.state.selectedIdx, this.props.idStr, evt.key, true);
         }
 
         let newIdx = this.state.selectedIdx;
@@ -548,7 +548,7 @@ export type FlipBookParams = {
     colorTheme?: string,
     hideTools: boolean,
     containerId: string,
-    key: string,
+    id: string,
 }
 
 export function AddFlipBook(params: FlipBookParams, groupName?: string) {
@@ -601,16 +601,16 @@ export function AddFlipBook(params: FlipBookParams, groupName?: string) {
             style={themeStyle}
             groupName={groupName}
             hideTools={params.hideTools}
-            keyStr={params.key}
+            idStr={params.id}
         />
     );
 
-    if(params.key)
-        registerBook(params.key, bookRef);
+    if(params.id)
+        registerBook(params.id, bookRef);
 
     new MutationObserver(_ => {
         if (!document.body.contains(params.parentElement)) {
-            unregisterBook(params.key, bookRef);
+            unregisterBook(params.id, bookRef);
             root.unmount();
         }
     }).observe(document.body, {childList: true, subtree: true});

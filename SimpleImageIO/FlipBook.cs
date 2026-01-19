@@ -213,9 +213,9 @@ public class FlipBook
     string containerId = null;
 
     /// <summary>
-    /// Unique key used to identify this flipbook in event handlers and to update images.
+    /// Unique ID used to identify this flipbook in event handlers and to update images.
     /// </summary>
-    string Key { get; set; } = Guid.NewGuid().ToString();
+    public string ID { get; private set; } = Guid.NewGuid().ToString();
 
     /// <summary>
     /// Returns a image from the list images
@@ -297,11 +297,11 @@ public class FlipBook
     }
 
     /// <summary>
-    /// Replaces the default GUID <see cref="Key" /> by a user-defined value.
+    /// Replaces the default GUID <see cref="ID" /> by a user-defined value.
     /// This must be unique across all FlipBooks in the same HTML page.
     /// </summary>
-    public FlipBook SetKey(string key) {
-        this.Key = key;
+    public FlipBook SetID(string ID) {
+        this.ID = ID;
         return this;
     }
 
@@ -452,7 +452,7 @@ public class FlipBook
             "width": {{width}},
             "height": {{height}},
             "containerId": "{{this.containerId}}",
-            "key": {{JsonSerializer.Serialize(Key)}},
+            "id": {{JsonSerializer.Serialize(ID)}},
             "initialZoom": {{initialZoom.ToString()}},
             "initialTMO": {{initialTMOStr}},
             "initialTMOOverrides": [

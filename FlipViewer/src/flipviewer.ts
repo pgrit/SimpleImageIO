@@ -78,7 +78,7 @@ export type FlipData = {
     initialTMO: ToneMapSettings;
     initialTMOOverrides: ToneMapSettings[]
     containerId: string;
-    key: string;
+    id: string;
     colorTheme?: string;
     groupName?: string;
     hideTools: boolean;
@@ -140,7 +140,7 @@ export async function MakeFlipBook(data: FlipData | string, onClick?: OnClickHan
         colorTheme: data.colorTheme,
         hideTools: data.hideTools,
         containerId: data.containerId,
-        key: data.key,
+        id: data.id,
     }, data.groupName);
 }
 
@@ -164,7 +164,7 @@ export async function UpdateImage(data: FlipData | string) {
 
     // iterate over all registered flipbooks
     // update image of flipbooks with groupname data.groupname
-    for(const ref of getBooks(data.key)) {
+    for(const ref of getBooks(data.id)) {
         const book = ref.current;
 
         if(!book)
