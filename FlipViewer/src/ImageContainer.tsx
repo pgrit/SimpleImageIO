@@ -303,7 +303,7 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
     }
 
     onMouseMove(event: React.MouseEvent<HTMLDivElement>) {
-        // Mouse event listener for c# side
+        // Mouse event callback
         let xy = this.offset(event);
         let curPixelCol = Math.floor(xy.x / this.state.scale);
         let curPixelRow = Math.floor(xy.y / this.state.scale);
