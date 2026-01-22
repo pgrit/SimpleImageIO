@@ -1,4 +1,4 @@
-import { AddFlipBook, getBooks, SetGroupIndex } from "./FlipBook";
+import { AddFlipBook, FlipBook, getBooks, SetGroupIndex } from "./FlipBook";
 import { OnClickHandler, OnKeyHandler, OnMouseOverHandler, OnWheelHandler } from "./ImageContainer";
 
 async function readRGBE(url: string) {
@@ -106,10 +106,7 @@ function AsFlipData(data: FlipData | string): FlipData {
         return data;
 }
 
-export async function MakeFlipBook(data: FlipData | string, onClick?: OnClickHandler, onWheel?: OnWheelHandler, onMouseOver?: OnMouseOverHandler, onKey?: OnKeyHandler) {
-    data = AsFlipData(data);
-
-    let work: Promise<Float32Array | HTMLImageElement>[] = [];
+async function CollectImages(data: FlipData, work: Promise<Float32Array | HTMLImageElement>[]) {
     for (let i = 0; i < data.dataUrls.length; ++i) {
         let loadFn;
         switch (data.types[i]) {
@@ -122,8 +119,15 @@ export async function MakeFlipBook(data: FlipData | string, onClick?: OnClickHan
         }
         work.push(loadFn(data.dataUrls[i]));
     }
+}
 
+export async function MakeFlipBook(data: FlipData | string, onClick?: OnClickHandler, onWheel?: OnWheelHandler, onMouseOver?: OnMouseOverHandler, onKey?: OnKeyHandler) {
+    data = AsFlipData(data);
+
+    let work: Promise<Float32Array | HTMLImageElement>[] = [];
+    CollectImages(data, work);
     let values = await Promise.all(work);
+
     return AddFlipBook({
         parentElement: document.getElementById(data.containerId),
         names: data.names,
@@ -148,18 +152,7 @@ export async function UpdateImage(data: FlipData | string) {
     data = AsFlipData(data);
 
     let work: Promise<Float32Array | HTMLImageElement>[] = [];
-    for (let i = 0; i < data.dataUrls.length; ++i) {
-        let loadFn;
-        switch (data.types[i]) {
-            case ImageType.Single: loadFn = readFloat; break;
-            case ImageType.Half: loadFn = readHalf; break;
-            case ImageType.Rgbe: loadFn = readRGBE; break;
-            case ImageType.Ldr: loadFn = readLDR; break;
-            case ImageType.Float32Array: loadFn = (data: Float32Array) => data; break;
-            default: console.error(`unsupported type: ${data.types[i]}`);
-        }
-        work.push(loadFn(data.dataUrls[i]));
-    }
+    CollectImages(data, work);
     let images = await Promise.all(work);
 
     // iterate over all registered flipbooks
