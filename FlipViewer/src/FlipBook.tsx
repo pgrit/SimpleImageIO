@@ -154,7 +154,7 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
     }
 
     onKeyUp(evt: React.KeyboardEvent<HTMLDivElement>) {
-        // c# listener
+        // trigger callbacks
         if(this.props.onKeyImageContainer && keyPressed.has(evt.key))
         {
             keyPressed.delete(evt.key);
@@ -168,7 +168,7 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
     }
 
     onKeyDown(evt: React.KeyboardEvent<HTMLDivElement>) {
-        // c# listener
+        // trigger callbacks
         if(this.props.onKeyImageContainer && !keyPressed.has(evt.key))
         {
             keyPressed.add(evt.key);
