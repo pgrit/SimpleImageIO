@@ -11,7 +11,9 @@ export type OnMouseOverHandler = (col: number, row: number) => void
 export type OnKeyHandler = (selectedIdx: number, keyStr: string, keyPressed: string, isPressedDown: boolean) => void
 // export type OnKeyUpHandler = (selectedIdx: number, keyStr: string, keyReleased: string, isPressedDown: boolean) => void
 
-let magnifierResolution = 2;
+let magnifierResolution = 1;
+let flagXSwapped = false;
+let flagYSwapped = false;
 
 let isAnyKeyPressed = false;
 export function setKeyPressed(value: boolean): void {
@@ -43,7 +45,7 @@ export interface ImageContainerState {
     magnifierVisible: boolean;
     magnifierRow?: number;
     magnifierCol?: number;
-    magnifierPCBelow: boolean;
+    magnifierPixelCoordsBelow: boolean;
 
     cropX?: number;
     cropY?: number;
@@ -69,7 +71,7 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
             posY: 0,
             scale: 1,
             magnifierVisible: false,
-            magnifierPCBelow: false,
+            magnifierPixelCoordsBelow: false,
             cropActive: false,
             cropDragging: false,
         };
@@ -107,6 +109,78 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
         return { x: x, y: y };
     }
 
+    // computes offset of the magnifier (decides where to place magnifier around mouse)
+    offsetMagnifier(event: React.MouseEvent<HTMLDivElement>) {
+        let magnifierSizeX = parseInt(styles.magnifierWidth, 10) * (2 * magnifierResolution + 1);
+        let magnifierSizeY = parseInt(styles.magnifierHeight, 10) * (2 * magnifierResolution + 1);
+        let flipSizeX = this.container.current.clientWidth;
+        let flipSizeY = this.container.current.clientHeight - 20;
+        let paddingX = magnifierPadding;
+        let paddingY = magnifierPadding;
+
+        let posX = event.pageX - this.container.current.getBoundingClientRect().x;
+        let posY = event.pageY - this.container.current.getBoundingClientRect().y - window.scrollY;
+
+        let offsetX = 0;
+        let offsetY = 0;
+
+        if(!flagXSwapped)
+        {
+            offsetX = 0;
+            let tmpX = flipSizeX - posX;
+        
+            tmpX -= (paddingX + magnifierSizeX);
+            tmpX = Math.min(tmpX, 0);
+        
+            if(tmpX < 0)
+            {
+                offsetX = -(magnifierSizeX + 2 * paddingX);
+            
+                flagXSwapped = true;
+            }
+        }
+        else
+        {
+            offsetX = -(magnifierSizeX + 2 * paddingX);
+            let tmpX = posX - (paddingX + magnifierSizeX);
+            tmpX = Math.min(tmpX, 0);
+        
+            if(tmpX < 0)
+            {
+                offsetX = 0
+                flagXSwapped = false;
+            }
+        }
+        if(!flagYSwapped)
+        {
+            offsetY = 0;
+            let tmpY = flipSizeY - posY;
+        
+            tmpY -= (paddingY + magnifierSizeY);
+            tmpY = Math.min(tmpY, 0);
+        
+            if(tmpY < 0)
+            {
+                offsetY = -(magnifierSizeY + 2 * paddingY + 10);
+                flagYSwapped = true;
+            }
+        }
+        else
+        {
+            offsetY = -(magnifierSizeY + 2 * paddingY + 10);
+            let tmpY = posY - (paddingY + magnifierSizeY);
+            tmpY = Math.min(tmpY, 0);
+        
+            if(tmpY < 0)
+            {
+                offsetY = 0
+                flagYSwapped = false;
+            }
+        }
+
+        return { offsetX: offsetX, offsetY: offsetY };
+    }
+
     onMouseMoveOverImage(event: React.MouseEvent<HTMLDivElement>) {
         let xy = this.offset(event);
 
@@ -121,41 +195,14 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
             return;
         }
 
-let magnifierSizeX = parseInt(styles.magnifierWidth, 10) * (2 * magnifierResolution + 1);
-let magnifierSizeY = parseInt(styles.magnifierHeight, 10) * (2 * magnifierResolution + 1);
-let flipSizeX = this.container.current.clientWidth;
-let flipSizeY = this.container.current.clientHeight - 20;
-let paddingX = magnifierPadding;
-let paddingY = magnifierPadding;
-let flag = false;
-
-let posX = event.pageX - this.container.current.getBoundingClientRect().x;
-let posY = event.pageY - this.container.current.getBoundingClientRect().y - window.scrollY;
-    
-let offsetX = flipSizeX - posX;
-let offsetY = flipSizeY - posY;
- 
-
-offsetX -= (paddingX + magnifierSizeX);
-offsetY -= (paddingY + magnifierSizeY);
-// console.log(offsetX);
-// console.log(offsetY);
-offsetX = Math.min(offsetX, 0);
-offsetY = Math.min(offsetY, 0);
-
-if(offsetX < 0)
-    offsetX = -(magnifierSizeX + 2 * paddingX);
-if(offsetY < 0)
-{
-    offsetY = -(magnifierSizeY + 2 * paddingY + 10);
-    flag = true;
-}
+        // computes offset of the magnifier (decides where to place magnifier)
+        let offset = this.offsetMagnifier(event);
 
         this.setState({
             magnifierVisible: true,
-            magnifierPCBelow: flag,
-            magnifierX: xy.x + paddingX + offsetX,
-            magnifierY: xy.y + paddingY + offsetY,
+            magnifierPixelCoordsBelow: flagYSwapped,
+            magnifierX: xy.x + magnifierPadding + offset.offsetX,
+            magnifierY: xy.y + magnifierPadding + offset.offsetY,
             magnifierCol: curPixelCol,
             magnifierRow: curPixelRow,
         }, () => { 
@@ -343,41 +390,14 @@ if(offsetY < 0)
             let x = event.clientX - bounds.left;
             let y = event.clientY - bounds.top;
 
-let magnifierSizeX = parseInt(styles.magnifierWidth, 10) * (2 * magnifierResolution + 1);
-let magnifierSizeY = parseInt(styles.magnifierHeight, 10) * (2 * magnifierResolution + 1);
-let flipSizeX = this.container.current.clientWidth;
-let flipSizeY = this.container.current.clientHeight - 20;
-let paddingX = magnifierPadding;
-let paddingY = magnifierPadding;
-let flag = false;
-        
-let posX = event.pageX - this.container.current.getBoundingClientRect().x;
-let posY = event.pageY - this.container.current.getBoundingClientRect().y - window.scrollY;
-        
-let offsetX = flipSizeX - posX;
-let offsetY = flipSizeY - posY;
-        
-        
-offsetX -= (paddingX + magnifierSizeX);
-offsetY -= (paddingY + magnifierSizeY);
-// console.log(offsetX);
-// console.log(offsetY);
-offsetX = Math.min(offsetX, 0);
-offsetY = Math.min(offsetY, 0);
-        
-if(offsetX < 0)
-    offsetX = -(magnifierSizeX + 2 * paddingX);
-if(offsetY < 0)
-{
-    offsetY = -(magnifierSizeY + 2 * paddingY + 10);
-    flag = true;
-}
+            // computes offset of the magnifier (decides where to place magnifier)
+            let offset = this.offsetMagnifier(event);
         
             this.shiftImage(deltaX, deltaY);
             this.setState({
                 scale: scale,
-                magnifierX: x + magnifierPadding - deltaX + offsetX,
-                magnifierY: y + magnifierPadding - deltaY + offsetY,
+                magnifierX: x + magnifierPadding - deltaX + offset.offsetX,
+                magnifierY: y + magnifierPadding - deltaY + offset.offsetY,
             }, () => { 
                 this.props.onStateChange?.(this.state); // callback
             });
@@ -444,7 +464,7 @@ if(offsetY < 0)
                 y={this.state.magnifierY}
                 resolution={magnifierResolution}
                 image={this.props.toneMappers[this.props.selectedIdx]}
-                pixelCoordBelow={this.state.magnifierPCBelow}
+                pixelCoordBelow={this.state.magnifierPixelCoordsBelow}
             />
         }
 
