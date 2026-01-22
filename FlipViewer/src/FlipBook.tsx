@@ -117,7 +117,7 @@ export interface FlipProps {
     onClick?: OnClickHandler;
     onWheel?: OnWheelHandler;
     onMouseOver?: OnMouseOverHandler;
-    onKeyIC?: OnKeyHandler;
+    onKeyImageContainer?: OnKeyHandler;
     groupName?: string;
     hideTools: boolean;
     idStr: string;
@@ -155,7 +155,7 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
 
     onKeyUp(evt: React.KeyboardEvent<HTMLDivElement>) {
         // c# listener
-        if(this.props.onKeyIC && keyPressed.has(evt.key))
+        if(this.props.onKeyImageContainer && keyPressed.has(evt.key))
         {
             keyPressed.delete(evt.key);
             evt.preventDefault();
@@ -163,18 +163,18 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
             if(keyPressed.size == 0)
                 setKeyPressed(false);
 
-            this.props.onKeyIC(this.state.selectedIdx, this.props.idStr, evt.key, false);
+            this.props.onKeyImageContainer(this.state.selectedIdx, this.props.idStr, evt.key, false);
         }
     }
 
     onKeyDown(evt: React.KeyboardEvent<HTMLDivElement>) {
         // c# listener
-        if(this.props.onKeyIC && !keyPressed.has(evt.key))
+        if(this.props.onKeyImageContainer && !keyPressed.has(evt.key))
         {
             keyPressed.add(evt.key);
             evt.preventDefault();
             setKeyPressed(true);
-            this.props.onKeyIC(this.state.selectedIdx, this.props.idStr, evt.key, true);
+            this.props.onKeyImageContainer(this.state.selectedIdx, this.props.idStr, evt.key, true);
         }
 
         let newIdx = this.state.selectedIdx;
@@ -543,7 +543,7 @@ export type FlipBookParams = {
     onClick?: OnClickHandler,
     onWheel?: OnWheelHandler,
     onMouseOver?: OnMouseOverHandler,
-    onKeyIC?: OnKeyHandler,
+    onKeyImageContainer?: OnKeyHandler,
     // onKeyUpIC?: OnKeyUpHandler,
     colorTheme?: string,
     hideTools: boolean,
@@ -597,7 +597,7 @@ export function AddFlipBook(params: FlipBookParams, groupName?: string) {
             onClick={params.onClick}
             onWheel={params.onWheel}
             onMouseOver={params.onMouseOver}
-            onKeyIC={params.onKeyIC}
+            onKeyImageContainer={params.onKeyImageContainer}
             style={themeStyle}
             groupName={groupName}
             hideTools={params.hideTools}

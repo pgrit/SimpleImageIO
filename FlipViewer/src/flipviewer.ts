@@ -136,7 +136,7 @@ export async function MakeFlipBook(data: FlipData | string, onClick?: OnClickHan
         onClick: onClick,
         onWheel: onWheel,
         onMouseOver: onMouseOver,
-        onKeyIC: onKey,
+        onKeyImageContainer: onKey,
         colorTheme: data.colorTheme,
         hideTools: data.hideTools,
         containerId: data.containerId,
