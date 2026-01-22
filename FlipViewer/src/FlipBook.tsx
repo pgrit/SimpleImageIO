@@ -430,25 +430,7 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
     // is called when other flipbook's ImageContainerStates changes
     onImageContainerGroupUpdate = (groupName: string, newImageContainerState: ImageContainerState) => {
         if (groupName === this.props.groupName && this.imageContainer.current) {
-            this.imageContainer.current.setState({
-                posX: newImageContainerState.posX,
-                posY: newImageContainerState.posY,
-                scale: newImageContainerState.scale,
-
-                magnifierX: newImageContainerState.magnifierX,
-                magnifierY: newImageContainerState.magnifierY,
-                magnifierVisible: newImageContainerState.magnifierVisible,
-                magnifierRow: newImageContainerState.magnifierRow,
-                magnifierCol: newImageContainerState.magnifierCol,
-
-                cropX: newImageContainerState.cropX,
-                cropY: newImageContainerState.cropY,
-                cropWidth: newImageContainerState.cropWidth,
-                cropHeight: newImageContainerState.cropHeight,
-                cropActive: newImageContainerState.cropActive,
-                cropDragging: newImageContainerState.cropDragging,
-                cropMeans: newImageContainerState.cropMeans
-            });
+            this.imageContainer.current.setState(newImageContainerState);
         }
     }
 
