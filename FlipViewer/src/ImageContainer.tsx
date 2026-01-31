@@ -4,7 +4,6 @@ import { ToneMappingImage } from './FlipBook';
 import { Magnifier, formatNumber } from './Magnifier';
 import { ZoomLevel } from './flipviewer';
 import { JSX } from 'react/jsx-runtime';
-import { listeners } from 'process';
 
 export type OnClickHandler = (mouseButtom: number, mouseX: number, mouseY: number, deltaY: number, ID: string, selectedIdx: number, keyPressed: string, isPressed: boolean) => void
 export type OnWheelHandler = (mouseButtom: number, mouseX: number, mouseY: number, deltaY: number, ID: string, selectedIdx: number, keyPressed: string, isPressed: boolean) => void

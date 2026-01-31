@@ -213,15 +213,11 @@ public class FlipBook
     string containerId = null;
 
     /// <summary>
-    /// Unique ID used to identify this flipbook in event handlers and to update images.
+    /// Unique ID used to identify this Flipbook in event handlers and to update images.
     /// </summary>
     public string ID { get; private set; } = Guid.NewGuid().ToString();
 
-    /// <summary>
-    /// Returns a image from the list images
-    /// </summary>
-    /// <param name="index"></param>
-    /// <returns></returns>
+    /// <param name="index">Index of Image of tuple list of Flipbook</param>
     public Image GetImage(int index) {
         return images[index].Image;
     }

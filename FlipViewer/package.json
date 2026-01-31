@@ -4,8 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "npx webpack --mode production",
-    "build-dev": "npx webpack --mode development"
+    "build": "npx webpack --mode production"
   },
   "author": "Pascal Grittmann",
   "license": "MIT",
