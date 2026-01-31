@@ -1,4 +1,4 @@
-import { AddFlipBook, FlipBook, getBooks, SetGroupIndex } from "./FlipBook";
+import { AddFlipBook, getBooks, SetGroupIndex } from "./FlipBook";
 import { OnClickHandler, OnKeyHandler, OnMouseOverHandler, OnWheelHandler } from "./ImageContainer";
 
 async function readRGBE(url: string) {
@@ -106,7 +106,10 @@ function AsFlipData(data: FlipData | string): FlipData {
         return data;
 }
 
-async function CollectImages(data: FlipData, work: Promise<Float32Array | HTMLImageElement>[]) {
+export async function MakeFlipBook(data: FlipData | string, onClick?: OnClickHandler, onWheel?: OnWheelHandler, onMouseOver?: OnMouseOverHandler, onKey?: OnKeyHandler) {
+    data = AsFlipData(data);
+
+    let work: Promise<Float32Array | HTMLImageElement>[] = [];
     for (let i = 0; i < data.dataUrls.length; ++i) {
         let loadFn;
         switch (data.types[i]) {
@@ -119,13 +122,6 @@ async function CollectImages(data: FlipData, work: Promise<Float32Array | HTMLIm
         }
         work.push(loadFn(data.dataUrls[i]));
     }
-}
-
-export async function MakeFlipBook(data: FlipData | string, onClick?: OnClickHandler, onWheel?: OnWheelHandler, onMouseOver?: OnMouseOverHandler, onKey?: OnKeyHandler) {
-    data = AsFlipData(data);
-
-    let work: Promise<Float32Array | HTMLImageElement>[] = [];
-    CollectImages(data, work);
     let values = await Promise.all(work);
 
     return AddFlipBook({
@@ -151,21 +147,39 @@ export async function MakeFlipBook(data: FlipData | string, onClick?: OnClickHan
 export async function UpdateImage(data: FlipData | string) {
     data = AsFlipData(data);
 
-    let work: Promise<Float32Array | HTMLImageElement>[] = [];
-    CollectImages(data, work);
+    let book = getBooks(data.id)[0].current;
+    if(!book)
+        return;
+
+    let work: Promise<Float32Array | ImageData>[] = [];
+    for (let i = 0; i < data.dataUrls.length; ++i) {
+        let loadFn;
+        switch (data.types[i]) {
+            case ImageType.Single: loadFn = readFloat; break;
+            case ImageType.Half: loadFn = readHalf; break;
+            case ImageType.Rgbe: loadFn = readRGBE; break;
+            case ImageType.Ldr: loadFn = readLDR; break;
+            case ImageType.Float32Array: loadFn = (data: Float32Array) => data; break;
+            default: console.error(`unsupported type: ${data.types[i]}`);
+        }
+        work.push(loadFn(data.dataUrls[i]));
+    }
     let images = await Promise.all(work);
 
-    // iterate over all registered flipbooks
-    // update image of flipbooks with groupname data.groupname
-    for(const ref of getBooks(data.id)) {
-        const book = ref.current;
+    const tms = book.props.toneMappers;
+    tms[book.state.selectedIdx].setPixels(images[0]);
 
-        if(!book)
-            continue;
+    // // Iterate over all registered Flipbooks
+    // // Update image of Flipbooks with groupname data.groupname
+    // for(const ref of getBooks(data.id)) {
+    //     const book = ref.current;
 
-        const tms = book.props.toneMappers;
-        tms[book.state.selectedIdx].setPixels(images[0] as (Float32Array<ArrayBufferLike>));
-    }
+    //     if(!book)
+    //         continue;
+
+    //     const tms = book.props.toneMappers;
+    //     tms[book.state.selectedIdx].setPixels(images[0]);
+    // }
 }
 
 export function UpdateFlipGroupSelection(groupName: string, newIdx: number) {
