@@ -2,7 +2,7 @@ import { createRoot } from 'react-dom/client';
 import styles from './styles.module.css';
 import React, { createRef } from 'react';
 import { renderImage } from "./Render";
-import { ImageContainer, OnClickHandler, OnWheelHandler, OnMouseOverHandler, ImageContainerState, OnKeyHandler, setKeyPressed } from './ImageContainer';
+import { ImageContainer, OnClickHandler, OnWheelHandler, OnMouseOverHandler, ImageContainerState, OnKeyHandler, setKeyPressed, listenerState } from './ImageContainer';
 import { ToneMapControls } from './ToneMapControls';
 import { MethodList } from './MethodList';
 import { Tools } from './Tools';
@@ -163,7 +163,12 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
             if(keyPressed.size == 0)
                 setKeyPressed(false);
 
-            this.props.onKeyImageContainer(this.state.selectedIdx, this.props.idStr, evt.key, false);
+            listenerState.selectedIdx = this.state.selectedIdx;
+            listenerState.ID = this.props.idStr;
+            listenerState.keyPressed = evt.key;
+            listenerState.isPressed = false;
+
+            this.props.onKeyImageContainer(listenerState.mouseButtom, listenerState.mouseX, listenerState.mouseY, listenerState.deltaY, listenerState.ID, listenerState.selectedIdx, listenerState.keyPressed, listenerState.isPressed);
         }
     }
 
@@ -174,7 +179,13 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
             keyPressed.add(evt.key);
             evt.preventDefault();
             setKeyPressed(true);
-            this.props.onKeyImageContainer(this.state.selectedIdx, this.props.idStr, evt.key, true);
+
+            listenerState.selectedIdx = this.state.selectedIdx;
+            listenerState.ID = this.props.idStr;
+            listenerState.keyPressed = evt.key;
+            listenerState.isPressed = true;
+
+            this.props.onKeyImageContainer(listenerState.mouseButtom, listenerState.mouseX, listenerState.mouseY, listenerState.deltaY, listenerState.ID, listenerState.selectedIdx, listenerState.keyPressed, listenerState.isPressed);
         }
 
         let newIdx = this.state.selectedIdx;

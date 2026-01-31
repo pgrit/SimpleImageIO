@@ -4,12 +4,32 @@ import { ToneMappingImage } from './FlipBook';
 import { Magnifier, formatNumber } from './Magnifier';
 import { ZoomLevel } from './flipviewer';
 import { JSX } from 'react/jsx-runtime';
+import { listeners } from 'process';
 
-export type OnClickHandler = (buttom: number) => void
-export type OnWheelHandler = (deltaY: number) => void
-export type OnMouseOverHandler = (col: number, row: number) => void
-export type OnKeyHandler = (selectedIdx: number, keyStr: string, keyPressed: string, isPressedDown: boolean) => void
-// export type OnKeyUpHandler = (selectedIdx: number, keyStr: string, keyReleased: string, isPressedDown: boolean) => void
+export type OnClickHandler = (mouseButtom: number, mouseX: number, mouseY: number, deltaY: number, ID: string, selectedIdx: number, keyPressed: string, isPressed: boolean) => void
+export type OnWheelHandler = (mouseButtom: number, mouseX: number, mouseY: number, deltaY: number, ID: string, selectedIdx: number, keyPressed: string, isPressed: boolean) => void
+export type OnMouseOverHandler = (mouseButtom: number, mouseX: number, mouseY: number, deltaY: number, ID: string, selectedIdx: number, keyPressed: string, isPressed: boolean) => void
+export type OnKeyHandler = (mouseButtom: number, mouseX: number, mouseY: number, deltaY: number, ID: string, selectedIdx: number, keyPressed: string, isPressed: boolean) => void
+
+// Listener state that is forwared
+export interface ListenerState {
+    /// Mouse state
+    mouseButtom: number;
+    mouseX: number;
+    mouseY: number;
+    // Mouse Wheel
+    deltaY: number;
+
+    /// Key state (Handled by the Flipbook.tsx)
+    // ID of the Flipbook
+    ID: string;
+    // Which image is selected in a Flipbook
+    selectedIdx: number;
+    // Key pressed
+    keyPressed: string;
+    isPressed: boolean;
+}
+export const listenerState: ListenerState = { mouseButtom: 0, mouseX: 0, mouseY: 0, deltaY: 0, ID: "", selectedIdx: 0, keyPressed: "", isPressed: false};
 
 let magnifierResolution = 1;
 let flagXSwapped = false;
@@ -277,9 +297,13 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
         curPixelCol = Math.min(Math.max(curPixelCol, 0), this.props.width - 1);
         curPixelRow = Math.min(Math.max(curPixelRow, 0), this.props.height - 1);
 
+        listenerState.mouseButtom = event.button;
+        listenerState.mouseX = curPixelCol;
+        listenerState.mouseY = curPixelRow;
+
         if (this.props.onClick)
         {
-            this.props.onClick(event.button);
+            this.props.onClick(listenerState.mouseButtom, listenerState.mouseX, listenerState.mouseY, listenerState.deltaY, listenerState.ID, listenerState.selectedIdx, listenerState.keyPressed, listenerState.isPressed);
         }
 
         // Confirm or remove the crop box
@@ -309,9 +333,14 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
         let curPixelRow = Math.floor(xy.y / this.state.scale);
         curPixelCol = Math.min(Math.max(curPixelCol, 0), this.props.width - 1);
         curPixelRow = Math.min(Math.max(curPixelRow, 0), this.props.height - 1);
+
+        listenerState.mouseButtom = event.button;
+        listenerState.mouseX = curPixelCol;
+        listenerState.mouseY = curPixelRow;
+
         if (this.props.onMouseOver)
         {
-            this.props.onMouseOver(curPixelCol, curPixelRow);
+            this.props.onMouseOver(listenerState.mouseButtom, listenerState.mouseX, listenerState.mouseY, listenerState.deltaY, listenerState.ID, listenerState.selectedIdx, listenerState.keyPressed, listenerState.isPressed);
         }
 
         // If left mouse button down
@@ -357,6 +386,8 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
     }
 
     onWheel(event: React.WheelEvent<HTMLDivElement>) {
+        listenerState.deltaY = event.deltaY;
+
         if(event.ctrlKey)
         {
             const ScrollSpeed = 0.25;
@@ -402,14 +433,12 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
                 this.props.onStateChange?.(this.state); // callback
             });
         
-            // event.stopPropagation();
-        
             // keep the manual input in sync
             this.props.onZoom(this.state.scale * window.devicePixelRatio);
         }
         else if (this.props.onWheel)
         {
-            this.props.onWheel(event.deltaY);
+            this.props.onWheel(listenerState.mouseButtom, listenerState.mouseX, listenerState.mouseY, listenerState.deltaY, listenerState.ID, listenerState.selectedIdx, listenerState.keyPressed, listenerState.isPressed);
         }
     }
 
