@@ -33,7 +33,7 @@ export function unregisterBook(id: string, ref: BookRef) {
     if (set.size === 0) registry.delete(id);
 }
 
-// to get only key presses and not is down state
+// Keep track of pressed keys
 // Idea is to only fire events if state of key changes
 const keyPressed = new Set<string>();
 
@@ -88,20 +88,17 @@ export function SetGroupIndex(groupName: string, newIdx: number) {
         fn(groupName, newIdx);
 }
 
-
 export function SetGroupTMOSettings(groupName: string, newTMOSettings: ToneMapSettings)
 {
     for (let fn of tmoUpdateListeners)
         fn(groupName, newTMOSettings);
 }
 
-
 export function SetGroupImageContainerSettings(groupName: string, newImgConState: ImageContainerState)
 {
     for (let fn of imgConStateUpdateListeners)
         fn(groupName, newImgConState);
 }
-
 
 export interface FlipProps {
     names: string[];
@@ -253,7 +250,6 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
             evt.stopPropagation();
         }
 
-
         this.updateTMOSettings(this.tmoCtrls.current.state.globalSettings);
     }
 
@@ -344,7 +340,6 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
         else this.setState({selectedIdx: newIdx});
     }
 
-
     updateTMOSettings(newTMOSettings: ToneMapSettings){
         if (this.props.groupName) SetGroupTMOSettings(this.props.groupName, newTMOSettings);
         else this.tmoCtrls.current.applySettings(newTMOSettings);
@@ -420,13 +415,11 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
         }
     }
 
-
     onTMOUpdate(groupName: string, newTMOSettings: ToneMapSettings) {
         if (groupName == this.props.groupName) {
             this.tmoCtrls.current.applySettings(newTMOSettings);
         }
     }
-
 
     // is called when onStateIsChanged in ImageContainer is called
     // everytime when the ImageContainerState changes (pos, zoom, etc.)
@@ -436,7 +429,6 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
             SetGroupImageContainerSettings(this.props.groupName, newImageContainerState);
         }
     }
-
 
     // is called when other flipbook's ImageContainerStates changes
     onImageContainerGroupUpdate = (groupName: string, newImageContainerState: ImageContainerState) => {
@@ -458,10 +450,8 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
         let idx = selectUpdateListeners.findIndex(v => v === this.onSelectUpdate);
         selectUpdateListeners.splice(idx, 1);
 
-
         idx = tmoUpdateListeners.findIndex(v => v === this.onTMOUpdate);
         tmoUpdateListeners.splice(idx, 1);
-
 
         idx = imgConStateUpdateListeners.findIndex(v => v === this.onImageContainerGroupUpdate);
         imgConStateUpdateListeners.splice(idx, 1);
@@ -537,7 +527,6 @@ export type FlipBookParams = {
     onWheel?: OnWheelHandler,
     onMouseOver?: OnMouseOverHandler,
     onKeyImageContainer?: OnKeyHandler,
-    // onKeyUpIC?: OnKeyUpHandler,
     colorTheme?: string,
     hideTools: boolean,
     containerId: string,
