@@ -5,15 +5,16 @@ import { Magnifier, formatNumber } from './Magnifier';
 import { ZoomLevel } from './flipviewer';
 import { JSX } from 'react/jsx-runtime';
 
-export type OnClickHandler = (mouseButtom: number, mouseX: number, mouseY: number, deltaY: number, ID: string, selectedIdx: number, keyPressed: string, isPressed: boolean) => void
-export type OnWheelHandler = (mouseButtom: number, mouseX: number, mouseY: number, deltaY: number, ID: string, selectedIdx: number, keyPressed: string, isPressed: boolean) => void
-export type OnMouseOverHandler = (mouseButtom: number, mouseX: number, mouseY: number, deltaY: number, ID: string, selectedIdx: number, keyPressed: string, isPressed: boolean) => void
-export type OnKeyHandler = (mouseButtom: number, mouseX: number, mouseY: number, deltaY: number, ID: string, selectedIdx: number, keyPressed: string, isPressed: boolean) => void
+export type OnClickHandler = (mouseButton: number, mouseX: number, mouseY: number, deltaY: number, ID: string, selectedIdx: number, keyPressed: string, isPressed: boolean) => void
+export type OnWheelHandler = (mouseButton: number, mouseX: number, mouseY: number, deltaY: number, ID: string, selectedIdx: number, keyPressed: string, isPressed: boolean) => void
+export type OnMouseOverHandler = (mouseButton: number, mouseX: number, mouseY: number, deltaY: number, ID: string, selectedIdx: number, keyPressed: string, isPressed: boolean) => void
+export type OnKeyHandler = (mouseButton: number, mouseX: number, mouseY: number, deltaY: number, ID: string, selectedIdx: number, keyPressed: string, isPressed: boolean) => void
 
 // Listener state that is forwared
 export interface ListenerState {
     /// Mouse state
-    mouseButtom: number;
+    mouseButton: number;
+    // Mouse X/Y relative to an image in Flipbook ((0, 0) at top left of image)
     mouseX: number;
     mouseY: number;
     // Mouse Wheel
@@ -28,7 +29,7 @@ export interface ListenerState {
     keyPressed: string;
     isPressed: boolean;
 }
-export const listenerState: ListenerState = { mouseButtom: 0, mouseX: 0, mouseY: 0, deltaY: 0, ID: "", selectedIdx: 0, keyPressed: "", isPressed: false};
+export const listenerState: ListenerState = { mouseButton: 0, mouseX: 0, mouseY: 0, deltaY: 0, ID: "", selectedIdx: 0, keyPressed: "", isPressed: false};
 
 let magnifierResolution = 1;
 let flagXSwapped = false;
@@ -296,13 +297,13 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
         curPixelCol = Math.min(Math.max(curPixelCol, 0), this.props.width - 1);
         curPixelRow = Math.min(Math.max(curPixelRow, 0), this.props.height - 1);
 
-        listenerState.mouseButtom = event.button;
+        listenerState.mouseButton = event.button;
         listenerState.mouseX = curPixelCol;
         listenerState.mouseY = curPixelRow;
 
         if (this.props.onClick)
         {
-            this.props.onClick(listenerState.mouseButtom, listenerState.mouseX, listenerState.mouseY, listenerState.deltaY, listenerState.ID, listenerState.selectedIdx, listenerState.keyPressed, listenerState.isPressed);
+            this.props.onClick(listenerState.mouseButton, listenerState.mouseX, listenerState.mouseY, listenerState.deltaY, listenerState.ID, listenerState.selectedIdx, listenerState.keyPressed, listenerState.isPressed);
         }
 
         // Confirm or remove the crop box
@@ -333,13 +334,13 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
         curPixelCol = Math.min(Math.max(curPixelCol, 0), this.props.width - 1);
         curPixelRow = Math.min(Math.max(curPixelRow, 0), this.props.height - 1);
 
-        listenerState.mouseButtom = event.button;
+        listenerState.mouseButton = event.button;
         listenerState.mouseX = curPixelCol;
         listenerState.mouseY = curPixelRow;
 
         if (this.props.onMouseOver)
         {
-            this.props.onMouseOver(listenerState.mouseButtom, listenerState.mouseX, listenerState.mouseY, listenerState.deltaY, listenerState.ID, listenerState.selectedIdx, listenerState.keyPressed, listenerState.isPressed);
+            this.props.onMouseOver(listenerState.mouseButton, listenerState.mouseX, listenerState.mouseY, listenerState.deltaY, listenerState.ID, listenerState.selectedIdx, listenerState.keyPressed, listenerState.isPressed);
         }
 
         // If left mouse button down
@@ -437,7 +438,7 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
         }
         else if (this.props.onWheel)
         {
-            this.props.onWheel(listenerState.mouseButtom, listenerState.mouseX, listenerState.mouseY, listenerState.deltaY, listenerState.ID, listenerState.selectedIdx, listenerState.keyPressed, listenerState.isPressed);
+            this.props.onWheel(listenerState.mouseButton, listenerState.mouseX, listenerState.mouseY, listenerState.deltaY, listenerState.ID, listenerState.selectedIdx, listenerState.keyPressed, listenerState.isPressed);
         }
     }
 
