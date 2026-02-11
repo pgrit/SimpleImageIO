@@ -205,6 +205,7 @@ public class FlipBook
     List<(string Name, Image Image, DataType TargetType, InitialTMO TMOOverride)> images = new();
     int htmlWidth;
     int htmlHeight;
+    string customCSS;
     InitialZoom initialZoom;
     InitialTMO initialTMO;
     string theme;
@@ -233,6 +234,20 @@ public class FlipBook
     public FlipBook Resize(int width, int height) {
         htmlWidth = width;
         htmlHeight = height;
+        return this;
+    }
+
+    /// <summary>
+    /// Replaces the fixed width and height logic (as specified via <see cref="Resize(int, int)"/> or the constructor)
+    /// by a user-specified CSS style attribute.
+    /// E.g., to make the FlipBook fill the width or height of its parent:
+    /// <code>
+    /// SetCustomSizeCSS("width: 100%; height: 100%;");
+    /// </code>
+    /// Call this again with "null" to revert to the usual fixed size logic.
+    /// </summary>
+    public FlipBook SetCustomSizeCSS(string style) {
+        customCSS = style;
         return this;
     }
 
@@ -405,7 +420,8 @@ public class FlipBook
         }
 
         string id = "flipbook-" + Guid.NewGuid().ToString();
-        string html = $"<div id='{id}' style='width:{htmlWidth}px; height:{htmlHeight}px; resize: both; overflow: auto;'></div>";
+        string style = customCSS ?? $"style='width:{htmlWidth}px; height:{htmlHeight}px; resize: both; overflow: auto;'></div>";
+        string html = $"<div id='{id}' {style}";
 
         string initialTMOStr = "null";
         if (initialTMO != null) {
