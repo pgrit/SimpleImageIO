@@ -420,8 +420,8 @@ public class FlipBook
         }
 
         string id = "flipbook-" + Guid.NewGuid().ToString();
-        string style = customCSS ?? $"style='width:{htmlWidth}px; height:{htmlHeight}px; resize: both; overflow: auto;'></div>";
-        string html = $"<div id='{id}' {style}";
+        string style = customCSS ?? $"width:{htmlWidth}px; height:{htmlHeight}px; resize: both; overflow: auto;";
+        string html = $"<div id='{id}' style='{style}'></div>";
 
         string initialTMOStr = "null";
         if (initialTMO != null) {
