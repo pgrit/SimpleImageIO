@@ -14,30 +14,37 @@ export type OnKeyHandler = (mouseButton: number, mouseX: number, mouseY: number,
 export interface ListenerState {
     /// Mouse state
     mouseButton: number;
-    // Mouse X/Y relative to an image in Flipbook ((0, 0) at top left of image)
+
+    // Mouse X/Y pixel coordinates relative to an image in Flipbook (Pixel (0, 0) at top left of image)
     mouseX: number;
     mouseY: number;
+
     // Mouse Wheel
     deltaY: number;
 
     /// Key state (Handled by the Flipbook.tsx)
     // ID of the Flipbook
     ID: string;
+
     // Which image is selected in a Flipbook
     selectedIdx: number;
+
     // Key pressed
     keyPressed: string;
+
+    // Tells if current key is pressed or released. If more than one key at a time is pressed, 
+    // Flipbook.tsx holds a HashSet of all keys pressed.
+    // Other side can then track which key is pressed and which is released.
     isPressed: boolean;
 }
 export const listenerState: ListenerState = { mouseButton: 0, mouseX: 0, mouseY: 0, deltaY: 0, ID: "", selectedIdx: 0, keyPressed: "", isPressed: false};
 
-let magnifierResolution = 1;
-let flagXSwapped = false;
-let flagYSwapped = false;
-
-let isAnyKeyPressed = false;
 export function setKeyPressed(value: boolean): void {
-    isAnyKeyPressed = value;
+    this.setState({
+        isAnyKeyPressed: value,
+    }, () => { 
+        this.props.onStateChange?.(this.state); // callback
+    });
 }
 
 export interface ImageContainerProps {
@@ -74,6 +81,12 @@ export interface ImageContainerState {
     cropActive: boolean;
     cropDragging: boolean;
     cropMeans?: number[];
+
+    isAnyKeyPressed: boolean;
+
+    magnifierResolution : number;
+    flagXSwapped : boolean;
+    flagYSwapped : boolean;
 }
 
 const magnifierPadding = 15;
@@ -94,6 +107,10 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
             magnifierPixelCoordsBelow: false,
             cropActive: false,
             cropDragging: false,
+            isAnyKeyPressed: false,
+            magnifierResolution: 1,
+            flagXSwapped: false,
+            flagYSwapped: false,
         };
 
         this.canvasRefs = [];
@@ -131,8 +148,8 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
 
     // computes offset of the magnifier (decides where to place magnifier around mouse)
     offsetMagnifier(event: React.MouseEvent<HTMLDivElement>) {
-        let magnifierSizeX = parseInt(styles.magnifierWidth, 10) * (2 * magnifierResolution + 1);
-        let magnifierSizeY = parseInt(styles.magnifierHeight, 10) * (2 * magnifierResolution + 1);
+        let magnifierSizeX = parseInt(styles.magnifierWidth, 10) * (2 * this.state.magnifierResolution + 1);
+        let magnifierSizeY = parseInt(styles.magnifierHeight, 10) * (2 * this.state.magnifierResolution + 1);
         let flipSizeX = this.container.current.clientWidth;
         let flipSizeY = this.container.current.clientHeight - 20;
         let paddingX = magnifierPadding;
@@ -144,7 +161,7 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
         let offsetX = 0;
         let offsetY = 0;
 
-        if(!flagXSwapped)
+        if(!this.state.flagXSwapped)
         {
             offsetX = 0;
             let tmpX = flipSizeX - posX;
@@ -156,7 +173,11 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
             {
                 offsetX = -(magnifierSizeX + 2 * paddingX);
             
-                flagXSwapped = true;
+                this.setState({
+                    flagXSwapped: true,
+                }, () => { 
+                    this.props.onStateChange?.(this.state); // callback
+                });
             }
         }
         else
@@ -168,10 +189,14 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
             if(tmpX < 0)
             {
                 offsetX = 0
-                flagXSwapped = false;
+                this.setState({
+                    flagXSwapped: false,
+                }, () => { 
+                    this.props.onStateChange?.(this.state); // callback
+                });
             }
         }
-        if(!flagYSwapped)
+        if(!this.state.flagYSwapped)
         {
             offsetY = 0;
             let tmpY = flipSizeY - posY;
@@ -182,7 +207,11 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
             if(tmpY < 0)
             {
                 offsetY = -(magnifierSizeY + 2 * paddingY + 10);
-                flagYSwapped = true;
+                this.setState({
+                    flagYSwapped: true,
+                }, () => { 
+                    this.props.onStateChange?.(this.state); // callback
+                });
             }
         }
         else
@@ -194,7 +223,11 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
             if(tmpY < 0)
             {
                 offsetY = 0
-                flagYSwapped = false;
+                this.setState({
+                    flagYSwapped: false,
+                }, () => { 
+                    this.props.onStateChange?.(this.state); // callback
+                });
             }
         }
 
@@ -220,7 +253,7 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
 
         this.setState({
             magnifierVisible: true,
-            magnifierPixelCoordsBelow: flagYSwapped,
+            magnifierPixelCoordsBelow: this.state.flagYSwapped,
             magnifierX: xy.x + magnifierPadding + offset.offsetX,
             magnifierY: xy.y + magnifierPadding + offset.offsetY,
             magnifierCol: curPixelCol,
@@ -379,9 +412,9 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
 
     // Native Browser WheelEvent
     // while wheeling over flipbook, website scroll is disabled
-    onWheelNative(event: WheelEvent)
+    onWheelNative = (event: WheelEvent) =>
     {
-        if(event.ctrlKey || isAnyKeyPressed)
+        if(event.ctrlKey || this.state.isAnyKeyPressed)
             event.preventDefault();
     }
 
@@ -491,7 +524,7 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
                 row={this.state.magnifierRow}
                 x={this.state.magnifierX}
                 y={this.state.magnifierY}
-                resolution={magnifierResolution}
+                resolution={this.state.magnifierResolution}
                 image={this.props.toneMappers[this.props.selectedIdx]}
                 pixelCoordBelow={this.state.magnifierPixelCoordsBelow}
             />
