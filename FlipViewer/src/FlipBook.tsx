@@ -158,7 +158,12 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
             evt.preventDefault();
 
             if(keyPressed.size == 0)
-                setKeyPressed(false);
+                this.imageContainer.current.setState({
+                    isAnyKeyPressed: false,
+                }, () => { 
+                    this.imageContainer.current.props.onStateChange?.(this.imageContainer.current.state); // callback
+                });
+                // setKeyPressed(false);
 
             listenerState.selectedIdx = this.state.selectedIdx;
             listenerState.ID = this.props.idStr;
@@ -175,7 +180,12 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
         {
             keyPressed.add(evt.key);
             evt.preventDefault();
-            setKeyPressed(true);
+            // setKeyPressed(true);
+            this.imageContainer.current.setState({
+                isAnyKeyPressed: true,
+            }, () => { 
+                this.imageContainer.current.props.onStateChange?.(this.imageContainer.current.state); // callback
+            });
 
             listenerState.selectedIdx = this.state.selectedIdx;
             listenerState.ID = this.props.idStr;
