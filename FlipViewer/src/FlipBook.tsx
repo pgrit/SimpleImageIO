@@ -35,7 +35,7 @@ export function unregisterBook(id: string, ref: BookRef) {
 
 // Keep track of pressed keys
 // Idea is to only fire events if state of key changes
-const keyPressed = new Set<string>();
+const keysPressed = new Set<string>();
 
 export class ToneMappingImage {
     currentTMO: string;
@@ -152,35 +152,33 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
 
     onKeyUp(evt: React.KeyboardEvent<HTMLDivElement>) {
         // trigger callbacks
-        if(this.props.onKeyImageContainer && keyPressed.has(evt.key))
+        if(this.props.onKeyImageContainer && keysPressed.has(evt.key))
         {
-            keyPressed.delete(evt.key);
+            keysPressed.delete(evt.key);
             evt.preventDefault();
 
-            if(keyPressed.size == 0)
+            if(keysPressed.size == 0)
                 this.imageContainer.current.setState({
                     isAnyKeyPressed: false,
                 }, () => { 
                     this.imageContainer.current.props.onStateChange?.(this.imageContainer.current.state); // callback
                 });
-                // setKeyPressed(false);
 
             listenerState.selectedIdx = this.state.selectedIdx;
             listenerState.ID = this.props.idStr;
-            listenerState.keyPressed = evt.key;
-            listenerState.isPressed = false;
+            listenerState.keysPressed = keysPressed;
 
-            this.props.onKeyImageContainer(listenerState.mouseButton, listenerState.mouseX, listenerState.mouseY, listenerState.deltaY, listenerState.ID, listenerState.selectedIdx, listenerState.keyPressed, listenerState.isPressed);
+            this.props.onKeyImageContainer(listenerState.mouseButton, listenerState.mouseX, listenerState.mouseY, listenerState.deltaY, listenerState.ID, listenerState.selectedIdx, Array.from(listenerState.keysPressed));
         }
     }
 
     onKeyDown(evt: React.KeyboardEvent<HTMLDivElement>) {
         // trigger callbacks
-        if(this.props.onKeyImageContainer && !keyPressed.has(evt.key))
+        if(this.props.onKeyImageContainer && !keysPressed.has(evt.key))
         {
-            keyPressed.add(evt.key);
+            keysPressed.add(evt.key);
             evt.preventDefault();
-            // setKeyPressed(true);
+
             this.imageContainer.current.setState({
                 isAnyKeyPressed: true,
             }, () => { 
@@ -189,10 +187,9 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
 
             listenerState.selectedIdx = this.state.selectedIdx;
             listenerState.ID = this.props.idStr;
-            listenerState.keyPressed = evt.key;
-            listenerState.isPressed = true;
+            listenerState.keysPressed = keysPressed;
 
-            this.props.onKeyImageContainer(listenerState.mouseButton, listenerState.mouseX, listenerState.mouseY, listenerState.deltaY, listenerState.ID, listenerState.selectedIdx, listenerState.keyPressed, listenerState.isPressed);
+            this.props.onKeyImageContainer(listenerState.mouseButton, listenerState.mouseX, listenerState.mouseY, listenerState.deltaY, listenerState.ID, listenerState.selectedIdx, Array.from(listenerState.keysPressed));
         }
 
         let newIdx = this.state.selectedIdx;
