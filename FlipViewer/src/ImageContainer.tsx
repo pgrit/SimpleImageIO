@@ -12,7 +12,6 @@ export type OnKeyHandler = (mouseButton: number, mouseX: number, mouseY: number,
 
 // Listener state that is forwared
 export interface ListenerState {
-    /// Mouse state
     mouseButton: number;
 
     // Mouse X/Y pixel coordinates relative to an image in Flipbook (Pixel (0, 0) at top left of image)
@@ -22,7 +21,6 @@ export interface ListenerState {
     // Mouse Wheel
     deltaY: number;
 
-    /// Key state (Handled by the Flipbook.tsx)
     // ID of the Flipbook
     ID: string;
 
@@ -242,7 +240,7 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
 
         if ((event.buttons & 2) == 0)
         {
-            this.setState({magnifierVisible: false}, () => { 
+            this.setState({magnifierVisible: false, flagXSwapped: false, flagYSwapped: false}, () => { 
             this.props.onStateChange?.(this.state); // callback
         });
             return;
