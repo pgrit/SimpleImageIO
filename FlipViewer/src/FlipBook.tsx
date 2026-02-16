@@ -168,7 +168,7 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
             listenerState.ID = this.props.idStr;
             listenerState.keysPressed = keysPressed;
 
-            this.props.onKeyImageContainer(listenerState.mouseButton, listenerState.mouseX, listenerState.mouseY, listenerState.deltaY, listenerState.ID, listenerState.selectedIdx, Array.from(listenerState.keysPressed));
+            this.props.onKeyImageContainer(listenerState.mouseX, listenerState.mouseY, listenerState.ID, listenerState.selectedIdx, Array.from(listenerState.keysPressed));
         }
     }
 
@@ -189,7 +189,7 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
             listenerState.ID = this.props.idStr;
             listenerState.keysPressed = keysPressed;
 
-            this.props.onKeyImageContainer(listenerState.mouseButton, listenerState.mouseX, listenerState.mouseY, listenerState.deltaY, listenerState.ID, listenerState.selectedIdx, Array.from(listenerState.keysPressed));
+            this.props.onKeyImageContainer(listenerState.mouseX, listenerState.mouseY, listenerState.ID, listenerState.selectedIdx, Array.from(listenerState.keysPressed));
         }
 
         let newIdx = this.state.selectedIdx;

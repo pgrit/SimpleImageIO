@@ -5,10 +5,10 @@ import { Magnifier, formatNumber } from './Magnifier';
 import { ZoomLevel } from './flipviewer';
 import { JSX } from 'react/jsx-runtime';
 
-export type OnClickHandler = (mouseButton: number, mouseX: number, mouseY: number, deltaY: number, ID: string, selectedIdx: number, keysPressed: Array<string>) => void
-export type OnWheelHandler = (mouseButton: number, mouseX: number, mouseY: number, deltaY: number, ID: string, selectedIdx: number, keysPressed: Array<string>) => void
-export type OnMouseOverHandler = (mouseButton: number, mouseX: number, mouseY: number, deltaY: number, ID: string, selectedIdx: number, keysPressed: Array<string>) => void
-export type OnKeyHandler = (mouseButton: number, mouseX: number, mouseY: number, deltaY: number, ID: string, selectedIdx: number, keysPressed: Array<string>) => void
+export type OnClickHandler = (mouseButton: number, mouseX: number, mouseY: number, ID: string, selectedIdx: number, keysPressed: Array<string>) => void
+export type OnWheelHandler = (mouseX: number, mouseY: number, deltaY: number, ID: string, selectedIdx: number, keysPressed: Array<string>) => void
+export type OnMouseOverHandler = (mouseX: number, mouseY: number, ID: string, selectedIdx: number, keysPressed: Array<string>) => void
+export type OnKeyHandler = (mouseX: number, mouseY: number, ID: string, selectedIdx: number, keysPressed: Array<string>) => void
 
 // Listener state that is forwared
 export interface ListenerState {
@@ -330,7 +330,7 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
         if (this.props.onClick)
         {
             // this.props.onClick(listenerState.mouseButton, listenerState.mouseX, listenerState.mouseY, listenerState.deltaY, listenerState.ID, listenerState.selectedIdx, listenerState.keyPressed, listenerState.isPressed);
-            this.props.onClick(listenerState.mouseButton, listenerState.mouseX, listenerState.mouseY, listenerState.deltaY, listenerState.ID, listenerState.selectedIdx, Array.from(listenerState.keysPressed));
+            this.props.onClick(listenerState.mouseButton, listenerState.mouseX, listenerState.mouseY, listenerState.ID, listenerState.selectedIdx, Array.from(listenerState.keysPressed));
         }
 
         // Confirm or remove the crop box
@@ -368,7 +368,7 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
         if (this.props.onMouseOver)
         {
             // this.props.onMouseOver(listenerState.mouseButton, listenerState.mouseX, listenerState.mouseY, listenerState.deltaY, listenerState.ID, listenerState.selectedIdx, listenerState.keyPressed, listenerState.isPressed);
-            this.props.onMouseOver(listenerState.mouseButton, listenerState.mouseX, listenerState.mouseY, listenerState.deltaY, listenerState.ID, listenerState.selectedIdx, Array.from(listenerState.keysPressed));
+            this.props.onMouseOver(listenerState.mouseX, listenerState.mouseY, listenerState.ID, listenerState.selectedIdx, Array.from(listenerState.keysPressed));
         }
 
         // If left mouse button down
@@ -467,7 +467,7 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
         else if (this.props.onWheel)
         {
             // this.props.onWheel(listenerState.mouseButton, listenerState.mouseX, listenerState.mouseY, listenerState.deltaY, listenerState.ID, listenerState.selectedIdx, listenerState.keyPressed, listenerState.isPressed);
-            this.props.onWheel(listenerState.mouseButton, listenerState.mouseX, listenerState.mouseY, listenerState.deltaY, listenerState.ID, listenerState.selectedIdx, Array.from(listenerState.keysPressed));
+            this.props.onWheel(listenerState.mouseX, listenerState.mouseY, listenerState.deltaY, listenerState.ID, listenerState.selectedIdx, Array.from(listenerState.keysPressed));
         }
     }
 
