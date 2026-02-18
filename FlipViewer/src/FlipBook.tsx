@@ -88,14 +88,12 @@ export function SetGroupIndex(groupName: string, newIdx: number) {
         fn(groupName, newIdx);
 }
 
-export function SetGroupTMOSettings(groupName: string, newTMOSettings: ToneMapSettings)
-{
+export function SetGroupTMOSettings(groupName: string, newTMOSettings: ToneMapSettings) {
     for (let fn of tmoUpdateListeners)
         fn(groupName, newTMOSettings);
 }
 
-export function SetGroupImageContainerSettings(groupName: string, newImgConState: ImageContainerState)
-{
+export function SetGroupImageContainerSettings(groupName: string, newImgConState: ImageContainerState) {
     for (let fn of imgConStateUpdateListeners)
         fn(groupName, newImgConState);
 }
@@ -132,7 +130,7 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
     imageContainer: React.RefObject<ImageContainer>;
     tools: React.RefObject<Tools>;
 
-    constructor(props : FlipProps) {
+    constructor(props: FlipProps) {
         super(props);
 
         this.state = {
@@ -152,15 +150,14 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
 
     onKeyUp(evt: React.KeyboardEvent<HTMLDivElement>) {
         // trigger callbacks
-        if(this.props.onKeyImageContainer && keysPressed.has(evt.key))
-        {
+        if (this.props.onKeyImageContainer && keysPressed.has(evt.key)) {
             keysPressed.delete(evt.key);
             evt.preventDefault();
 
-            if(keysPressed.size == 0)
+            if (keysPressed.size == 0)
                 this.imageContainer.current.setState({
                     isAnyKeyPressed: false,
-                }, () => { 
+                }, () => {
                     this.imageContainer.current.props.onStateChange?.(this.imageContainer.current.state); // callback
                 });
 
@@ -174,14 +171,13 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
 
     onKeyDown(evt: React.KeyboardEvent<HTMLDivElement>) {
         // trigger callbacks
-        if(this.props.onKeyImageContainer && !keysPressed.has(evt.key))
-        {
+        if (this.props.onKeyImageContainer && !keysPressed.has(evt.key)) {
             keysPressed.add(evt.key);
             evt.preventDefault();
 
             this.imageContainer.current.setState({
                 isAnyKeyPressed: true,
-            }, () => { 
+            }, () => {
                 this.imageContainer.current.props.onStateChange?.(this.imageContainer.current.state); // callback
             });
 
@@ -253,7 +249,7 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
         }
 
         if (evt.key === "t") {
-            this.setState({hideTools: !this.state.hideTools});
+            this.setState({ hideTools: !this.state.hideTools });
             evt.stopPropagation();
         }
 
@@ -344,10 +340,10 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
 
     updateSelection(newIdx: number) {
         if (this.props.groupName) SetGroupIndex(this.props.groupName, newIdx);
-        else this.setState({selectedIdx: newIdx});
+        else this.setState({ selectedIdx: newIdx });
     }
 
-    updateTMOSettings(newTMOSettings: ToneMapSettings){
+    updateTMOSettings(newTMOSettings: ToneMapSettings) {
         if (this.props.groupName) SetGroupTMOSettings(this.props.groupName, newTMOSettings);
         else this.tmoCtrls.current.applySettings(newTMOSettings);
 
@@ -359,7 +355,7 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
             popup =
                 <Popup
                     durationMs={this.state.popupDurationMs}
-                    unmount={() => this.setState({popupContent: null})}
+                    unmount={() => this.setState({ popupContent: null })}
                 >
                     {this.state.popupContent}
                 </Popup>
@@ -367,15 +363,15 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
 
         return (
             <div className={styles['flipbook']} style={this.props.style} onKeyDown={this.onKeyDown} onKeyUp={this.onKeyUp}>
-                <div style={{display: "contents"}}>
+                <div style={{ display: "contents" }}>
                     <MethodList
                         names={this.props.names}
                         selectedIdx={this.state.selectedIdx}
                         setSelectedIdx={this.updateSelection.bind(this)}
                     />
                     <ImageContainer ref={this.imageContainer}
-                        width = {this.props.width}
-                        height = {this.props.height}
+                        width={this.props.width}
+                        height={this.props.height}
                         rawPixels={this.props.rawPixels}
                         means={this.props.means}
                         toneMappers={this.props.toneMappers}
@@ -388,10 +384,10 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
                     >
                         {popup}
                         <button className={styles.toolsBtn}
-                            onClick={() => this.setState({hideTools: !this.state.hideTools})}
-                            style={{position: "absolute", bottom: 0, right: 0}}
+                            onClick={() => this.setState({ hideTools: !this.state.hideTools })}
+                            style={{ position: "absolute", bottom: 0, right: 0 }}
                         >
-                            { this.state.hideTools ? "Show tools " : "Hide tools " }
+                            {this.state.hideTools ? "Show tools " : "Hide tools "}
                             <span className={styles['key']}>t</span>
                         </button>
                     </ImageContainer>
@@ -418,7 +414,7 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
     onSelectUpdate(groupName: string, newIdx: number) {
         if (groupName == this.props.groupName) {
             newIdx = Math.min(this.props.rawPixels.length - 1, Math.max(0, newIdx));
-            this.setState({selectedIdx: newIdx});
+            this.setState({ selectedIdx: newIdx });
         }
     }
 
@@ -474,7 +470,7 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
  * @param images List of images that are either raw floating point data or HTML image elements
  * @returns List of all images with image elements replaced by their image data
  */
-function GetImageData(images: (Float32Array | HTMLImageElement)[]) : (Float32Array | ImageData)[] {
+function GetImageData(images: (Float32Array | HTMLImageElement)[]): (Float32Array | ImageData)[] {
     let imgData: (Float32Array | ImageData)[] = []
     for (let i = 0; i < images.length; ++i) {
         if (images[i] instanceof HTMLImageElement) {
@@ -594,7 +590,7 @@ export function AddFlipBook(params: FlipBookParams, groupName?: string) {
         />
     );
 
-    if(params.id)
+    if (params.id)
         registerBook(params.id, bookRef);
 
     new MutationObserver(_ => {
@@ -602,5 +598,5 @@ export function AddFlipBook(params: FlipBookParams, groupName?: string) {
             unregisterBook(params.id, bookRef);
             root.unmount();
         }
-    }).observe(document.body, {childList: true, subtree: true});
+    }).observe(document.body, { childList: true, subtree: true });
 }

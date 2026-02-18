@@ -89,7 +89,7 @@ copy-oidn: _ensure_dirs _download
 # Builds the C++ wrapper library for x86 and arm
 [macos]
 [working-directory: "./build/" ]
-build-native:
+build-native: _ensure_dirs
   cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="x86_64" ..
   cmake --build . --config Release
 
@@ -103,7 +103,7 @@ build-native:
 [linux]
 [windows]
 [working-directory: "./build/" ]
-build-native:
+build-native: _ensure_dirs
   cmake -DCMAKE_BUILD_TYPE=Release ..
   cmake --build . --config Release
 
