@@ -168,18 +168,6 @@ export async function UpdateImage(data: FlipData | string) {
 
     const tms = book.props.toneMappers;
     tms[book.state.selectedIdx].setPixels(images[0]);
-
-    // // Iterate over all registered Flipbooks
-    // // Update image of Flipbooks with groupname data.groupname
-    // for(const ref of getBooks(data.id)) {
-    //     const book = ref.current;
-
-    //     if(!book)
-    //         continue;
-
-    //     const tms = book.props.toneMappers;
-    //     tms[book.state.selectedIdx].setPixels(images[0]);
-    // }
 }
 
 export function UpdateFlipGroupSelection(groupName: string, newIdx: number) {

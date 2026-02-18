@@ -36,7 +36,7 @@ export function setKeyPressed(value: boolean): void {
     this.setState({
         isAnyKeyPressed: value,
     }, () => { 
-        this.props.onStateChange?.(this.state); // callback
+        this.props.onStateChange?.(this.state); 
     });
 }
 
@@ -128,7 +128,7 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
             posX: this.state.posX + dx,
             posY: this.state.posY + dy
         }, () => { 
-            this.props.onStateChange?.(this.state); // callback
+            this.props.onStateChange?.(this.state); 
         });
     }
 
@@ -169,7 +169,7 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
                 this.setState({
                     flagXSwapped: true,
                 }, () => { 
-                    this.props.onStateChange?.(this.state); // callback
+                    this.props.onStateChange?.(this.state); 
                 });
             }
         }
@@ -185,7 +185,7 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
                 this.setState({
                     flagXSwapped: false,
                 }, () => { 
-                    this.props.onStateChange?.(this.state); // callback
+                    this.props.onStateChange?.(this.state); 
                 });
             }
         }
@@ -203,7 +203,7 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
                 this.setState({
                     flagYSwapped: true,
                 }, () => { 
-                    this.props.onStateChange?.(this.state); // callback
+                    this.props.onStateChange?.(this.state); 
                 });
             }
         }
@@ -219,7 +219,7 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
                 this.setState({
                     flagYSwapped: false,
                 }, () => { 
-                    this.props.onStateChange?.(this.state); // callback
+                    this.props.onStateChange?.(this.state); 
                 });
             }
         }
@@ -236,7 +236,7 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
         if ((event.buttons & 2) == 0)
         {
             this.setState({magnifierVisible: false, flagXSwapped: false, flagYSwapped: false}, () => { 
-            this.props.onStateChange?.(this.state); // callback
+            this.props.onStateChange?.(this.state); 
         });
             return;
         }
@@ -252,14 +252,14 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
             magnifierCol: curPixelCol,
             magnifierRow: curPixelRow,
         }, () => { 
-            this.props.onStateChange?.(this.state); // callback
+            this.props.onStateChange?.(this.state); 
         });
     }
 
     onMouseOutOverImage(event: React.MouseEvent<HTMLDivElement>) {
         this.setState({magnifierVisible: false}, 
             () => { 
-                this.props.onStateChange?.(this.state); // callback
+                this.props.onStateChange?.(this.state); 
             }
         );
     }
@@ -312,7 +312,7 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
         }
 
         this.setState({cropMeans: means}, () => { 
-            this.props.onStateChange?.(this.state); // callback
+            this.props.onStateChange?.(this.state); 
         });
     }
 
@@ -329,7 +329,6 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
 
         if (this.props.onClick)
         {
-            // this.props.onClick(listenerState.mouseButton, listenerState.mouseX, listenerState.mouseY, listenerState.deltaY, listenerState.ID, listenerState.selectedIdx, listenerState.keyPressed, listenerState.isPressed);
             this.props.onClick(listenerState.mouseButton, listenerState.mouseX, listenerState.mouseY, listenerState.ID, listenerState.selectedIdx, Array.from(listenerState.keysPressed));
         }
 
@@ -340,13 +339,13 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
                     cropActive: false,
                     cropDragging: false,
                 }, () => { 
-                    this.props.onStateChange?.(this.state); // callback
+                    this.props.onStateChange?.(this.state); 
                 });
             } else {
                 this.setState({
                     cropDragging: false
                 }, () => { 
-                    this.props.onStateChange?.(this.state); // callback
+                    this.props.onStateChange?.(this.state); 
                 });
                 this.computeCropMeans();
             }
@@ -367,7 +366,6 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
 
         if (this.props.onMouseOver)
         {
-            // this.props.onMouseOver(listenerState.mouseButton, listenerState.mouseX, listenerState.mouseY, listenerState.deltaY, listenerState.ID, listenerState.selectedIdx, listenerState.keyPressed, listenerState.isPressed);
             this.props.onMouseOver(listenerState.mouseX, listenerState.mouseY, listenerState.ID, listenerState.selectedIdx, Array.from(listenerState.keysPressed));
         }
 
@@ -385,7 +383,7 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
                         cropHeight: curPixelRow - this.state.cropY,
                         cropWidth: curPixelCol - this.state.cropX,
                     }, () => { 
-                        this.props.onStateChange?.(this.state); // callback
+                        this.props.onStateChange?.(this.state); 
                     });
                 } else {
                     this.setState({
@@ -396,7 +394,7 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
                         cropHeight: 0,
                         cropWidth: 0,
                     }, () => { 
-                        this.props.onStateChange?.(this.state); // callback
+                        this.props.onStateChange?.(this.state); 
                     });
                 }
             } else {
@@ -458,7 +456,7 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
                 magnifierX: x + magnifierPadding - deltaX + offset.offsetX,
                 magnifierY: y + magnifierPadding - deltaY + offset.offsetY,
             }, () => { 
-                this.props.onStateChange?.(this.state); // callback
+                this.props.onStateChange?.(this.state); 
             });
         
             // keep the manual input in sync
@@ -466,14 +464,13 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
         }
         else if (this.props.onWheel)
         {
-            // this.props.onWheel(listenerState.mouseButton, listenerState.mouseX, listenerState.mouseY, listenerState.deltaY, listenerState.ID, listenerState.selectedIdx, listenerState.keyPressed, listenerState.isPressed);
             this.props.onWheel(listenerState.mouseX, listenerState.mouseY, listenerState.deltaY, listenerState.ID, listenerState.selectedIdx, Array.from(listenerState.keysPressed));
         }
     }
 
     centerView() {
         this.setState({posX: 0, posY: 0}, () => { 
-            this.props.onStateChange?.(this.state); // callback
+            this.props.onStateChange?.(this.state); 
         });
     }
 
@@ -491,7 +488,7 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
                 scale = (zoom as number) / window.devicePixelRatio;
         }
         this.setState({scale: scale}, () => { 
-            this.props.onStateChange?.(this.state); // callback
+            this.props.onStateChange?.(this.state); 
         });
         this.centerView();
         this.props.onZoom(scale * window.devicePixelRatio);
