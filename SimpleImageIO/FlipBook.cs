@@ -24,7 +24,8 @@ public class FlipBook
     /// Specifies the representation used for the image data. Determines accuracy and file size.
     /// Dual purpose: positive integers specify JPEG compression level.
     /// </summary>
-    public enum DataType {
+    public enum DataType
+    {
         /// <summary>
         /// Encodes HDR colors with a shared 1 byte exponent and one 1 byte mantissa per channel.
         /// I.e., the format used by Radiance .hdr files.
@@ -51,13 +52,14 @@ public class FlipBook
         /// <summary>
         /// LDR image with lossy JPEG encoding (quality 90). Smallest but least accurate.
         /// </summary>
-        JPEG = 90
+        JPEG = 90,
     }
 
     /// <summary>
     /// Specifies the initial zoom level of the images
     /// </summary>
-    public struct InitialZoom {
+    public struct InitialZoom
+    {
         /// <summary>
         /// Image is scaled to fit the container in width and height
         /// </summary>
@@ -86,55 +88,63 @@ public class FlipBook
         /// <returns>Zoom level (floating point value) as a string with default formatting</returns>
         public override string ToString() => value.ToString();
 
-        #pragma warning disable CS1591
+#pragma warning disable CS1591
         public static implicit operator InitialZoom(float v) => new(v);
+
         public static implicit operator float(InitialZoom v) => v.value;
-        #pragma warning restore CS1591
+#pragma warning restore CS1591
     }
 
     /// <summary>
     /// Tone mapping settings that will be applied when first displayed.
     /// </summary>
-    public class InitialTMO {
-        #pragma warning disable CS1591 // "Missing XML comment"
-        [JsonInclude] public string activeTMO;
-        [JsonInclude] public float min;
-        [JsonInclude] public float max = 1;
-        [JsonInclude] public bool useLog;
-        [JsonInclude] public float exposure;
-        [JsonInclude] public string script;
-        #pragma warning restore CS1591
+    public class InitialTMO
+    {
+#pragma warning disable CS1591 // "Missing XML comment"
+        [JsonInclude]
+        public string activeTMO;
+
+        [JsonInclude]
+        public float min;
+
+        [JsonInclude]
+        public float max = 1;
+
+        [JsonInclude]
+        public bool useLog;
+
+        [JsonInclude]
+        public float exposure;
+
+        [JsonInclude]
+        public string script;
+#pragma warning restore CS1591
 
         private InitialTMO() { }
 
         /// <summary>
         /// Exposure correction: each pixel is multiplied by 2^value
         /// </summary>
-        public static InitialTMO Exposure(float value)
-        => new InitialTMO {
-            activeTMO = "exposure",
-            exposure = value
-        };
+        public static InitialTMO Exposure(float value) =>
+            new InitialTMO { activeTMO = "exposure", exposure = value };
 
         /// <summary>
         /// False color mapping: each pixel is colored based on its average value, scaled to the specified range.
         /// </summary>
-        public static InitialTMO FalseColor(float min, float max, bool log = false)
-        => new InitialTMO {
-            activeTMO = "falsecolor",
-            min = min,
-            max = max,
-            useLog = log
-        };
+        public static InitialTMO FalseColor(float min, float max, bool log = false) =>
+            new InitialTMO
+            {
+                activeTMO = "falsecolor",
+                min = min,
+                max = max,
+                useLog = log,
+            };
 
         /// <summary>
         /// Custom: the given GLSL code will be run inside the pixel shader
         /// </summary>
-        public static InitialTMO GLSL(string code)
-        => new InitialTMO {
-            activeTMO = "script",
-            script = code
-        };
+        public static InitialTMO GLSL(string code) =>
+            new InitialTMO { activeTMO = "script", script = code };
     }
 
     /// <summary>
@@ -146,12 +156,15 @@ public class FlipBook
     /// <param name="Id">ID of the HTML element defined in <see cref="Html"/></param>
     public record struct GeneratedCode(string Html, string Data, string ScriptFn, string Id) { }
 
-    unsafe static string CompressImageAsRGBE(Image img) {
+    static unsafe string CompressImageAsRGBE(Image img)
+    {
         Debug.Assert(img.NumChannels == 3);
 
         List<byte> rgbeBytes = new();
-        for (int row = 0; row < img.Height; ++row) {
-            for (int col = 0; col < img.Width; ++col) {
+        for (int row = 0; row < img.Height; ++row)
+        {
+            for (int col = 0; col < img.Width; ++col)
+            {
                 RGBE clr = new RgbColor(img[col, row, 0], img[col, row, 1], img[col, row, 2]);
                 rgbeBytes.AddRange(new[] { clr.R, clr.G, clr.B, clr.E });
             }
@@ -159,21 +172,26 @@ public class FlipBook
         return "data:;base64," + Convert.ToBase64String(rgbeBytes.ToArray());
     }
 
-    unsafe static string WriteImageAsFloat32(Image img) {
+    static unsafe string WriteImageAsFloat32(Image img)
+    {
         var bytePtr = (byte*)img.DataPointer.ToPointer();
         Span<byte> bytes = new(bytePtr, img.Width * img.Height * img.NumChannels * sizeof(float));
         return "data:;base64," + Convert.ToBase64String(bytes.ToArray());
     }
 
-    unsafe static string WriteImageAsFloat16(Image img) {
+    static unsafe string WriteImageAsFloat16(Image img)
+    {
         var bytes = new List<byte>();
-        void AddHalf(float v) {
+        void AddHalf(float v)
+        {
             ushort bits = BitConverter.HalfToUInt16Bits((Half)v);
             bytes.Add((byte)(bits & 0xFF));
             bytes.Add((byte)(bits >> 8));
         }
-        for (int row = 0; row < img.Height; ++row) {
-            for (int col = 0; col < img.Width; ++col) {
+        for (int row = 0; row < img.Height; ++row)
+        {
+            for (int col = 0; col < img.Width; ++col)
+            {
                 for (int chan = 0; chan < img.NumChannels; ++chan)
                     AddHalf(img[col, row, chan]);
             }
@@ -181,24 +199,21 @@ public class FlipBook
         return "data:;base64," + Convert.ToBase64String(bytes.ToArray());
     }
 
-    static string CompressImageAsPNG(Image img)
-    => "data:image/png;base64," + img.AsBase64();
+    static string CompressImageAsPNG(Image img) => "data:image/png;base64," + img.AsBase64();
 
-    static string CompressImageAsJPEG(Image img, int quality = 90)
-    => "data:image/jpeg;base64," + img.AsBase64(".jpg", quality);
+    static string CompressImageAsJPEG(Image img, int quality = 90) =>
+        "data:image/jpeg;base64," + img.AsBase64(".jpg", quality);
 
     /// <summary>
     /// HTML code that should be added once to each webpage / notebook that displays flip books.
     /// </summary>
     /// <returns>HTML code as a string</returns>
-    public static string Header
-    => $"<script>{HeaderScript}</script>";
+    public static string Header => $"<script>{HeaderScript}</script>";
 
     /// <summary>
     /// The JavaScript code that is part of <see cref="Header"/>
     /// </summary>
-    public static string HeaderScript
-    => ReadResourceText("flipbook.js");
+    public static string HeaderScript => ReadResourceText("flipbook.js");
 
     List<(string Name, Image Image, DataType TargetType, InitialTMO TMOOverride)> images = new();
     int htmlWidth;
@@ -216,10 +231,16 @@ public class FlipBook
     /// </summary>
     public string ID { get; private set; } = Guid.NewGuid().ToString();
 
-    /// <param name="index">Index of Image of tuple list of Flipbook</param>
-    public Image GetImage(int index) {
-        return images[index].Image;
-    }
+    /// <param name="index">Index of the image in the FlipBook</param>
+    /// <returns>The name and image data of this entry</returns>
+    public (string Name, Image Image) Get(int index) =>
+        (images[index].Name, images[index].Image);
+
+    /// <summary>
+    /// Indices, names, and image data of all images currently in the FlipBook
+    /// </summary>
+    public IEnumerable<(int Index, string Name, Image Image)> All =>
+        images.Select((img, idx) => (idx, img.Name, img.Image));
 
     /// <summary>
     /// Syntactic sugar to create a new object of this class. Makes the fluent API more readable.
@@ -229,7 +250,8 @@ public class FlipBook
     /// <summary>
     /// Initializes a new flip book with the given width and height in HTML pixels
     /// </summary>
-    public FlipBook(int width = 660, int height = 480) {
+    public FlipBook(int width = 660, int height = 480)
+    {
         htmlWidth = width;
         htmlHeight = height;
         hideTools = true;
@@ -240,7 +262,8 @@ public class FlipBook
     /// Updates the size of the flip book in HTML pixels
     /// </summary>
     /// <returns>This object</returns>
-    public FlipBook Resize(int width, int height) {
+    public FlipBook Resize(int width, int height)
+    {
         htmlWidth = width;
         htmlHeight = height;
         return this;
@@ -255,7 +278,8 @@ public class FlipBook
     /// </code>
     /// Call this again with "null" to revert to the usual fixed size logic.
     /// </summary>
-    public FlipBook SetCustomSizeCSS(string style) {
+    public FlipBook SetCustomSizeCSS(string style)
+    {
         customCSS = style;
         return this;
     }
@@ -263,7 +287,8 @@ public class FlipBook
     /// <summary>
     /// Sets the requested initial zoom level in this flip book
     /// </summary>
-    public FlipBook SetZoom(InitialZoom zoom) {
+    public FlipBook SetZoom(InitialZoom zoom)
+    {
         initialZoom = zoom;
         return this;
     }
@@ -271,7 +296,8 @@ public class FlipBook
     /// <summary>
     /// Sets the requested initial tone mapping operator in this flip book
     /// </summary>
-    public FlipBook SetToneMapper(InitialTMO tmo) {
+    public FlipBook SetToneMapper(InitialTMO tmo)
+    {
         initialTMO = tmo;
         return this;
     }
@@ -280,7 +306,8 @@ public class FlipBook
     /// Sets the color theme for this flip book
     /// </summary>
     /// <param name="theme">Of of the supported themes: "dark" or "light"</param>
-    public FlipBook SetColorTheme(string theme) {
+    public FlipBook SetColorTheme(string theme)
+    {
         this.theme = theme;
         return this;
     }
@@ -290,7 +317,8 @@ public class FlipBook
     /// selection logic to each other.
     /// </summary>
     /// <param name="groupName">Unique name of the group</param>
-    public FlipBook SetGroupName(string groupName) {
+    public FlipBook SetGroupName(string groupName)
+    {
         this.groupName = groupName;
         return this;
     }
@@ -300,7 +328,8 @@ public class FlipBook
     /// (Can always be toggled in the browser later)
     /// </summary>
     /// <param name="visible">If false, tool buttons will be hidden initially</param>
-    public FlipBook SetToolVisibility(bool visible) {
+    public FlipBook SetToolVisibility(bool visible)
+    {
         this.hideTools = !visible;
         return this;
     }
@@ -309,7 +338,8 @@ public class FlipBook
     /// Replaces the default GUID <see cref="ID" /> by a user-defined value.
     /// This must be unique across all FlipBooks in the same HTML page.
     /// </summary>
-    public FlipBook SetID(string ID) {
+    public FlipBook SetID(string ID)
+    {
         this.ID = ID;
         return this;
     }
@@ -322,8 +352,17 @@ public class FlipBook
     /// <param name="targetType">Data type to use for this image's pixels</param>
     /// <param name="tmoOverride">If not null, this image will use its own tone mapping settings</param>
     /// <returns>This object (fluent API)</returns>
-    public FlipBook Add(string name, Image image, DataType targetType = DataType.RGBE, InitialTMO tmoOverride = null) {
-        if (images.Count > 0 && (images[0].Image.Width != image.Width || images[0].Image.Height != image.Height))
+    public FlipBook Add(
+        string name,
+        Image image,
+        DataType targetType = DataType.RGBE,
+        InitialTMO tmoOverride = null
+    )
+    {
+        if (
+            images.Count > 0
+            && (images[0].Image.Width != image.Width || images[0].Image.Height != image.Height)
+        )
             throw new ArgumentException("Image resolution does not match", nameof(image));
         images.Add((name, image, targetType, tmoOverride));
         return this;
@@ -335,8 +374,8 @@ public class FlipBook
     /// <param name="flipbook">The flip book</param>
     /// <param name="img">The new image, a pair of name and image data</param>
     /// <returns>The updated flipbook</returns>
-    public static FlipBook operator +(FlipBook flipbook, (string Name, Image Image) img)
-    => flipbook.Copy().Add(img.Name, img.Image);
+    public static FlipBook operator +(FlipBook flipbook, (string Name, Image Image) img) =>
+        flipbook.Copy().Add(img.Name, img.Image);
 
     /// <summary>
     /// Add a new image to the flip book
@@ -344,11 +383,11 @@ public class FlipBook
     /// <param name="flipbook">The flip book</param>
     /// <param name="img">The new image, a pair of name and image data</param>
     /// <returns>The updated flipbook</returns>
-    public static FlipBook operator +(FlipBook flipbook, Image img)
-    => flipbook.Copy().Add("", img);
+    public static FlipBook operator +(FlipBook flipbook, Image img) => flipbook.Copy().Add("", img);
 
     /// <returns>A deep copy of this object</returns>
-    public FlipBook Copy() {
+    public FlipBook Copy()
+    {
         FlipBook other = new(htmlWidth, htmlHeight);
         other.images = new(images);
         return other;
@@ -359,11 +398,22 @@ public class FlipBook
     /// </summary>
     /// <param name="name">case-sensitive image name (exact string match)</param>
     /// <returns>This flip book</returns>
-    public FlipBook Remove(string name)
+    public FlipBook Remove(string name) => Remove(Find(name));
+
+    /// <summary>
+    /// Queries the index of an image with the given, case-sensitive, name
+    /// </summary>
+    /// <returns>The index of the first match or -1 if not found</returns>
+    public int Find(string name) => images.FindIndex(i => i.Name == name);
+
+    /// <summary>
+    /// Removes the image with the given index if it exists, does nothing otherwise
+    /// </summary>
+    /// <returns>This flip book</returns>
+    public FlipBook Remove(int index)
     {
-        int i = images.FindIndex(i => i.Name == name);
-        if (i >= 0)
-            images.RemoveAt(i);
+        if (index >= 0 && index < images.Count)
+            images.RemoveAt(index);
         return this;
     }
 
@@ -376,8 +426,10 @@ public class FlipBook
     /// Utility function to save the flip viewer in a static HTML webpage
     /// </summary>
     /// <param name="filename">Output filename. Should end with .html</param>
-    public void Save(string filename) {
-        string content = "<!DOCTYPE html><html><head>" + Header + "</head><body>" + this + "</body>";
+    public void Save(string filename)
+    {
+        string content =
+            "<!DOCTYPE html><html><head>" + Header + "</head><body>" + this + "</body>";
         File.WriteAllText(filename, content);
     }
 
@@ -391,12 +443,14 @@ public class FlipBook
     /// Generates the flipbook (<see cref="Generate()"/>) and combines the HTML and JS code into one HTML string.
     /// </summary>
     /// <returns>HTML code</returns>
-    public override string ToString() {
+    public override string ToString()
+    {
         var code = Generate();
         return code.Html + $"<script>{code.ScriptFn}({code.Data});</script>";
     }
 
-    private GeneratedCode GenerateInternal(int? index) {
+    private GeneratedCode GenerateInternal(int? index)
+    {
         if (images.Count == 0)
             throw new InvalidOperationException("No images in the flip book");
 
@@ -407,7 +461,7 @@ public class FlipBook
         int height = images[0].Image.Height;
         for (int i = 0; i < images.Count; i++)
         {
-            if(index.HasValue && index.Value != i)
+            if (index.HasValue && index.Value != i)
                 continue;
 
             var img = images[i];
@@ -420,20 +474,26 @@ public class FlipBook
             if (targetType == DataType.RGBE && img.Image.NumChannels != 3)
                 targetType = DataType.Float16;
 
-            dataStrs.Add(targetType switch {
-                DataType.Float32 => WriteImageAsFloat32(img.Image),
-                DataType.RGBE => CompressImageAsRGBE(img.Image),
-                DataType.PNG => CompressImageAsPNG(img.Image),
-                DataType.Float16 => WriteImageAsFloat16(img.Image),
-                DataType quality => CompressImageAsJPEG(img.Image, (int)quality)
-            });
+            dataStrs.Add(
+                targetType switch
+                {
+                    DataType.Float32 => WriteImageAsFloat32(img.Image),
+                    DataType.RGBE => CompressImageAsRGBE(img.Image),
+                    DataType.PNG => CompressImageAsPNG(img.Image),
+                    DataType.Float16 => WriteImageAsFloat16(img.Image),
+                    DataType quality => CompressImageAsJPEG(img.Image, (int)quality),
+                }
+            );
 
-            typeStrs.Add(targetType switch {
-                DataType.Float32 => "single",
-                DataType.RGBE => "rgbe",
-                DataType.Float16 => "half",
-                _ => "ldr"
-            });
+            typeStrs.Add(
+                targetType switch
+                {
+                    DataType.Float32 => "single",
+                    DataType.RGBE => "rgbe",
+                    DataType.Float16 => "half",
+                    _ => "ldr",
+                }
+            );
 
             nameStrs.Add(img.Name);
         }
@@ -441,16 +501,20 @@ public class FlipBook
         if (String.IsNullOrEmpty(containerId))
             containerId = "flipbook-" + Guid.NewGuid().ToString();
 
-        string style = customCSS ?? $"width:{htmlWidth}px; height:{htmlHeight}px; resize: both; overflow: auto;";
+        string style =
+            customCSS
+            ?? $"width:{htmlWidth}px; height:{htmlHeight}px; resize: both; overflow: auto;";
         string html = $"<div id='{containerId}' style='{style}'></div>";
 
         string initialTMOStr = "null";
-        if (initialTMO != null) {
+        if (initialTMO != null)
+        {
             initialTMOStr = JsonSerializer.Serialize(initialTMO);
         }
 
         List<string> tmoOverrideStrs = [];
-        foreach (var img in images) {
+        foreach (var img in images)
+        {
             if (img.TMOOverride == null)
                 tmoOverrideStrs.Add("null");
             else
@@ -458,24 +522,24 @@ public class FlipBook
         }
 
         string json = $$"""
-        {
-            "width": {{width}},
-            "height": {{height}},
-            "containerId": "{{containerId}}",
-            "id": {{JsonSerializer.Serialize(ID)}},
-            "initialZoom": {{initialZoom.ToString()}},
-            "initialTMO": {{initialTMOStr}},
-            "initialTMOOverrides": [
-                {{string.Join(',', tmoOverrideStrs)}}
-            ],
-            "names": [{{string.Join(',', nameStrs.Select(n => $"\"{n}\""))}}],
-            "dataUrls": [{{string.Join(',', dataStrs.Select(n => $"\"{n}\""))}}],
-            "types": [{{string.Join(',', typeStrs.Select(n => $"\"{n}\""))}}],
-            "colorTheme": "{{theme}}",
-            "groupName": "{{groupName}}",
-            "hideTools": {{hideTools.ToString().ToLowerInvariant()}}
-        }
-        """;
+            {
+                "width": {{width}},
+                "height": {{height}},
+                "containerId": "{{containerId}}",
+                "id": {{JsonSerializer.Serialize(ID)}},
+                "initialZoom": {{initialZoom.ToString()}},
+                "initialTMO": {{initialTMOStr}},
+                "initialTMOOverrides": [
+                    {{string.Join(',', tmoOverrideStrs)}}
+                ],
+                "names": [{{string.Join(',', nameStrs.Select(n => $"\"{n}\""))}}],
+                "dataUrls": [{{string.Join(',', dataStrs.Select(n => $"\"{n}\""))}}],
+                "types": [{{string.Join(',', typeStrs.Select(n => $"\"{n}\""))}}],
+                "colorTheme": "{{theme}}",
+                "groupName": "{{groupName}}",
+                "hideTools": {{hideTools.ToString().ToLowerInvariant()}}
+            }
+            """;
 
         return new(html, json, "flipbook.MakeFlipBook", this.containerId);
     }
@@ -503,23 +567,30 @@ public class FlipBook
     /// <summary>
     /// Creates a flip book out of a dictionary of named images
     /// </summary>
-    public static FlipBook Make(IEnumerable<KeyValuePair<string, Image>> images,
-                                DataType dataType = DataType.RGBE)
-    => New.AddAll(images, dataType);
+    public static FlipBook Make(
+        IEnumerable<KeyValuePair<string, Image>> images,
+        DataType dataType = DataType.RGBE
+    ) => New.AddAll(images, dataType);
 
     /// <summary>
     /// Creates a flip book out of a dictionary of named images
     /// </summary>
-    public static FlipBook Make(IEnumerable<(string, Image)> images,
-                                DataType dataType = DataType.RGBE)
-    => New.AddAll(images, dataType);
+    public static FlipBook Make(
+        IEnumerable<(string, Image)> images,
+        DataType dataType = DataType.RGBE
+    ) => New.AddAll(images, dataType);
 
     /// <summary>
     /// Adds a dictionary of named images to a flip book
     /// </summary>
-    public FlipBook AddAll(IEnumerable<KeyValuePair<string, Image>> images,
-                           DataType dataType = DataType.RGBE, InitialTMO tmoOverride = null) {
-        foreach (var (name, image) in images) {
+    public FlipBook AddAll(
+        IEnumerable<KeyValuePair<string, Image>> images,
+        DataType dataType = DataType.RGBE,
+        InitialTMO tmoOverride = null
+    )
+    {
+        foreach (var (name, image) in images)
+        {
             Add(name, image, dataType, tmoOverride);
         }
         return this;
@@ -528,9 +599,14 @@ public class FlipBook
     /// <summary>
     /// Adds a dictionary of named images to a flip book
     /// </summary>
-    public FlipBook AddAll(IEnumerable<(string, Image)> images,
-                           DataType dataType = DataType.RGBE, InitialTMO tmoOverride = null) {
-        foreach (var (name, image) in images) {
+    public FlipBook AddAll(
+        IEnumerable<(string, Image)> images,
+        DataType dataType = DataType.RGBE,
+        InitialTMO tmoOverride = null
+    )
+    {
+        foreach (var (name, image) in images)
+        {
             Add(name, image, dataType, tmoOverride);
         }
         return this;
