@@ -6,7 +6,13 @@ endif()
 
 # FPNG stuff
 if (NOT MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-strict-aliasing -DFPNG_NO_SSE=1 -msse4.1 -mpclmul")
+    if (CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-strict-aliasing -msse4.1 -mpclmul")
+        add_compile_definitions(FPNG_NO_SSE=0)
+    else()
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-strict-aliasing")
+        add_compile_definitions(FPNG_NO_SSE=1)
+    endif()
 endif()
 
 target_include_directories(SimpleImageIOCore PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
