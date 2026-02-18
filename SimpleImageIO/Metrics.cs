@@ -60,6 +60,11 @@ public static class Metrics {
     }
 
     /// <summary>
+    /// Computes the absolute error image between two images.
+    /// </summary>
+    public static Image AbsErrorImage(Image a, Image b) => Image.ApplyOp(a, b, (x, y) => Math.Abs(x - y));
+
+    /// <summary>
     /// Computes the relative mean square error of two images. Ignores a small percentage of the
     /// brightest pixels. The result is less obscured by outliers this way.
     /// </summary>

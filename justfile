@@ -16,13 +16,18 @@ clean:
 clean:
   rm -rf ./prebuilt
 
-# builds flipbook.js via npm
 [working-directory: 'FlipViewer']
-frontend:
+_frontend mode:
   npm install
-  npm run build
+  npm run build{{mode}}
   echo "Copying .js to python package..."
   cp ./dist/flipbook.js ../PyWrapper/simpleimageio/flipbook.js
+
+# builds flipbook.js via npm
+frontend: (_frontend "")
+
+# builds flipbook.js via npm in development mode (source map and no minify)
+frontend-dev: (_frontend "-dev")
 
 [unix]
 _ensure_dirs:
@@ -84,7 +89,7 @@ copy-oidn: _ensure_dirs _download
 # Builds the C++ wrapper library for x86 and arm
 [macos]
 [working-directory: "./build/" ]
-build-native:
+build-native: _ensure_dirs
   cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="x86_64" ..
   cmake --build . --config Release
 
@@ -98,7 +103,7 @@ build-native:
 [linux]
 [windows]
 [working-directory: "./build/" ]
-build-native:
+build-native: _ensure_dirs
   cmake -DCMAKE_BUILD_TYPE=Release ..
   cmake --build . --config Release
 

@@ -92,6 +92,10 @@ export class ToneMapControls extends React.Component<ToneMapControlsProps, ToneM
         }
     }
 
+    public applySettings(settings: ToneMapSettings) {
+        this.setState({ globalSettings: settings }, () => this.apply());
+    } 
+
     stepExposure(reduce: boolean) {
         let state = this.state.globalSettings;
         if (this.state.soloMode[this.props.selectedIdx])

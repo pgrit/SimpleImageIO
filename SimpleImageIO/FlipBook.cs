@@ -209,6 +209,17 @@ public class FlipBook
     string theme;
     string groupName;
     bool hideTools;
+    string containerId = null;
+
+    /// <summary>
+    /// Unique ID used to identify this Flipbook in event handlers and to update images.
+    /// </summary>
+    public string ID { get; private set; } = Guid.NewGuid().ToString();
+
+    /// <param name="index">Index of Image of tuple list of Flipbook</param>
+    public Image GetImage(int index) {
+        return images[index].Image;
+    }
 
     /// <summary>
     /// Syntactic sugar to create a new object of this class. Makes the fluent API more readable.
@@ -295,6 +306,15 @@ public class FlipBook
     }
 
     /// <summary>
+    /// Replaces the default GUID <see cref="ID" /> by a user-defined value.
+    /// This must be unique across all FlipBooks in the same HTML page.
+    /// </summary>
+    public FlipBook SetID(string ID) {
+        this.ID = ID;
+        return this;
+    }
+
+    /// <summary>
     /// Adds a new image to this flip book.
     /// </summary>
     /// <param name="name">Name of the new image</param>
@@ -302,8 +322,7 @@ public class FlipBook
     /// <param name="targetType">Data type to use for this image's pixels</param>
     /// <param name="tmoOverride">If not null, this image will use its own tone mapping settings</param>
     /// <returns>This object (fluent API)</returns>
-    public FlipBook Add(string name, Image image, DataType targetType = DataType.RGBE, InitialTMO tmoOverride = null)
-    {
+    public FlipBook Add(string name, Image image, DataType targetType = DataType.RGBE, InitialTMO tmoOverride = null) {
         if (images.Count > 0 && (images[0].Image.Width != image.Width || images[0].Image.Height != image.Height))
             throw new ArgumentException("Image resolution does not match", nameof(image));
         images.Add((name, image, targetType, tmoOverride));
@@ -377,10 +396,7 @@ public class FlipBook
         return code.Html + $"<script>{code.ScriptFn}({code.Data});</script>";
     }
 
-    /// <summary>
-    /// Generates the HTML and JS for the flip book and returns them separately.
-    /// </summary>
-    public GeneratedCode Generate() {
+    private GeneratedCode GenerateInternal(int? index) {
         if (images.Count == 0)
             throw new InvalidOperationException("No images in the flip book");
 
@@ -389,8 +405,13 @@ public class FlipBook
         List<string> nameStrs = new();
         int width = images[0].Image.Width;
         int height = images[0].Image.Height;
-        foreach (var img in images)
+        for (int i = 0; i < images.Count; i++)
         {
+            if(index.HasValue && index.Value != i)
+                continue;
+
+            var img = images[i];
+
             if (width != img.Image.Width || height != img.Image.Height)
                 throw new InvalidOperationException("Image resolutions differ");
 
@@ -417,9 +438,11 @@ public class FlipBook
             nameStrs.Add(img.Name);
         }
 
-        string id = "flipbook-" + Guid.NewGuid().ToString();
+        if (String.IsNullOrEmpty(containerId))
+            containerId = "flipbook-" + Guid.NewGuid().ToString();
+
         string style = customCSS ?? $"width:{htmlWidth}px; height:{htmlHeight}px; resize: both; overflow: auto;";
-        string html = $"<div id='{id}' style='{style}'></div>";
+        string html = $"<div id='{containerId}' style='{style}'></div>";
 
         string initialTMOStr = "null";
         if (initialTMO != null) {
@@ -438,7 +461,8 @@ public class FlipBook
         {
             "width": {{width}},
             "height": {{height}},
-            "containerId": "{{id}}",
+            "containerId": "{{containerId}}",
+            "id": {{JsonSerializer.Serialize(ID)}},
             "initialZoom": {{initialZoom.ToString()}},
             "initialTMO": {{initialTMOStr}},
             "initialTMOOverrides": [
@@ -453,7 +477,27 @@ public class FlipBook
         }
         """;
 
-        return new(html, json, "flipbook.MakeFlipBook", id);
+        return new(html, json, "flipbook.MakeFlipBook", this.containerId);
+    }
+
+    /// <summary>
+    /// Generates the HTML and JS for the flip book and returns them separately.
+    /// The HTML code must not be added more than once to the same page. This is
+    /// the case even if this function is invoked multiple times
+    /// (because the HTML is always the same).
+    /// </summary>
+    public GeneratedCode Generate() => GenerateInternal(null);
+
+    /// <summary>
+    /// Replaces the image with the given index by a new one.
+    /// Assumes that <see cref="Generate()"/> was called before.
+    /// </summary>
+    /// <returns>JSON and JS code that must be output to the browser to change the image.
+    /// The HTML code is unchanged from the one returned by <see cref="Generate()"/> </returns>
+    public GeneratedCode ReplaceImage(Image newImage, int index)
+    {
+        images[index] = images[index] with { Image = newImage };
+        return GenerateInternal(index);
     }
 
     /// <summary>

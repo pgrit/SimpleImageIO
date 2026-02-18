@@ -9,6 +9,7 @@ export interface MagnifierProps {
     y: number;
     resolution: number;
     image: ToneMappingImage;
+    pixelCoordBelow: boolean;
 }
 
 interface MagnifierState {
@@ -124,7 +125,22 @@ export class Magnifier extends React.Component<MagnifierProps, MagnifierState> {
             );
         }
 
-        return (
+        if(this.props.pixelCoordBelow)
+        {
+            return (
+            <div className={styles.magnifier} style={{ left: this.props.x, top: this.props.y }}>
+                <table className={styles.magnifier}>
+                    <tbody>
+                        {rows}
+                    </tbody>
+                </table>
+                <p className={styles.pixelCoords}>{this.props.col}, {this.props.row}</p>
+            </div>
+            );
+        }
+        else
+        {
+            return (
             <div className={styles.magnifier} style={{ left: this.props.x, top: this.props.y }}>
                 <p className={styles.pixelCoords}>{this.props.col}, {this.props.row}</p>
                 <table className={styles.magnifier}>
@@ -134,5 +150,6 @@ export class Magnifier extends React.Component<MagnifierProps, MagnifierState> {
                 </table>
             </div>
         );
+        }
     }
 }

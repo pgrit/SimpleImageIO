@@ -5,7 +5,40 @@ import { Magnifier, formatNumber } from './Magnifier';
 import { ZoomLevel } from './flipviewer';
 import { JSX } from 'react/jsx-runtime';
 
-export type OnClickHandler = (col: number, row: number, event: MouseEvent) => void
+export type OnClickHandler = (mouseButton: number, mouseX: number, mouseY: number, ID: string, selectedIdx: number, keysPressed: Array<string>) => void
+export type OnWheelHandler = (mouseX: number, mouseY: number, deltaY: number, ID: string, selectedIdx: number, keysPressed: Array<string>) => void
+export type OnMouseOverHandler = (mouseX: number, mouseY: number, ID: string, selectedIdx: number, keysPressed: Array<string>) => void
+export type OnKeyHandler = (mouseX: number, mouseY: number, ID: string, selectedIdx: number, keysPressed: Array<string>) => void
+
+// Listener state that is forwared
+export interface ListenerState {
+    mouseButton: number;
+
+    // Mouse X/Y pixel coordinates relative to an image in Flipbook (Pixel (0, 0) at top left of image)
+    mouseX: number;
+    mouseY: number;
+
+    // Mouse Wheel
+    deltaY: number;
+
+    // ID of the Flipbook
+    ID: string;
+
+    // Which image is selected in a Flipbook
+    selectedIdx: number;
+
+    // All keys currently pressed
+    keysPressed: Set<string>;
+}
+export const listenerState: ListenerState = { mouseButton: 0, mouseX: 0, mouseY: 0, deltaY: 0, ID: "", selectedIdx: 0, keysPressed: new Set<string>() };
+
+export function setKeyPressed(value: boolean): void {
+    this.setState({
+        isAnyKeyPressed: value,
+    }, () => {
+        this.props.onStateChange?.(this.state);
+    });
+}
 
 export interface ImageContainerProps {
     width: number;
@@ -15,11 +48,14 @@ export interface ImageContainerProps {
     selectedIdx: number;
     onZoom: (zoom: number) => void;
     onClick?: OnClickHandler;
+    onWheel?: OnWheelHandler;
+    onMouseOver?: OnMouseOverHandler;
     children: React.ReactNode;
     means: number[];
+    onStateChange?: (state: ImageContainerState) => void;
 }
 
-interface ImageContainerState {
+export interface ImageContainerState {
     posX: number;
     posY: number;
     scale: number;
@@ -29,6 +65,7 @@ interface ImageContainerState {
     magnifierVisible: boolean;
     magnifierRow?: number;
     magnifierCol?: number;
+    magnifierPixelCoordsBelow: boolean;
 
     cropX?: number;
     cropY?: number;
@@ -37,9 +74,15 @@ interface ImageContainerState {
     cropActive: boolean;
     cropDragging: boolean;
     cropMeans?: number[];
+
+    isAnyKeyPressed: boolean;
+
+    magnifierResolution: number;
+    flagXSwapped: boolean;
+    flagYSwapped: boolean;
 }
 
-const magnifierPadding = 10;
+const magnifierPadding = 15;
 
 export class ImageContainer extends React.Component<ImageContainerProps, ImageContainerState> {
     canvasRefs: React.RefObject<HTMLCanvasElement>[];
@@ -54,8 +97,13 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
             posY: 0,
             scale: 1,
             magnifierVisible: false,
+            magnifierPixelCoordsBelow: false,
             cropActive: false,
             cropDragging: false,
+            isAnyKeyPressed: false,
+            magnifierResolution: 1,
+            flagXSwapped: false,
+            flagYSwapped: false,
         };
 
         this.canvasRefs = [];
@@ -71,20 +119,104 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
         this.onMouseOutOverImage = this.onMouseOutOverImage.bind(this);
         this.onWheel = this.onWheel.bind(this);
         this.onClick = this.onClick.bind(this);
+
+        this.props.onStateChange?.(this.state);
     }
 
     shiftImage(dx: number, dy: number) {
         this.setState({
             posX: this.state.posX + dx,
             posY: this.state.posY + dy
+        }, () => {
+            this.props.onStateChange?.(this.state);
         });
     }
 
-    offset(event: React.MouseEvent) {
+    offset(event: React.MouseEvent | WheelEvent) {
         let bounds = this.imgPlacer.current.getBoundingClientRect();
         let x = event.clientX - bounds.left;
         let y = event.clientY - bounds.top;
         return { x: x, y: y };
+    }
+
+    // computes offset of the magnifier (decides where to place magnifier around mouse)
+    offsetMagnifier(event: React.MouseEvent<HTMLDivElement>) {
+        let magnifierSizeX = parseInt(styles.magnifierWidth, 10) * (2 * this.state.magnifierResolution + 1);
+        let magnifierSizeY = parseInt(styles.magnifierHeight, 10) * (2 * this.state.magnifierResolution + 1);
+        let flipSizeX = this.container.current.clientWidth;
+        let flipSizeY = this.container.current.clientHeight - 20;
+        let paddingX = magnifierPadding;
+        let paddingY = magnifierPadding;
+
+        let posX = event.pageX - this.container.current.getBoundingClientRect().x;
+        let posY = event.pageY - this.container.current.getBoundingClientRect().y - window.scrollY;
+
+        let offsetX = 0;
+        let offsetY = 0;
+
+        if (!this.state.flagXSwapped) {
+            offsetX = 0;
+            let tmpX = flipSizeX - posX;
+
+            tmpX -= (paddingX + magnifierSizeX);
+            tmpX = Math.min(tmpX, 0);
+
+            if (tmpX < 0) {
+                offsetX = -(magnifierSizeX + 2 * paddingX);
+
+                this.setState({
+                    flagXSwapped: true,
+                }, () => {
+                    this.props.onStateChange?.(this.state);
+                });
+            }
+        }
+        else {
+            offsetX = -(magnifierSizeX + 2 * paddingX);
+            let tmpX = posX - (paddingX + magnifierSizeX);
+            tmpX = Math.min(tmpX, 0);
+
+            if (tmpX < 0) {
+                offsetX = 0
+                this.setState({
+                    flagXSwapped: false,
+                }, () => {
+                    this.props.onStateChange?.(this.state);
+                });
+            }
+        }
+        if (!this.state.flagYSwapped) {
+            offsetY = 0;
+            let tmpY = flipSizeY - posY;
+
+            tmpY -= (paddingY + magnifierSizeY);
+            tmpY = Math.min(tmpY, 0);
+
+            if (tmpY < 0) {
+                offsetY = -(magnifierSizeY + 2 * paddingY + 10);
+                this.setState({
+                    flagYSwapped: true,
+                }, () => {
+                    this.props.onStateChange?.(this.state);
+                });
+            }
+        }
+        else {
+            offsetY = -(magnifierSizeY + 2 * paddingY + 10);
+            let tmpY = posY - (paddingY + magnifierSizeY);
+            tmpY = Math.min(tmpY, 0);
+
+            if (tmpY < 0) {
+                offsetY = 0
+                this.setState({
+                    flagYSwapped: false,
+                }, () => {
+                    this.props.onStateChange?.(this.state);
+                });
+            }
+        }
+
+        return { offsetX: offsetX, offsetY: offsetY };
     }
 
     onMouseMoveOverImage(event: React.MouseEvent<HTMLDivElement>) {
@@ -93,23 +225,34 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
         let curPixelCol = Math.floor(xy.x / this.state.scale);
         let curPixelRow = Math.floor(xy.y / this.state.scale);
 
-        if ((event.buttons & 2) == 0)
-        {
-            this.setState({magnifierVisible: false});
+        if ((event.buttons & 2) == 0) {
+            this.setState({ magnifierVisible: false, flagXSwapped: false, flagYSwapped: false }, () => {
+                this.props.onStateChange?.(this.state);
+            });
             return;
         }
 
+        // computes offset of the magnifier (decides where to place magnifier)
+        let offset = this.offsetMagnifier(event);
+
         this.setState({
             magnifierVisible: true,
-            magnifierX: xy.x + magnifierPadding,
-            magnifierY: xy.y + magnifierPadding,
+            magnifierPixelCoordsBelow: this.state.flagYSwapped,
+            magnifierX: xy.x + magnifierPadding + offset.offsetX,
+            magnifierY: xy.y + magnifierPadding + offset.offsetY,
             magnifierCol: curPixelCol,
-            magnifierRow: curPixelRow
+            magnifierRow: curPixelRow,
+        }, () => {
+            this.props.onStateChange?.(this.state);
         });
     }
 
     onMouseOutOverImage(event: React.MouseEvent<HTMLDivElement>) {
-        this.setState({magnifierVisible: false});
+        this.setState({ magnifierVisible: false },
+            () => {
+                this.props.onStateChange?.(this.state);
+            }
+        );
     }
 
     computeCropMeans() {
@@ -159,7 +302,9 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
             means.push(m);
         }
 
-        this.setState({cropMeans: means});
+        this.setState({ cropMeans: means }, () => {
+            this.props.onStateChange?.(this.state);
+        });
     }
 
     onClick(event: React.MouseEvent<HTMLDivElement>) {
@@ -169,21 +314,28 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
         curPixelCol = Math.min(Math.max(curPixelCol, 0), this.props.width - 1);
         curPixelRow = Math.min(Math.max(curPixelRow, 0), this.props.height - 1);
 
-        if (this.props.onClick)
-        {
-            this.props.onClick(curPixelCol, curPixelRow, event.nativeEvent);
+        listenerState.mouseButton = event.button;
+        listenerState.mouseX = curPixelCol;
+        listenerState.mouseY = curPixelRow;
+
+        if (this.props.onClick) {
+            this.props.onClick(listenerState.mouseButton, listenerState.mouseX, listenerState.mouseY, listenerState.ID, listenerState.selectedIdx, Array.from(listenerState.keysPressed));
         }
 
         // Confirm or remove the crop box
-        if (event.ctrlKey && this.state.cropActive) {
+        if (event.shiftKey && this.state.cropActive) {
             if (this.state.cropWidth === 0 || this.state.cropHeight === 0 || !this.state.cropDragging) {
                 this.setState({
                     cropActive: false,
                     cropDragging: false,
+                }, () => {
+                    this.props.onStateChange?.(this.state);
                 });
             } else {
                 this.setState({
                     cropDragging: false
+                }, () => {
+                    this.props.onStateChange?.(this.state);
                 });
                 this.computeCropMeans();
             }
@@ -191,9 +343,24 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
     }
 
     onMouseMove(event: React.MouseEvent<HTMLDivElement>) {
+        // Mouse event callback
+        let xy = this.offset(event);
+        let curPixelCol = Math.floor(xy.x / this.state.scale);
+        let curPixelRow = Math.floor(xy.y / this.state.scale);
+        curPixelCol = Math.min(Math.max(curPixelCol, 0), this.props.width - 1);
+        curPixelRow = Math.min(Math.max(curPixelRow, 0), this.props.height - 1);
+
+        listenerState.mouseButton = event.button;
+        listenerState.mouseX = curPixelCol;
+        listenerState.mouseY = curPixelRow;
+
+        if (this.props.onMouseOver) {
+            this.props.onMouseOver(listenerState.mouseX, listenerState.mouseY, listenerState.ID, listenerState.selectedIdx, Array.from(listenerState.keysPressed));
+        }
+
         // If left mouse button down
         if ((event.buttons & 1) == 1) {
-            if (event.ctrlKey) {
+            if (event.shiftKey) {
                 let xy = this.offset(event);
                 let curPixelCol = Math.floor(xy.x / this.state.scale);
                 let curPixelRow = Math.floor(xy.y / this.state.scale);
@@ -204,6 +371,8 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
                     this.setState({
                         cropHeight: curPixelRow - this.state.cropY,
                         cropWidth: curPixelCol - this.state.cropX,
+                    }, () => {
+                        this.props.onStateChange?.(this.state);
                     });
                 } else {
                     this.setState({
@@ -213,6 +382,8 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
                         cropY: curPixelRow,
                         cropHeight: 0,
                         cropWidth: 0,
+                    }, () => {
+                        this.props.onStateChange?.(this.state);
                     });
                 }
             } else {
@@ -221,55 +392,72 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
         }
     }
 
-    onWheel(event: WheelEvent) {
-        if (event.altKey) return; // holding alt allows to scroll over the image
+    // Native Browser WheelEvent
+    // while wheeling over flipbook, website scroll is disabled
+    onWheelNative = (event: WheelEvent) => {
+        if (event.ctrlKey || this.state.isAnyKeyPressed)
+            event.preventDefault();
+    }
 
-        const ScrollSpeed = 0.25;
-        const MaxScale = 100;
-        const MinScale = 0.05;
+    onWheel(event: React.WheelEvent<HTMLDivElement>) {
+        listenerState.deltaY = event.deltaY;
 
-        const oldScale = this.state.scale;
-        const scale = oldScale * (1 - Math.sign(event.deltaY) * ScrollSpeed);
-        const factor = scale / oldScale;
+        if (event.ctrlKey) {
+            const ScrollSpeed = 0.25;
+            const MaxScale = 100;
+            const MinScale = 0.05;
 
-        if (scale > MaxScale || scale < MinScale) return;
+            const oldScale = this.state.scale;
+            const scale = oldScale * (1 - Math.sign(event.deltaY) * ScrollSpeed);
+            const factor = scale / oldScale;
 
-        // Adjust the position of the top left corner, so we get a scale pivot at the mouse cursor.
-        var relX = event.offsetX;
-        var relY = event.offsetY;
+            if (scale > MaxScale || scale < MinScale) return;
 
-        if (event.target === this.container.current) {
-            // Map position outside the image to a hypothetical pixel position
-            relX -= this.state.posX;
-            relY -= this.state.posY;
-        } else if (event.target === this.cropMarker.current) {
-            // Map position wihtin the crop marker to the image position
-            relX += this.state.cropX * oldScale;
-            relY += this.state.cropY * oldScale;
+            // Adjust the position of the top left corner, so we get a scale pivot at the mouse cursor.
+            var relX = event.nativeEvent.offsetX;
+            var relY = event.nativeEvent.offsetY;
+
+            if (event.target === this.container.current) {
+                // Map position outside the image to a hypothetical pixel position
+                relX -= this.state.posX;
+                relY -= this.state.posY;
+            } else if (event.target === this.cropMarker.current) {
+                // Map position wihtin the crop marker to the image position
+                relX += this.state.cropX * oldScale;
+                relY += this.state.cropY * oldScale;
+            }
+
+            var deltaX = (1 - factor) * relX;
+            var deltaY = (1 - factor) * relY;
+
+            let bounds = this.imgPlacer.current.getBoundingClientRect();
+            let x = event.clientX - bounds.left;
+            let y = event.clientY - bounds.top;
+
+            // computes offset of the magnifier (decides where to place magnifier)
+            let offset = this.offsetMagnifier(event);
+
+            this.shiftImage(deltaX, deltaY);
+            this.setState({
+                scale: scale,
+                magnifierX: x + magnifierPadding - deltaX + offset.offsetX,
+                magnifierY: y + magnifierPadding - deltaY + offset.offsetY,
+            }, () => {
+                this.props.onStateChange?.(this.state);
+            });
+
+            // keep the manual input in sync
+            this.props.onZoom(this.state.scale * window.devicePixelRatio);
         }
-
-        var deltaX = (1 - factor) * relX;
-        var deltaY = (1 - factor) * relY;
-
-        let bounds = this.imgPlacer.current.getBoundingClientRect();
-        let x = event.clientX - bounds.left;
-        let y = event.clientY - bounds.top;
-
-        this.shiftImage(deltaX, deltaY);
-        this.setState({
-            scale: scale,
-            magnifierX: x + magnifierPadding - deltaX,
-            magnifierY: y + magnifierPadding - deltaY,
-        });
-
-        event.preventDefault();
-
-        // keep the manual input in sync
-        this.props.onZoom(this.state.scale * window.devicePixelRatio);
+        else if (this.props.onWheel) {
+            this.props.onWheel(listenerState.mouseX, listenerState.mouseY, listenerState.deltaY, listenerState.ID, listenerState.selectedIdx, Array.from(listenerState.keysPressed));
+        }
     }
 
     centerView() {
-        this.setState({posX: 0, posY: 0});
+        this.setState({ posX: 0, posY: 0 }, () => {
+            this.props.onStateChange?.(this.state);
+        });
     }
 
     setZoom(zoom: ZoomLevel) {
@@ -285,7 +473,9 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
                 // number of _device_ pixels used as the image contains
                 scale = (zoom as number) / window.devicePixelRatio;
         }
-        this.setState({scale: scale});
+        this.setState({ scale: scale }, () => {
+            this.props.onStateChange?.(this.state);
+        });
         this.centerView();
         this.props.onZoom(scale * window.devicePixelRatio);
     }
@@ -313,8 +503,9 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
                 row={this.state.magnifierRow}
                 x={this.state.magnifierX}
                 y={this.state.magnifierY}
-                resolution={2}
+                resolution={this.state.magnifierResolution}
                 image={this.props.toneMappers[this.props.selectedIdx]}
+                pixelCoordBelow={this.state.magnifierPixelCoordsBelow}
             />
         }
 
@@ -342,11 +533,11 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
             if (!this.state.cropDragging) {
                 let cropCoords = `top=${top}, left=${left}, width=${width}, height=${height}`;
 
-                cropMean = <div style={{bottom: 16}} className={styles.meanValue}>
+                cropMean = <div style={{ bottom: 16 }} className={styles.meanValue}>
                     Crop mean: {formatNumber(this.state.cropMeans[this.props.selectedIdx])}
 
                     <input name='cropCoords' readOnly={true} value={cropCoords}
-                        style={{width: cropCoords.length + "ch"}}
+                        style={{ width: cropCoords.length + "ch" }}
                         className={styles['cropCoords']}
                         onClick={(event) => navigator.clipboard.writeText(event.currentTarget.value)}
                     /> ← click to copy
@@ -356,7 +547,7 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
 
         return (
             <div tabIndex={2} className={styles['image-container']}
-                onContextMenu={(e)=> e.preventDefault()}
+                onContextMenu={(e) => e.preventDefault()}
                 onMouseMove={this.onMouseMove}
                 ref={this.container}
             >
@@ -372,6 +563,7 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
                     onMouseOut={this.onMouseOutOverImage}
                     onMouseDown={this.onMouseMoveOverImage}
                     onClick={this.onClick}
+                    onWheel={this.onWheel}
                 >
                     {canvases}
                     {magnifier}
@@ -394,10 +586,10 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
             this.props.toneMappers[i] = new ToneMappingImage(img, canvas, () => { });
         }
 
-        this.container.current.addEventListener('wheel', this.onWheel, { passive: false })
+        this.container.current.addEventListener('wheel', this.onWheelNative, { passive: false })
     }
 
     componentWillUnmount(): void {
-        this.container.current.removeEventListener('wheel', this.onWheel)
+        this.container.current.removeEventListener('wheel', this.onWheelNative)
     }
 }
