@@ -15,6 +15,7 @@ obj
 __pycache__
 /dist
 /SimpleImageIO.egg-info
+/simpleimageio.egg-info
 launchSettings.json
 /FlipViewer/dist
 /FlipViewer/node_modules
