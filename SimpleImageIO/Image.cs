@@ -24,6 +24,12 @@ public unsafe class Image : IDisposable {
     public int NumChannels { get; protected set; }
 
     /// <summary>
+    /// Names of each channel in this image (e.g., "R" for the red color channel)
+    /// If null or empty, then a default interpretation (RGBA order) is assumed
+    /// </summary>
+    public string[] ChannelNames { get; protected set; }
+
+    /// <summary>
     /// Pointer to the native memory containing the image data
     /// </summary>
     public IntPtr DataPointer;
@@ -77,6 +83,7 @@ public unsafe class Image : IDisposable {
         Width = w;
         Height = h;
         this.NumChannels = numChannels;
+        this.ChannelNames = new string[numChannels];
         Alloc();
 
         // Zero out the values to avoid undefined contents
@@ -140,6 +147,7 @@ public unsafe class Image : IDisposable {
         dest.Width = src.Width;
         dest.Height = src.Height;
         dest.NumChannels = src.NumChannels;
+        dest.ChannelNames = src.ChannelNames;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -366,6 +374,7 @@ public unsafe class Image : IDisposable {
         Width = w;
         Height = h;
         NumChannels = n;
+        ChannelNames = new string[n];
         if (id < 0 || Width <= 0 || Height <= 0)
             throw new IOException($"ERROR: Could not load image file '{filename}'");
 
@@ -441,6 +450,7 @@ public unsafe class Image : IDisposable {
         Width = other.Width * scale;
         Height = other.Height * scale;
         NumChannels = other.NumChannels;
+        ChannelNames = other.ChannelNames;
         Alloc();
 
         SimpleImageIOCore.ZoomWithNearestInterp(other.DataPointer, NumChannels * other.Width, DataPointer,
@@ -468,6 +478,7 @@ public unsafe class Image : IDisposable {
         result.Width = a.Width;
         result.Height = a.Height;
         result.NumChannels = a.NumChannels;
+        result.ChannelNames = a.ChannelNames;
         result.Alloc();
         Parallel.For(0, a.Height, row => {
             for (int col = 0; col < a.Width; ++col) {
@@ -492,6 +503,7 @@ public unsafe class Image : IDisposable {
         result.Width = a.Width;
         result.Height = a.Height;
         result.NumChannels = a.NumChannels;
+        result.ChannelNames = a.ChannelNames;
         result.Alloc();
         Parallel.For(0, a.Height, row => {
             for (int col = 0; col < a.Width; ++col) {

@@ -45,6 +45,14 @@ _get_layer_name = corelib.core.GetExrLayerName
 _get_layer_name.argtypes = [c_int, c_int, POINTER(c_char)]
 _get_layer_name.restype = None
 
+_get_channel_name_len = corelib.core.GetExrChannelNameLen
+_get_channel_name_len.argtypes = [c_int, c_char_p, c_int]
+_get_channel_name_len.restype = c_int
+
+_get_channel_name = corelib.core.GetExrChannelName
+_get_channel_name.argtypes = [c_int, c_char_p, c_int, POINTER(c_char)]
+_get_channel_name.restype = None
+
 _copy_layer = corelib.core.CopyCachedLayer
 _copy_layer.argtypes = [c_int, c_char_p, POINTER(c_float)]
 _copy_layer.restype = None
@@ -69,7 +77,14 @@ def read(filename: str):
 
     return buffer
 
-def read_layered_exr(filename: str):
+def read_layered_exr(filename: str, layout = None):
+    '''
+    Reads all layers from an .exr file
+
+    Arguments:
+    filename -- the file to load
+    layout -- optional dictionary that will be filled with the per-layer channel name configurations
+    '''
     w = c_int()
     h = c_int()
     c = c_int()
@@ -91,6 +106,16 @@ def read_layered_exr(filename: str):
             buffer = np.zeros((h.value,w.value,num_chans), dtype=np.float32)
 
         _copy_layer(idx, name, buffer.ctypes.data_as(POINTER(c_float)))
+
+        # Read the channel names
+        if layout is not None:
+            channel_names = []
+            for c in range(num_chans):
+                nc = _get_channel_name_len(idx, name, c)
+                cstr_buf = create_string_buffer(nc + 1)
+                _get_channel_name(idx, name, c, cstr_buf);
+                channel_names.append(cstr_buf.value.decode('utf-8'))
+            layout[name.decode('utf-8')] = channel_names
 
         layers[name.decode('utf-8')] = buffer
 

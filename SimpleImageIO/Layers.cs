@@ -41,6 +41,14 @@ public static class Layers {
             else
                 layers[name] = new(width, height, numChans);
 
+            // Read the channel names
+            for (int c = 0; c < numChans; ++c) {
+                int clen = SimpleImageIOCore.GetExrChannelNameLen(id, name, c);
+                StringBuilder chanNameBuilder = new(clen);
+                SimpleImageIOCore.GetExrChannelName(id, name, c, chanNameBuilder);
+                layers[name].ChannelNames[c] = chanNameBuilder.ToString();
+            }
+
             SimpleImageIOCore.CopyCachedLayer(id, name, layers[name].DataPointer);
         }
 

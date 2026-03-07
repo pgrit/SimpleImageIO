@@ -17,6 +17,12 @@ static internal partial class SimpleImageIOCore {
     public static extern int GetExrLayerChannelCount(int id, string name);
 
     [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
+    public static extern int GetExrChannelNameLen(int id, string layerName, int channelIdx);
+
+    [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
+    public static extern int GetExrChannelName(int id, string layerName, int channelIdx, StringBuilder name);
+
+    [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]
     public static extern int GetExrLayerNameLen(int id, int layerIdx);
 
     [DllImport("SimpleImageIOCore", CallingConvention = CallingConvention.Cdecl)]

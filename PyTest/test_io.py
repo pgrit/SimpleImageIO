@@ -204,10 +204,20 @@ class TestInputOutput(unittest.TestCase):
         ], dtype=np.float32)
 
         sio.write_layered_exr("layered.exr", {"": img, "albedo": other})
-        layers = sio.read_layered_exr("layered.exr")
+        channel_names = {}
+        layers = sio.read_layered_exr("layered.exr", channel_names)
 
         self.assertTrue("" in layers)
         self.assertTrue("albedo" in layers)
+
+        self.assertEqual(len(channel_names[""]), 3)
+        self.assertEqual(len(channel_names["albedo"]), 3)
+        self.assertEqual(channel_names["albedo"][0], "R")
+        self.assertEqual(channel_names["albedo"][1], "G")
+        self.assertEqual(channel_names["albedo"][2], "B")
+        self.assertEqual(channel_names[""][0], "R")
+        self.assertEqual(channel_names[""][1], "G")
+        self.assertEqual(channel_names[""][2], "B")
 
         self.assertEqual(other[0,0,0], layers["albedo"][0,0,0])
         self.assertEqual(other[0,0,1], layers["albedo"][0,0,1])

@@ -59,7 +59,8 @@ struct ExrChannelLayout {
     int idxG = -1;
     int idxB = -1;
     int idxA = -1;
-    int idxY = -1;
+
+    std::map<std::string, int> customChannels = {};
 
     int CountChannels() const {
         return
@@ -67,7 +68,32 @@ struct ExrChannelLayout {
             (idxG >= 0 ? 1 : 0) +
             (idxB >= 0 ? 1 : 0) +
             (idxA >= 0 ? 1 : 0) +
-            (idxY >= 0 ? 1 : 0);
+            customChannels.size();
+    }
+
+    std::string NameOf(int idx) const {
+        int rgbaOffset =
+            (idxR >= 0 ? 1 : 0) +
+            (idxG >= 0 ? 1 : 0) +
+            (idxB >= 0 ? 1 : 0) +
+            (idxA >= 0 ? 1 : 0);
+
+        if (idx < rgbaOffset) {
+            char* fixed = (char*)alloca(4);
+            int offset = 0;
+            if (idxR >= 0) fixed[offset++] = 'R';
+            if (idxG >= 0) fixed[offset++] = 'G';
+            if (idxB >= 0) fixed[offset++] = 'B';
+            if (idxA >= 0) fixed[offset++] = 'A';
+
+            return std::string { fixed[idx] };
+        }
+
+        int i = idx - rgbaOffset;
+        auto it = customChannels.cbegin();
+        for (; it != customChannels.cend(); ++it)
+            if (i-- == 0) break;
+        return it->first;
     }
 };
 
@@ -156,20 +182,22 @@ int CacheExrImage(const char* filename) {
     }
 
     // Read the number of channels in each layer
-    int freeChannels = 0;
     for (int chan = 0; chan < result.header.num_channels; ++chan) {
-        // Extract the layer name by assuming a channel name of the form "layername.R", "layername.B" and so on
-        size_t len = strlen(result.header.channels[chan].name);
+        // Extract the layer name by assuming a channel name of the form "layername.channelname"
+        std::string name = result.header.channels[chan].name;
+        size_t len = name.size();
 
-        std::string layerName;
-        if (len <= 2) // Plain channels without a layer will be merged into an unnamed default layer (e.g., "R", "G", and "B")
+        size_t idxSep = name.rfind('.');
+        std::string layerName, chanName;
+        if (idxSep == name.npos) {
+            // Plain channels without a layer will be merged into an unnamed default layer (e.g., "R", "G", and "B")
             layerName = "";
-        else if (result.header.channels[chan].name[len - 2] != '.') // Keep the full name as the layer name
-            layerName = std::string(result.header.channels[chan].name, len);
-        else // Remove channel name from the layer name (e.g., .R / .G / .B)
-            layerName = std::string(result.header.channels[chan].name, len - 2);
-
-        char chanName = result.header.channels[chan].name[len - 1];
+            chanName = name;
+        } else {
+            // Remove channel name from the layer name
+            layerName = name.substr(0, idxSep);
+            chanName = name.substr(idxSep + 1);
+        }
 
         // Update the channel layout info
         auto iter = result.channelsPerLayer.find(layerName);
@@ -177,27 +205,20 @@ int CacheExrImage(const char* filename) {
             result.channelsPerLayer[layerName] = ExrChannelLayout();
             result.layerNames.emplace_back(layerName);
         }
-
         auto& layout = result.channelsPerLayer[layerName];
 
-        switch (chanName) {
-        case 'R':
+        // Handle known channel names R G B and A so we can reorder them
+        // All other channel names will be alphabethically sorted
+        if (chanName == "R")
             layout.idxR = chan;
-            break;
-        case 'G':
+        else if (chanName == "G")
             layout.idxG = chan;
-            break;
-        case 'B':
+        else if (chanName == "B")
             layout.idxB = chan;
-            break;
-        case 'A':
+        else if (chanName == "A")
             layout.idxA = chan;
-            break;
-        case 'Y':
-        default:
-            layout.idxY = chan;
-            break;
-        }
+        else if (!layout.customChannels.emplace(chanName, chan).second)
+            std::cerr << "Duplicate channel '" << chanName << "' in layer '" << layerName << "' ignored." << std::endl;
     }
 
     cacheMutex.lock();
@@ -234,44 +255,24 @@ bool CopyCachedExrLayer(int id, std::string layerName, float* out) {
     int numChannels = layerInfo.CountChannels();
 
     auto swizzle = [numChannels, &layerInfo, &layerName](unsigned char** images, int srcIdx, int dstIdx, float* out) {
-        if (numChannels == 1) { // Y
-            assert(layerInfo.idxY >= 0);
-            auto chanImg = (float*)images[layerInfo.idxY];
-            out[dstIdx + 0] = chanImg[srcIdx];
-        } else if (numChannels == 3) { // RGB
-            assert(layerInfo.idxR >= 0);
-            auto chanImg = (float*)images[layerInfo.idxR];
-            out[dstIdx + 0] = chanImg[srcIdx];
+        int offset = 0;
+        auto add = [&](int idx) {
+            auto chanImg = (float*)images[idx];
+            out[dstIdx + offset] = chanImg[srcIdx];
+            offset++;
+        };
 
-            assert(layerInfo.idxG >= 0);
-            chanImg = (float*)images[layerInfo.idxG];
-            out[dstIdx + 1] = chanImg[srcIdx];
+        if (layerInfo.idxR >= 0)
+            add(layerInfo.idxR);
+        if (layerInfo.idxG >= 0)
+            add(layerInfo.idxG);
+        if (layerInfo.idxB >= 0)
+            add(layerInfo.idxB);
+        if (layerInfo.idxA >= 0)
+            add(layerInfo.idxA);
+        for (auto it = layerInfo.customChannels.begin(); it != layerInfo.customChannels.end(); ++it)
+            add(it->second);
 
-            assert(layerInfo.idxB >= 0);
-            chanImg = (float*)images[layerInfo.idxB];
-            out[dstIdx + 2] = chanImg[srcIdx];
-        } else if (numChannels == 4) { // RGBA
-            assert(layerInfo.idxR >= 0);
-            auto chanImg = (float*)images[layerInfo.idxR];
-            out[dstIdx + 0] = chanImg[srcIdx];
-
-            assert(layerInfo.idxG >= 0);
-            chanImg = (float*)images[layerInfo.idxG];
-            out[dstIdx + 1] = chanImg[srcIdx];
-
-            assert(layerInfo.idxB >= 0);
-            chanImg = (float*)images[layerInfo.idxB];
-            out[dstIdx + 2] = chanImg[srcIdx];
-
-            assert(layerInfo.idxA >= 0);
-            chanImg = (float*)images[layerInfo.idxA];
-            out[dstIdx + 3] = chanImg[srcIdx];
-        } else {
-            std::cerr << "ERROR while reading .exr layer " << layerName << ": Images with "
-                    << numChannels << " channels are currently not supported. " << std::endl;
-            cacheMutex.unlock();
-            return false;
-        }
         return true;
     };
 
@@ -896,6 +897,20 @@ SIIO_API void GetExrLayerName(int id, int layerIdx, char* out) {
     cacheMutex.unlock();
 }
 
+SIIO_API int GetExrChannelNameLen(int id, const char* layerName, int channelIdx) {
+    cacheMutex.lock();
+    const auto& chanName = exrImages[id].channelsPerLayer[layerName].NameOf(channelIdx);
+    cacheMutex.unlock();
+    return chanName.size();
+}
+
+SIIO_API void GetExrChannelName(int id, const char* layerName, int channelIdx, char* out) {
+    cacheMutex.lock();
+    const auto& chanName = exrImages[id].channelsPerLayer[layerName].NameOf(channelIdx);
+    strcpy(out, chanName.c_str());
+    cacheMutex.unlock();
+}
+
 SIIO_API bool CopyCachedLayer(int id, const char* name, float* out) {
     return CopyCachedExrLayer(id, name, out);
 }
@@ -960,7 +975,6 @@ SIIO_API int GetExrLayerNames(const char* filename, char*** names) {
     }
 
     // Read the number of channels in each layer
-    int freeChannels = 0;
     std::unordered_set<std::string> layerNames;
     for (int chan = 0; chan < header.num_channels; ++chan) {
         // Extract the layer name by assuming a channel name of the form "layername.R", "layername.B" and so on
