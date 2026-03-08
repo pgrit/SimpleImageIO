@@ -222,13 +222,17 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
             evt.stopPropagation();
         }
 
+        let needTMOUpdate = false;
+
         if (evt.key === "e" || evt.key === "E") {
             this.tmoCtrls.current.stepExposure(evt.key === "E");
+            needTMOUpdate = true;
             evt.stopPropagation();
         }
 
         if (evt.key === "f" || evt.key === "F") {
             this.tmoCtrls.current.stepFalseColor(evt.key === "f");
+            needTMOUpdate = true;
             evt.stopPropagation();
         }
 
@@ -239,6 +243,7 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
 
         if (evt.ctrlKey && evt.key === 'r') {
             this.tmoCtrls.current.state.globalSettings.exposure = 0;
+            needTMOUpdate = true;
             evt.stopPropagation();
             evt.preventDefault();
         }
@@ -253,7 +258,8 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
             evt.stopPropagation();
         }
 
-        this.updateTMOSettings(this.tmoCtrls.current.state.globalSettings);
+        if (needTMOUpdate)
+            this.updateTMOSettings(this.tmoCtrls.current.state.globalSettings);
     }
 
     reset() {

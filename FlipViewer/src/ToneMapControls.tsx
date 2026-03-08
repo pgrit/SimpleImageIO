@@ -94,7 +94,7 @@ export class ToneMapControls extends React.Component<ToneMapControlsProps, ToneM
 
     public applySettings(settings: ToneMapSettings) {
         this.setState({ globalSettings: settings }, () => this.apply());
-    } 
+    }
 
     stepExposure(reduce: boolean) {
         let state = this.state.globalSettings;
@@ -104,7 +104,6 @@ export class ToneMapControls extends React.Component<ToneMapControlsProps, ToneM
         let e = +state.exposure + (reduce ? -0.5 : 0.5);
         state.exposure = e;
         state.activeTMO = ToneMapType.Exposure;
-        this.setState({}, this.apply);
     }
 
     stepFalseColor(reduce: boolean) {
@@ -115,7 +114,6 @@ export class ToneMapControls extends React.Component<ToneMapControlsProps, ToneM
         let m = +state.max * (reduce ? 0.9 : 1.0 / 0.9);
         state.max = m;
         state.activeTMO = ToneMapType.FalseColor;
-        this.setState({}, this.apply);
     }
 
     render() {
