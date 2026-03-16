@@ -173,7 +173,6 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
         // trigger callbacks
         if (this.props.onKeyImageContainer && !keysPressed.has(evt.key)) {
             keysPressed.add(evt.key);
-            evt.preventDefault();
 
             this.imageContainer.current.setState({
                 isAnyKeyPressed: true,
@@ -198,6 +197,7 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
             evt.preventDefault(); // prevents the window from scrolling while flipping
         }
 
+        // Image selection shortcuts
         let digit = NaN;
         if (evt.code.startsWith("Digit"))
             digit = parseInt(evt.code.substring("Digit".length));
@@ -222,6 +222,17 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
             evt.stopPropagation();
         }
 
+        // Fullscreen mode
+        if (evt.key === "F11") {
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            } else {
+                evt.currentTarget.requestFullscreen();
+            }
+            evt.preventDefault(); // Don't trigger the browser's default full-page fullscreen mode
+        }
+
+        // Tone mapping update shortcuts
         let needTMOUpdate = false;
 
         if (evt.key === "e" || evt.key === "E") {
