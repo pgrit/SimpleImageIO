@@ -342,7 +342,7 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
                 <ul>
                     <li>Right click on the image to display pixel values.</li>
                     <li>Hold ALT while scrolling to override zoom.</li>
-                    <li>Ctrl + click to select a crop area.</li>
+                    <li>Shift + click to select a crop area.</li>
                     <li>Ctrl+C copies the image as png.</li>
                     <li>e increases exposure, Shift+e reduces it.</li>
                     <li>f lowers the maximum for false color mapping, Shift+f increases it.</li>
