@@ -39,20 +39,19 @@ _ensure_dirs:
 
 [windows]
 _ensure_dirs:
-  New-Item -ItemType Directory runtimes/linux-x64/native > $null
-  New-Item -ItemType Directory runtimes/win-x64/native > $null
-  New-Item -ItemType Directory runtimes/osx-x64/native > $null
-  New-Item -ItemType Directory runtimes/osx-arm64/native > $null
-  New-Item -ItemType Directory build > $null
+  New-Item -ItemType Directory -Force runtimes/linux-x64/native > $null
+  New-Item -ItemType Directory -Force runtimes/win-x64/native > $null
+  New-Item -ItemType Directory -Force runtimes/osx-x64/native > $null
+  New-Item -ItemType Directory -Force runtimes/osx-arm64/native > $null
+  New-Item -ItemType Directory -Force build > $null
 
 # Downloads the precompiled binaries for OIDN from GitHub
 [windows]
 _download:
-  if (-not(Test-Path -Path "prebuilt" -PathType Container))
-  {
-    Invoke-WebRequest -Uri "https://github.com/pgrit/RenderLibs/releases/download/v{{renderLibVersion}}/RenderLibs-v{{renderLibVersion}}.zip" -OutFile "prebuilt.zip"
-    Expand-Archive "prebuilt.zip" -DestinationPath ./prebuilt
-    rm prebuilt.zip
+  if (-not(Test-Path -Path "prebuilt" -PathType Container)) { \
+    Invoke-WebRequest -Uri "https://github.com/pgrit/RenderLibs/releases/download/v{{renderLibVersion}}/RenderLibs-v{{renderLibVersion}}.zip" -OutFile "prebuilt.zip" && \
+    Expand-Archive "prebuilt.zip" -DestinationPath ./prebuilt && \
+    rm prebuilt.zip \
   }
 
 # Downloads the precompiled binaries for OIDN from GitHub
