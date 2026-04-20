@@ -5,10 +5,11 @@ import { Magnifier, formatNumber } from './Magnifier';
 import { ZoomLevel } from './flipviewer';
 import { JSX } from 'react/jsx-runtime';
 
-export type OnClickHandler = (mouseButton: number, mouseX: number, mouseY: number, ID: string, selectedIdx: number, keysPressed: Array<string>) => void
-export type OnWheelHandler = (mouseX: number, mouseY: number, deltaY: number, ID: string, selectedIdx: number, keysPressed: Array<string>) => void
-export type OnMouseOverHandler = (mouseX: number, mouseY: number, ID: string, selectedIdx: number, keysPressed: Array<string>) => void
-export type OnKeyHandler = (mouseX: number, mouseY: number, ID: string, selectedIdx: number, keysPressed: Array<string>) => void
+export type OnClickHandler = (mouseButton: number, mouseX: number, mouseY: number, ID: string, selectedIdx: number, keysPressed: Array<string>) => void;
+export type OnWheelHandler = (mouseX: number, mouseY: number, deltaY: number, ID: string, selectedIdx: number, keysPressed: Array<string>) => void;
+export type OnMouseOverHandler = (mouseX: number, mouseY: number, ID: string, selectedIdx: number, keysPressed: Array<string>) => void;
+export type OnKeyHandler = (mouseX: number, mouseY: number, ID: string, selectedIdx: number, keysPressed: Array<string>) => void;
+export type OnCropHandler = (cropX?: number, cropY?: number, cropWidth?: number, cropHeight?: number) => void;
 
 // Listener state that is forwared
 export interface ListenerState {
@@ -50,6 +51,7 @@ export interface ImageContainerProps {
     onClick?: OnClickHandler;
     onWheel?: OnWheelHandler;
     onMouseOver?: OnMouseOverHandler;
+    onCrop?: OnCropHandler;
     children: React.ReactNode;
     means: number[];
     onStateChange?: (state: ImageContainerState) => void;
@@ -247,7 +249,7 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
         });
     }
 
-    onMouseOutOverImage(event: React.MouseEvent<HTMLDivElement>) {
+    onMouseOutOverImage(_event: React.MouseEvent<HTMLDivElement>) {
         this.setState({ magnifierVisible: false },
             () => {
                 this.props.onStateChange?.(this.state);
@@ -336,6 +338,7 @@ export class ImageContainer extends React.Component<ImageContainerProps, ImageCo
                     cropDragging: false
                 }, () => {
                     this.props.onStateChange?.(this.state);
+                    this.props.onCrop?.(this.state.cropX, this.state.cropY, this.state.cropWidth, this.state.cropHeight);
                 });
                 this.computeCropMeans();
             }

@@ -2,7 +2,7 @@ import { createRoot } from 'react-dom/client';
 import styles from './styles.module.css';
 import React, { createRef } from 'react';
 import { renderImage } from "./Render";
-import { ImageContainer, OnClickHandler, OnWheelHandler, OnMouseOverHandler, ImageContainerState, OnKeyHandler, setKeyPressed, listenerState } from './ImageContainer';
+import { ImageContainer, OnClickHandler, OnWheelHandler, OnMouseOverHandler, ImageContainerState, OnKeyHandler, listenerState, OnCropHandler } from './ImageContainer';
 import { ToneMapControls } from './ToneMapControls';
 import { MethodList } from './MethodList';
 import { Tools } from './Tools';
@@ -113,6 +113,7 @@ export interface FlipProps {
     onWheel?: OnWheelHandler;
     onMouseOver?: OnMouseOverHandler;
     onKeyImageContainer?: OnKeyHandler;
+    onCrop?: OnCropHandler;
     groupName?: string;
     hideTools: boolean;
     idStr: string;
@@ -397,6 +398,7 @@ export class FlipBook extends React.Component<FlipProps, FlipState> {
                         onClick={this.props.onClick}
                         onWheel={this.props.onWheel}
                         onMouseOver={this.props.onMouseOver}
+                        onCrop={this.props.onCrop}
                         onStateChange={(st) => this.onImageContainerUpdate(st)}
                     >
                         {popup}
@@ -547,6 +549,7 @@ export type FlipBookParams = {
     onWheel?: OnWheelHandler,
     onMouseOver?: OnMouseOverHandler,
     onKeyImageContainer?: OnKeyHandler,
+    onCrop?: OnCropHandler,
     colorTheme?: string,
     hideTools: boolean,
     containerId: string,
@@ -599,6 +602,7 @@ export function AddFlipBook(params: FlipBookParams, groupName?: string) {
             onClick={params.onClick}
             onWheel={params.onWheel}
             onMouseOver={params.onMouseOver}
+            onCrop={params.onCrop}
             onKeyImageContainer={params.onKeyImageContainer}
             style={themeStyle}
             groupName={groupName}

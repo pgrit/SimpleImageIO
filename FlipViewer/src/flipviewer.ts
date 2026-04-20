@@ -1,5 +1,5 @@
 import { AddFlipBook, getBooks, SetGroupIndex } from "./FlipBook";
-import { OnClickHandler, OnKeyHandler, OnMouseOverHandler, OnWheelHandler } from "./ImageContainer";
+import { OnClickHandler, OnCropHandler, OnKeyHandler, OnMouseOverHandler, OnWheelHandler } from "./ImageContainer";
 
 async function readRGBE(url: string) {
     const response = await fetch(url);
@@ -106,12 +106,12 @@ function AsFlipData(data: FlipData | string): FlipData {
         return data;
 }
 
-export async function MakeFlipBook(data: FlipData | string, onClick?: OnClickHandler, onWheel?: OnWheelHandler, onMouseOver?: OnMouseOverHandler, onKey?: OnKeyHandler) {
+export async function MakeFlipBook(data: FlipData | string, onClick?: OnClickHandler, onWheel?: OnWheelHandler, onMouseOver?: OnMouseOverHandler, onKey?: OnKeyHandler, onCrop?: OnCropHandler) {
     data = AsFlipData(data);
 
     let work: Promise<Float32Array | HTMLImageElement>[] = [];
     for (let i = 0; i < data.dataUrls.length; ++i) {
-        let loadFn;
+        let loadFn: any;
         switch (data.types[i]) {
             case ImageType.Single: loadFn = readFloat; break;
             case ImageType.Half: loadFn = readHalf; break;
@@ -137,6 +137,7 @@ export async function MakeFlipBook(data: FlipData | string, onClick?: OnClickHan
         onWheel: onWheel,
         onMouseOver: onMouseOver,
         onKeyImageContainer: onKey,
+        onCrop: onCrop,
         colorTheme: data.colorTheme,
         hideTools: data.hideTools,
         containerId: data.containerId,
@@ -148,12 +149,12 @@ export async function UpdateImage(data: FlipData | string) {
     data = AsFlipData(data);
 
     let book = getBooks(data.id)[0].current;
-    if(!book)
+    if (!book)
         return;
 
     let work: Promise<Float32Array | ImageData>[] = [];
     for (let i = 0; i < data.dataUrls.length; ++i) {
-        let loadFn;
+        let loadFn: any;
         switch (data.types[i]) {
             case ImageType.Single: loadFn = readFloat; break;
             case ImageType.Half: loadFn = readHalf; break;
