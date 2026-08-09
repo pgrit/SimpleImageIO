@@ -38,7 +38,7 @@ public unsafe class Image : IDisposable {
     /// List of file name extensions for all supported file formats. (Theoretically, some other formats are
     /// also supported through stb_image, but those not in this list have never been tested.)
     /// </summary>
-    public static readonly string[] SupportedExtensions = {
+    public static readonly string[] SupportedExtensions = [
         ".exr",
         ".hdr",
         ".png",
@@ -47,19 +47,19 @@ public unsafe class Image : IDisposable {
         ".tga",
         ".pfm",
         ".tif", ".tiff",
-    };
+    ];
 
     /// <summary>
     /// </summary>
     /// <returns>True if the filename has an extension that corresponds to a supported image format</returns>
     public static bool HasSupportedExtension(string filename) {
-        foreach (var ext in Image.SupportedExtensions)
+        foreach (var ext in SupportedExtensions)
             if (filename.EndsWith(ext, ignoreCase: true, culture: CultureInfo.InvariantCulture))
                 return true;
         return false;
     }
 
-    internal float* dataPtr {
+    internal float* DataPtr {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => (float*)DataPointer.ToPointer();
     }
@@ -82,12 +82,12 @@ public unsafe class Image : IDisposable {
     public Image(int w, int h, int numChannels) {
         Width = w;
         Height = h;
-        this.NumChannels = numChannels;
-        this.ChannelNames = new string[numChannels];
+        NumChannels = numChannels;
+        ChannelNames = new string[numChannels];
         Alloc();
 
         // Zero out the values to avoid undefined contents
-        Unsafe.InitBlock(dataPtr, 0, (uint)(Width * Height * NumChannels * sizeof(float)));
+        Unsafe.InitBlock(DataPtr, 0, (uint)(Width * Height * NumChannels * sizeof(float)));
     }
 
     /// <returns>True if the pixel coordinates lie within the image</returns>
@@ -167,7 +167,7 @@ public unsafe class Image : IDisposable {
         int c = Math.Clamp(col, 0, Width - 1);
         int r = Math.Clamp(row, 0, Height - 1);
 
-        return dataPtr[GetIndex(c, r) + chan];
+        return DataPtr[GetIndex(c, r) + chan];
     }
 
     /// <summary>
@@ -192,7 +192,7 @@ public unsafe class Image : IDisposable {
         int r = Math.Clamp(row, 0, Height - 1);
 
         for (int chan = 0; chan < NumChannels; ++chan)
-            dataPtr[GetIndex(c, r) + chan] = channels[chan];
+            DataPtr[GetIndex(c, r) + chan] = channels[chan];
     }
 
     /// <summary>
@@ -207,21 +207,7 @@ public unsafe class Image : IDisposable {
     public void SetPixelChannel(int col, int row, int chan, float value) {
         int c = Math.Clamp(col, 0, Width - 1);
         int r = Math.Clamp(row, 0, Height - 1);
-        dataPtr[GetIndex(c, r) + chan] = value;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static void AtomicAddFloat(ref float target, float value) {
-        float initialValue, computedValue;
-        do {
-            initialValue = target;
-            computedValue = initialValue + value;
-        } while (
-            initialValue != Interlocked.CompareExchange(ref target, computedValue, initialValue)
-            // If another thread changes target to NaN in the meantime, we will be stuck forever
-            // since NaN != NaN is always true, and NaN + value is also NaN
-            && !float.IsNaN(initialValue)
-        );
+        DataPtr[GetIndex(c, r) + chan] = value;
     }
 
     /// <summary>
@@ -238,7 +224,7 @@ public unsafe class Image : IDisposable {
         int c = Math.Clamp(col, 0, Width - 1);
         int r = Math.Clamp(row, 0, Height - 1);
         int idx = GetIndex(c, r);
-        AtomicAddFloat(ref *(dataPtr + idx + chan), value);
+        Atomic.Add(ref *(DataPtr + idx + chan), value);
     }
 
     /// <summary>
@@ -255,7 +241,7 @@ public unsafe class Image : IDisposable {
         int r = Math.Clamp(row, 0, Height - 1);
         int idx = GetIndex(c, r);
         for (int chan = 0; chan < NumChannels; ++chan)
-            AtomicAddFloat(ref *(dataPtr + idx + chan), channels[chan]);
+            Atomic.Add(ref *(DataPtr + idx + chan), channels[chan]);
     }
 
     /// <summary>
@@ -277,7 +263,7 @@ public unsafe class Image : IDisposable {
         for (int row = 0; row < Height; ++row) {
             for (int col = 0; col < Width; ++col) {
                 for (int chan = 0; chan < NumChannels; ++chan)
-                    dataPtr[GetIndex(col, row) + chan] = channels[chan];
+                    DataPtr[GetIndex(col, row) + chan] = channels[chan];
             }
         }
     }
@@ -296,16 +282,16 @@ public unsafe class Image : IDisposable {
         for (int row = 0; row < Height; ++row) {
             for (int col = 0; col < Width; ++col) {
                 for (int chan = 0; chan < NumChannels; ++chan)
-                    result += dataPtr[GetIndex(col, row) + chan];
+                    result += DataPtr[GetIndex(col, row) + chan];
             }
         }
         return result;
     }
 
     internal static void EnsureDirectory(string filename) {
-        var dirname = System.IO.Path.GetDirectoryName(filename);
+        var dirname = Path.GetDirectoryName(filename);
         if (dirname != "")
-            System.IO.Directory.CreateDirectory(dirname);
+            Directory.CreateDirectory(dirname);
     }
 
     /// <summary>
@@ -393,7 +379,7 @@ public unsafe class Image : IDisposable {
                 for (int chan = 0; chan < NumChannels; ++chan) {
                     int idxLeft = GetIndex(col, row) + chan;
                     int idxRight = GetIndex(Width - 1 - col, row) + chan;
-                    (dataPtr[idxLeft], dataPtr[idxRight]) = (dataPtr[idxRight], dataPtr[idxLeft]);
+                    (DataPtr[idxLeft], DataPtr[idxRight]) = (DataPtr[idxRight], DataPtr[idxLeft]);
                 }
             }
         }
@@ -403,7 +389,7 @@ public unsafe class Image : IDisposable {
     public virtual Image Copy() {
         if (DataPointer == IntPtr.Zero) return null;
         Image other = new(Width, Height, NumChannels);
-        Unsafe.CopyBlock(other.dataPtr, dataPtr, (uint)(Width * Height * NumChannels * sizeof(float)));
+        Unsafe.CopyBlock(other.DataPtr, DataPtr, (uint)(Width * Height * NumChannels * sizeof(float)));
         return other;
     }
 
@@ -474,11 +460,12 @@ public unsafe class Image : IDisposable {
         if (!Matches(a, b))
             throw new ArgumentException("Image dimensions must match");
 
-        var result = new T();
-        result.Width = a.Width;
-        result.Height = a.Height;
-        result.NumChannels = a.NumChannels;
-        result.ChannelNames = a.ChannelNames;
+        var result = new T {
+            Width = a.Width,
+            Height = a.Height,
+            NumChannels = a.NumChannels,
+            ChannelNames = a.ChannelNames
+        };
         result.Alloc();
         Parallel.For(0, a.Height, row => {
             for (int col = 0; col < a.Width; ++col) {
@@ -499,11 +486,12 @@ public unsafe class Image : IDisposable {
     /// <param name="op">Function to invoke</param>
     /// <returns>A new image with the updated values</returns>
     public static T ApplyOp<T>(T a, Func<float, float> op) where T : Image, new() {
-        var result = new T();
-        result.Width = a.Width;
-        result.Height = a.Height;
-        result.NumChannels = a.NumChannels;
-        result.ChannelNames = a.ChannelNames;
+        var result = new T {
+            Width = a.Width,
+            Height = a.Height,
+            NumChannels = a.NumChannels,
+            ChannelNames = a.ChannelNames
+        };
         result.Alloc();
         Parallel.For(0, a.Height, row => {
             for (int col = 0; col < a.Width; ++col) {

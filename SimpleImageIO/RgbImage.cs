@@ -22,13 +22,13 @@ public class RgbImage : Image {
     public static RgbImage StealData(Image img) {
         Debug.Assert(img.NumChannels == 3);
 
-        RgbImage result = new();
-        result.DataPointer = img.DataPointer;
+        RgbImage result = new() {
+            DataPointer = img.DataPointer,
+            Width = img.Width,
+            Height = img.Height,
+            NumChannels = 3
+        };
         img.DataPointer = IntPtr.Zero;
-
-        result.Width = img.Width;
-        result.Height = img.Height;
-        result.NumChannels = 3;
 
         return result;
     }
@@ -36,7 +36,7 @@ public class RgbImage : Image {
     /// <returns>A deep copy of this object, that is an RgbImage</returns>
     public override Image Copy() {
         Image cpyRaw = base.Copy();
-        return RgbImage.StealData(cpyRaw);
+        return StealData(cpyRaw);
     }
 
     /// <summary>
@@ -63,7 +63,7 @@ public class RgbImage : Image {
             using RgbImage rgb = new(Width, Height);
             for (int row = 0; row < Height; ++row) {
                 for (int col = 0; col < Width; ++col) {
-                    rgb[col, row] = RgbColor.White * dataPtr[row * Width + col];
+                    rgb[col, row] = RgbColor.White * DataPtr[row * Width + col];
                 }
             }
 

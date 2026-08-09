@@ -101,7 +101,7 @@ public class MonochromeImage : Image {
     /// <param name="image">An image with arbitrarily many channels</param>
     public unsafe MonochromeImage(Image image) : base(image.Width, image.Height, 1) {
         if (image.NumChannels == 1)
-            Unsafe.CopyBlock(dataPtr, image.dataPtr, (uint)(Width * Height * NumChannels * sizeof(float)));
+            Unsafe.CopyBlock(DataPtr, image.DataPtr, (uint)(Width * Height * NumChannels * sizeof(float)));
         else if (image.NumChannels == 3)
             SimpleImageIOCore.RgbToMonoAverage(image.DataPointer, 3 * image.Width, DataPointer, Width,
                 Width, Height, 3);
